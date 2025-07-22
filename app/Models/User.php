@@ -45,19 +45,10 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    // Roles
     public function roles()
     {
         return $this->belongsToMany(Role::class);
-    }
-
-    public function siswa()
-    {
-        return $this->hasOne(Siswa::class);
-    }
-
-    public function guru()
-    {
-        return $this->hasOne(Guru::class);
     }
 
     public function hasRole($role)
@@ -65,13 +56,33 @@ class User extends Authenticatable
         return $this->roles()->where('name', $role)->exists();
     }
 
-    public function kelasDiajarkan()
+    // Relasi ke Siswa
+    public function siswa()
     {
-        return $this->belongsToMany(Kelas::class, 'guru_kelas', 'guru_id', 'kelas_id');
+        return $this->hasOne(Siswa::class);
+    }
+
+    // Relasi ke Guru (profil)
+    public function guru()
+    {
+        return $this->hasOne(Guru::class);
+    }
+
+    // Relasi ke kelas sebagai guru di tabel pivot guru_kelas
+    public function kelasDibimbing()
+    {
+        return $this->belongsToMany(Kelas::class, 'guru_kelas', 'guru_id', 'kelas_id')
+            ->withPivot('tahun_ajaran_id')
+            ->withTimestamps();
     }
 
     public function getFilamentName(): string
     {
         return $this->username ?? 'User';
+    }
+
+    public function getRoleAttribute()
+    {
+        return $this->roles()->orderBy('name')->first()?->name ?? null;
     }
 }

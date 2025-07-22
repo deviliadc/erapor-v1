@@ -12,8 +12,9 @@ class TahunSemester extends Model
     protected $table = 'tahun_semester';
 
     protected $fillable = [
-        'tahun',       // contoh: "2024/2025"
-        'semester',    // contoh: "Ganjil" / "Genap"
+        'tahun',
+        'semester',
+        'is_active',
     ];
 
     public function kelas()
@@ -24,5 +25,15 @@ class TahunSemester extends Model
     public function kelasSiswa()
     {
         return $this->hasMany(KelasSiswa::class);
+    }
+
+    public function isUTSValidated()
+    {
+        return $this->is_validated_uts;
+    }
+
+    public function isUASValidated()
+    {
+        return $this->is_validated_uas;
     }
 }

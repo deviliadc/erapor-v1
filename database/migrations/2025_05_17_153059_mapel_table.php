@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('kode_mapel')->unique(); // Misal: MTK01
             $table->string('nama'); // Misal: Matematika
-            $table->enum('kategori', ['wajib', 'mulok'])->default('wajib'); // Wajib/Muatan Lokal
+            $table->enum('kategori', ['Wajib', 'Muatan Lokal'])->default('Wajib'); // Wajib/Muatan Lokal
             $table->timestamps();
         });
     }

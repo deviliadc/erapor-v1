@@ -4,10 +4,16 @@
     'placeholder' => '',
 ])
 
+@php
+    $isRequired = $attributes->has('required');
+@endphp
+
 <div x-data="{ showPassword: false }">
     @if ($label)
         <label for="{{ $name }}" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-            {{ $label }}
+            {{ $label }} @if ($isRequired)
+                <span class="text-error-500">*</span>
+            @endif
         </label>
     @endif
 
@@ -34,7 +40,10 @@
         </span>
     </div>
 
-    @error($name)
+    {{-- @error($name)
+        <p class="mt-1 text-sm text-error-500">{{ $message }}</p>
+    @enderror --}}
+    @error($name, 'updatePassword')
         <p class="mt-1 text-sm text-error-500">{{ $message }}</p>
     @enderror
 </div>

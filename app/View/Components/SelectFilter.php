@@ -12,7 +12,7 @@ class SelectFilter extends Component
      * Create a new component instance.
      */
 
-     public $name;
+    public $name;
     public $label;
     public $options;
     public $valueKey;

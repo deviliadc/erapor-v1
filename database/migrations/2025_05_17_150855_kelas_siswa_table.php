@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('kelas_siswa', function (Blueprint $table) {
             $table->id();
+            $table->unsignedTinyInteger('no_absen')->nullable();
             $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade');
             $table->foreignId('kelas_id')->constrained('kelas')->onDelete('cascade');
             $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
+            $table->timestamps();
 
             // Untuk mencegah data ganda
             $table->unique(['siswa_id', 'kelas_id', 'tahun_semester_id']);
-
-            $table->timestamps();
         });
     }
 

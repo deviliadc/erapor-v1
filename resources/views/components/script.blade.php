@@ -1,8 +1,40 @@
 <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('sidebar', {
+            toggle: false
+        });
+    });
     document.addEventListener('DOMContentLoaded', function() {
-        flatpickr(".datepickerTwo", {
+        // Init flatpickr
+        flatpickr(".datepicker", {
+            altInput: true,
+            altFormat: "d-m-Y", // yang dilihat user
+            dateFormat: "Y-m-d", // yang dikirim ke server
+            allowInput: true,
+            maxDate: new Date(), // Tidak bisa pilih tanggal setelah hari ini
+        });
+
+        // flatpickr(".datepicker-lahir", {
+        //     altInput: true,
+        //     altFormat: "d-m-Y",
+        //     dateFormat: "Y-m-d",
+        //     allowInput: true,
+        //     maxDate: new Date(), // Tidak bisa pilih tanggal setelah hari ini
+        // });
+
+        // Untuk presensi harian (tidak boleh Sabtu/Minggu & tidak boleh setelah hari ini)
+        flatpickr(".datepicker-presensi", {
+            altInput: true,
+            altFormat: "d-m-Y",
             dateFormat: "Y-m-d",
             allowInput: true,
+            maxDate: new Date(),
+            disable: [
+                function(date) {
+                    // Disable Sabtu (6) dan Minggu (0)
+                    return date.getDay() === 6 || date.getDay() === 0;
+                }
+            ],
         });
     });
 
@@ -49,9 +81,15 @@
             },
         };
     }
+    @if (session('open_modal_id'))
+        window.dispatchEvent(new CustomEvent('open-modal', {
+            detail: '{{ session('open_modal_id') }}'
+        }))
+    @endif
 </script>
 
-{{-- <script defer src="bundle.js"></script> --}}
+<script src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script defer src="{{ asset('tailadmin/build/bundle.js') }}"></script>
 <!-- JS flatpickr -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

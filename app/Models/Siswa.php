@@ -13,6 +13,7 @@ class Siswa extends Model
 
     protected $fillable = [
         'user_id',
+        'wali_murid_id',
         'nis',
         'nisn',
         'nama',
@@ -22,6 +23,7 @@ class Siswa extends Model
         'alamat',
         'pendidikan_sebelumnya',
         'no_hp',
+        'status',
     ];
 
     public function user()
@@ -29,13 +31,52 @@ class Siswa extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function waliMurid()
+    {
+        return $this->belongsTo(WaliMurid::class, 'wali_murid_id');
+    }
+
     public function kelas()
     {
-        return $this->belongsToMany(Kelas::class, 'kelas_siswa');
+        return $this->belongsToMany(Kelas::class, 'kelas_siswa')
+            ->withPivot('tahun_semester_id')
+            ->withTimestamps();
     }
 
     public function kelasSiswa()
     {
         return $this->hasMany(KelasSiswa::class);
+    }
+
+    public function ekstra()
+    {
+        return $this->belongsToMany(Ekstra::class, 'siswa_ekstra')
+            ->withPivot('tahun_semester_id')
+            ->withTimestamps();
+    }
+
+    public function ekstraSiswa()
+    {
+        return $this->hasMany(SiswaEkstra::class);
+    }
+
+    public function presensiDetail()
+    {
+        return $this->hasMany(PresensiDetail::class);
+    }
+
+    public function nilaiMapel()
+    {
+        return $this->hasMany(NilaiMapel::class);
+    }
+
+    public function nilaiEkstra()
+    {
+        return $this->hasMany(NilaiEkstra::class);
+    }
+
+    public function nilaiP5()
+    {
+        return $this->hasMany(NilaiP5::class);
     }
 }

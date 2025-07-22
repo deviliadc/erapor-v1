@@ -10,10 +10,34 @@
         SDN Darmorejo 02
     </title>
 
+    <!-- Logo -->
     <link rel="icon" href="{{ asset('images/logo-app.png') }}">
+    <!-- CSS utama aplikasi (TailAdmin build) -->
     <link href="{{ asset('tailadmin/build/style.css') }}" rel="stylesheet">
+    <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Flatpickr JS -->
+    {{-- <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> --}}
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- jQuery (dibutuhkan oleh Select) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    {{-- @livewireStyles
+
+    <script>
+        window.livewire = window.livewire || {};
+        window.livewire.alpineInitialized = true;
+    </script>
+    @livewireScripts --}}
 </head>
 
 <body x-data="{ page: 'ecommerce', 'loaded': true, 'darkMode': false, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }" x-init="darkMode = JSON.parse(localStorage.getItem('darkMode'));
@@ -29,7 +53,11 @@ $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(valu
 
     <!-- ===== Alerts Start ===== -->
     @if (session('success'))
-        <x-alert type="success" title="Berhasil!" :message="session('success')" />
+        <x-alert type="success" title="Success!" :message="session('success')" />
+    @endif
+
+    @if (session('status') === 'password-updated')
+        <x-alert type="success" title="Berhasil" message="Password berhasil diubah!" />
     @endif
 
     @if (session('error'))
@@ -50,14 +78,20 @@ $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(valu
     <!-- ===== Page Wrapper Start ===== -->
     <div class="flex h-screen overflow-hidden">
         <!-- ===== Sidebar Start ===== -->
-        <x-sidebar />
+        {{-- @includeIf('components.sidebar.' . auth()->user()?->role) --}}
+        @php
+            $role = auth()->user()->role;
+            $sidebarMenu = config("menu.$role", []);
+        @endphp
+
+        <x-sidebar-item :items="$sidebarMenu" :sidebarToggle="$sidebarToggle ?? false" />
         <!-- ===== Sidebar End ===== -->
 
         <!-- ===== Content Area Start ===== -->
         <div class="relative flex flex-col flex-1 overflow-x-hidden overflow-y-auto">
             <!-- Small Device Overlay Start -->
             <div @click="sidebarToggle = false" :class="sidebarToggle ? 'block lg:hidden' : 'hidden'"
-                class="fixed w-full h-screen z-9 bg-gray-900/50"></div>
+    class="fixed inset-0 z-[999998] bg-gray-900/50"></div>
             <!-- Small Device Overlay End -->
 
             <!-- ===== Header Start ===== -->
@@ -83,9 +117,10 @@ $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(valu
             <!-- ===== Footer End ===== -->
 
         </div>
-
         <!-- ===== Content Area End ===== -->
     </div>
+
+    @stack('modals')
 
     <!-- ===== Page Wrapper End ===== -->
     @include('components.script')

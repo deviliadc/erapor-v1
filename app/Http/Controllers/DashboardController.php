@@ -8,7 +8,9 @@ use App\Models\Guru;
 use App\Models\Siswa;
 use App\Models\Mapel;
 use App\Models\Ekstra;
+use App\Models\GuruKelas;
 use App\Models\P5;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -17,67 +19,90 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Hitung data untuk dashboard
+        $user = Auth::user();
+        $role = $user->role;
+
+        return match ($role) {
+            'admin' => $this->adminDashboard(),
+            'guru' => $this->guruDashboard(),
+            'siswa' => $this->siswaDashboard(),
+            // 'wali_kelas' => $this->waliKelasDashboard(),
+            'kepala_sekolah' => $this->kepsekDashboard(),
+            default => abort(403, 'Unauthorized'),
+        };
+    }
+
+    protected function adminDashboard()
+    {
         $totalSiswa = Siswa::count();
         $totalGuru = Guru::count();
         $totalMapel = Mapel::count();
-        $totalEkstra = Ekstra::count();
-        $totalP5 = P5::count();
+        $breadcrumbs = [['label' => 'Dashboard']];
+        $title = 'Dashboard Admin';
 
-        return view('admin.dashboard', compact(
+        return view('dashboard.admin', compact('totalSiswa', 'totalGuru', 'totalMapel', 'breadcrumbs', 'title'));
+    }
+
+    protected function guruDashboard()
+    {
+        $totalSiswa = Siswa::count();
+        $totalMapel = Mapel::count();
+        $user = Auth::user();
+        $guru = $user->guru;
+
+        if (!$guru) {
+            abort(403, 'Data guru tidak ditemukan.');
+        }
+
+        $guruKelas = GuruKelas::where('guru_id', $guru->id)->get();
+
+        // $isPengajar = $guruKelas->where('peran', 'pengajar')->isNotEmpty();
+        // $isWaliKelas = $guruKelas->where('peran', 'wali')->isNotEmpty();
+        $isPengajar = $guru->isPengajar();
+        $isWaliKelas = $guru->isWaliKelas();
+
+        $breadcrumbs = [['label' => 'Dashboard']];
+        $title = 'Dashboard Guru';
+
+        return view('dashboard.guru', compact(
             'totalSiswa',
-            'totalGuru',
             'totalMapel',
-            'totalEkstra',
-            'totalP5'
+            'breadcrumbs',
+            'title',
+            'isPengajar',
+            'isWaliKelas'
         ));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    protected function siswaDashboard()
     {
-        //
+        $user = Auth::user();
+        $siswa = $user->siswa;
+        $waliMurid = $siswa->waliMurid;
+        $breadcrumbs = [['label' => 'Dashboard']];
+        $title = 'Dashboard Siswa';
+        return view('dashboard.siswa', compact(
+            'breadcrumbs',
+            'title',
+            'siswa',
+            'waliMurid'
+        ));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    // protected function waliKelasDashboard()
+    // {
+    //     $breadcrumbs = [['label' => 'Dashboard']];
+    //     $title = 'Dashboard Wali Kelas';
+    //     return view('dashboard.wali-kelas', compact('breadcrumbs', 'title'));
+    // }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    protected function kepsekDashboard()
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $totalSiswa = Siswa::count();
+        $totalGuru = Guru::count();
+        $totalMapel = Mapel::count();
+        $breadcrumbs = [['label' => 'Dashboard']];
+        $title = 'Dashboard Kepala Sekolah';
+        return view('dashboard.kepala-sekolah', compact('breadcrumbs', 'title', 'totalSiswa', 'totalGuru', 'totalMapel'));
     }
 }

@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DetailP5 extends Model
+class DimensiP5 extends Model
 {
-    protected $table = 'detail_p5';
+    protected $table = 'p5_dimensi';
     protected $fillable = [
         'dimensi',
         'elemen',
         'subelemen',
+        'capaian',
         'p5_id'
     ];
 

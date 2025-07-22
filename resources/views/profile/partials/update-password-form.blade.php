@@ -1,18 +1,21 @@
-<div class="p-5 mb-6 border border-gray-200 dark:border-gray-700 rounded-2xl lg:p-6">
-    <form method="POST" action="{{ route('password.update') }}" class="space-y-5">
+<div class="p-5 mb-6 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-2xl lg:p-6">
+    <h3 class="text-base pb-3 font-medium text-gray-800 dark:text-white/90">
+        Password
+    </h3>
+    <form method="POST" action="{{ route('password.update') }}" class="space-y-5 pt-4 border-t border-gray-200 dark:border-gray-700">
         @csrf
         @method('PUT')
 
         @php
             $passwordFields = [
-                ['name' => 'current_password', 'label' => 'Current Password'],
+                ['name' => 'current_password', 'label' => 'Password Lama'],
                 ['name' => 'password', 'label' => 'Password Baru'],
                 ['name' => 'password_confirmation', 'label' => 'Konfirmasi Password'],
             ];
         @endphp
 
         @foreach ($passwordFields as $field)
-            <x-form.password :name="$field['name']" :label="$field['label']" />
+            <x-form.password :name="$field['name']" :label="$field['label']" required/>
         @endforeach
 
         <!-- Save Button -->

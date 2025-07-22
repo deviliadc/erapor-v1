@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -43,36 +44,32 @@ class UserController extends Controller
             });
         }
 
-        // Total data tanpa pagination
         $totalCount = $query->count();
 
-        //Pagination + QueryString (agar filter/search tetap)
-        $users = $query->paginate($perPage)->withQueryString();
+        $paginator = $query->paginate($perPage)->withQueryString();
 
-        // Format data untuk tampilan
-        $data = $users->through(function ($user) {
+        $users = $paginator->through(function ($item) {
             return [
-                'id' => $user->id,
-                'name' => $user->guru?->nama ?? $user->siswa?->nama ?? '-',
-                'username' => $user->username,
-                'email' => $user->email,
-                'roles' => $user->roles->pluck('name')->join(', '),
+                'id' => $item->id,
+                'name' => $item->guru?->nama ?? $item->siswa?->nama ?? '-',
+                'username' => $item->username,
+                'email' => $item->email,
+                'roles' => $item->roles->pluck('name')->join(', '),
+                'role_ids' => $item->roles->pluck('id')->all(),
             ];
         });
 
-        // Semua role untuk filter dropdown
-        $roles = Role::all();
+        // Roles untuk filter dan form di modal
+        $roles = Role::all()->map(function ($role) {
+            $role->label = Str::of($role->name)->replace('_', ' ')->title();
+            return $role;
+        });
+        // $roles = Role::pluck('name', 'name')->toArray();
 
         $breadcrumbs = [['label' => 'Manage User']];
-
         $title = 'Manage User';
 
-        return view('admin.user.index', compact('data', 'roles', 'users', 'totalCount', 'breadcrumbs', 'title'));
-    }
-
-    public function profile()
-    {
-        return view('profile.profile'); // ganti 'profile' sesuai dengan nama file Blade kamu
+        return view('user.index', compact('users', 'roles', 'totalCount', 'breadcrumbs', 'title', 'paginator'));
     }
 
     /**
@@ -80,16 +77,19 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = Role::all();
+        $roles = Role::all()->map(function ($role) {
+            $role->label = Str::of($role->name)->replace('_', ' ')->title();
+            return $role;
+        });
 
         $breadcrumbs = [
-            ['label' => 'Manage User', 'url' => route('admin.user.index')],
+            ['label' => 'Manage User', 'url' => route('user.index')],
             ['label' => 'Create User'],
         ];
 
         $title = 'Create User';
 
-        return view('admin.user.index', compact('roles', 'breadcrumbs', 'title'));
+        return view('user.create', compact('roles', 'breadcrumbs', 'title'));
     }
 
     /**
@@ -114,10 +114,10 @@ class UserController extends Controller
         $hasSiswaRole = in_array($roleSiswa->id, $request->roles ?? []);
 
         try {
-            if ($request->hasFile('profile_photo')) {
-                $path = $request->file('profile_photo')->store('profile_photos', 'public');
-                $validated['profile_photo'] = $path;
-            }
+            // if ($request->hasFile('profile_photo')) {
+            //     $path = $request->file('profile_photo')->store('profile_photos', 'public');
+            //     $validated['profile_photo'] = $path;
+            // }
 
             $validated['password'] = Hash::make($validated['password']);
             $user = User::create($validated);
@@ -133,7 +133,7 @@ class UserController extends Controller
 
             $user->roles()->sync($request->roles);
 
-            return redirect()->route('admin.user.index')->with('success', 'Data berhasil disimpan.');
+            return redirect()->route('user.index')->with('success', 'Data berhasil disimpan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data.');
         }
@@ -153,16 +153,19 @@ class UserController extends Controller
     public function edit(string $id)
     {
         $user = User::with('roles')->findOrFail($id);
-        $roles = Role::all();
+        $roles = Role::all()->map(function ($role) {
+            $role->label = Str::of($role->name)->replace('_', ' ')->title();
+            return $role;
+        });
 
         $breadcrumbs = [
-            ['label' => 'Manage User', 'url' => route('admin.user.index')],
+            ['label' => 'Manage User', 'url' => route('user.index')],
             ['label' => 'Edit User'],
         ];
 
         $title = 'Edit User';
 
-        return view('admin.user.edit', compact('user', 'roles', 'breadcrumbs', 'title'));
+        return view('user.edit', compact('user', 'roles', 'breadcrumbs', 'title'));
     }
 
     /**
@@ -206,7 +209,7 @@ class UserController extends Controller
 
             $user->roles()->sync($request->roles);
 
-            return redirect()->route('admin.user.index')->with('success', 'Data berhasil disimpan.');
+            return redirect()->route('user.index')->with('success', 'Data berhasil disimpan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data.');
         }
@@ -221,7 +224,7 @@ class UserController extends Controller
 
         // Cegah hapus diri sendiri
         if (Auth::check() && Auth::user()->id == $user->id) {
-            return redirect()->route('admin.user.index')
+            return redirect()->route('user.index')
                 ->with('error', 'Anda tidak bisa menghapus akun Anda sendiri.');
         }
 
@@ -237,14 +240,23 @@ class UserController extends Controller
             })->count();
 
             if ($adminCount <= 1) {
-                return redirect()->route('admin.user.index')
-                    ->with('error', 'Tidak bisa menghapus satu-satunya admin.');
+                return redirect()->route('user.index')
+                    ->with('error', 'Tidak bisa menghapus satu-satunya ');
             }
+        }
+
+        // Jika user adalah siswa, hapus wali jika tidak dipakai siswa lain
+        if ($user->siswa) {
+            $wali = $user->siswa->wali;
+            if ($wali && $wali->siswa()->count() === 1) {
+                $wali->delete();
+            }
+            $user->siswa->delete();
         }
 
         $user->delete();
 
-        return redirect()->route('admin.user.index')
+        return redirect()->route('user.index')
             ->with('success', 'User berhasil dihapus.');
     }
 
@@ -272,6 +284,6 @@ class UserController extends Controller
 
         // Excel::import(new UsersImport, $request->file('file'));
 
-        // return redirect()->route('admin.user.index')->with('success', 'Data user berhasil diimpor.');
+        // return redirect()->route('user.index')->with('success', 'Data user berhasil diimpor.');
     }
 }

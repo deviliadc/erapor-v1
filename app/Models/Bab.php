@@ -16,4 +16,9 @@ class Bab extends Model
     {
         return $this->belongsTo(Mapel::class);
     }
+
+    public function lingkupMateri()
+    {
+        return $this->hasMany(LingkupMateri::class);
+    }
 }

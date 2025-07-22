@@ -14,45 +14,41 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="//unpkg.com/alpinejs" defer></script>
+
+    <!-- TailAdmin CSS -->
+    <link href="{{ asset('tailadmin/build/style.css') }}" rel="stylesheet">
 </head>
 
-<body class="font-sans text-gray-900 antialiased bg-gray-100 min-h-screen flex flex-col">
+<body class="font-sans text-gray-900 antialiased bg-gray-100 min-h-screen flex items-center justify-center">
 
-    <!-- Main Content -->
-    <main class="flex-1 flex items-center justify-center px-4">
-        <div class="w-full max-w-2xl bg-white shadow-md rounded-xl overflow-hidden grid lg:grid-cols-2 items-stretch">
+    <main class="w-full min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
+        <div class="w-full max-w-6xl flex flex-col lg:flex-row overflow-hidden shadow-xl
+            bg-white dark:bg-gray-950
+            rounded-none sm:rounded-2xl
+            sm:my-8 mx-auto">
 
-            <!-- Logo (Mobile) -->
-            <div class="flex justify-center py-6 lg:hidden">
-                <a href="/">
-                    <img src="{{ asset('images/logo-app.png') }}" alt="Logo Sekolah"
-                        class="w-20 h-20 fill-current text-gray-500" />
-                </a>
+            <!-- Kiri: Gambar hanya di desktop -->
+            <div class="hidden lg:block w-2/3 h-screen">
+                <img src="{{ asset('images/sekolah.jpeg') }}" alt="Foto Sekolah"
+                    class="w-full h-full object-cover" />
             </div>
 
-            <!-- Logo (Desktop) -->
-            <div class="hidden lg:flex items-center justify-center bg-gray-200">
-                <a href="/" class="w-full h-full">
-                    <img src="{{ asset('images/sekolah.jpeg') }}" alt="Foto Sekolah"
-                        class="w-full h-full object-cover" />
-                </a>
-            </div>
-
-
-            <!-- Form Slot -->
-            <div class="p-6 sm:p-8 flex items-center justify-center">
-                <div class="w-full">
+            <!-- Kanan: Slot Konten -->
+            <div class="w-full lg:w-1/3 flex items-center justify-center p-6 sm:p-8">
+                <div class="w-full max-w-md">
+                    <!-- Logo Mobile -->
+                    <div class="flex justify-center mb-6 lg:hidden">
+                        <img src="{{ asset('images/logo-app.png') }}" alt="Logo Sekolah" class="w-16 h-16" />
+                    </div>
                     {{ $slot }}
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <x-footer />
+    @stack('modals')
+    @include('components.script')
 
 </body>
-
 </html>

@@ -12,7 +12,7 @@ class Mapel extends Model
     protected $table = 'mapel';
 
     protected $fillable = [
-        'kode',
+        'kode_mapel',
         'nama',
         'kategori',
     ];
@@ -24,12 +24,17 @@ class Mapel extends Model
 
     public function tujuanPembelajaran()
     {
-        return $this->hasMany(TujPembelajaran::class);
+        return $this->hasMany(TujuanPembelajaran::class);
     }
 
-    public function deskripsi()
+    public function lingkupMateri()
     {
-        return $this->hasOne(DesMapel::class);
+        return $this->hasMany(LingkupMateri::class);
+    }
+
+    public function guruKelas()
+    {
+        return $this->hasMany(GuruKelas::class);
     }
 
     public function nilaiMapel()

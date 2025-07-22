@@ -13,14 +13,25 @@ return new class extends Migration
     {
         Schema::create('nilai_mapel', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade');
+            $table->foreignId('kelas_siswa_id')->constrained('kelas_siswa')->onDelete('cascade');
+            // $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade');
             $table->foreignId('mapel_id')->constrained('mapel')->onDelete('cascade');
-            $table->foreignId('kelas_id')->constrained('kelas')->onDelete('cascade');
-            $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
-            $table->foreignId('rapor_id')->constrained('rapor')->onDelete('cascade');
-            $table->integer('nilai');
-            $table->integer('kkm');
+            // $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
+
+            $table->enum('periode', ['tengah', 'akhir']); // tengah = UTS, akhir = rapor akhir
+            $table->float('nilai_akhir')->nullable();
+            $table->text('deskripsi_tertinggi')->nullable();
+            $table->text('deskripsi_terendah')->nullable();
+
             $table->timestamps();
+
+            $table->unique([
+                'kelas_siswa_id',
+                // 'siswa_id',
+                'mapel_id',
+                // 'tahun_semester_id',
+                'periode'
+            ], 'nilai_mapel_unique');
         });
     }
 

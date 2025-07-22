@@ -17,39 +17,62 @@ class GuruController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
+        $sortBy = $request->input('sortBy', 'id');
+        $sortDirection = $request->input('sortDirection', 'asc');
 
-        $query = Guru::with('user');
+        $columnMap = [
+            'id' => 'guru.id',
+            'name' => 'guru.nama',
+            'nip' => 'guru.nip',
+            'email' => 'users.email', // jika sorting berdasarkan relasi
+            'no_hp' => 'guru.no_hp',
+            'alamat' => 'guru.alamat',
+            'jenis_kelamin' => 'guru.jenis_kelamin',
+            'status' => 'guru.status',
+        ];
 
-        // Search filter
+
+        $query = Guru::query()
+            ->leftJoin('users', 'users.id', '=', 'guru.user_id')
+            ->select(
+                'guru.*',
+                'users.email'
+            );
+
+        // Filter pencarian
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where('nama', 'like', "%{$search}%")
                 ->orWhere('nip', 'like', "%{$search}%");
         }
 
-        $totalCount = $query->count();
-        $users = $query->paginate($perPage)->withQueryString();
+        // Sorting aman berdasarkan kolom yang dimapping
+        if (isset($columnMap[$sortBy])) {
+            $query->orderBy($columnMap[$sortBy], $sortDirection);
+        } else {
+            $query->orderBy('guru.id', 'asc'); // default sorting
+        }
 
-        // Format data untuk tampilan
-        $data = $users->through(function ($user) {
+        $totalCount = $query->count();
+        $paginator = $query->paginate($perPage)->withQueryString();
+
+        $guru = $paginator->through(function ($item) {
             return [
-                'id' => $user->id,
-                'name' => $user->nama,
-                'nip' => $user->nip,
-                'email' => $user->user?->email ?? '-',
-                'no_hp' => $user->no_hp,
-                'alamat' => $user->alamat,
-                'jenis_kelamin' => $user->jenis_kelamin,
+                'id' => $item->id,
+                'name' => $item->nama,
+                'nip' => $item->nip,
+                'email' => $item->user?->email ?? '-',
+                'no_hp' => $item->no_hp,
+                'alamat' => $item->alamat ?? '-',
+                'jenis_kelamin' => $item->jenis_kelamin,
+                'status' => $item->status,
             ];
         });
 
-        $breadcrumbs = [
-            ['label' => 'Manage Guru', 'url' => route('admin.guru.index')],
-        ];
-
+        $breadcrumbs = [['label' => 'Manage Guru', 'url' => route('guru.index')]];
         $title = 'Manage Guru';
 
-        return view('admin.guru.index', compact('users', 'totalCount', 'breadcrumbs', 'title'));
+        return view('guru.index', compact('guru', 'totalCount', 'breadcrumbs', 'title'));
     }
 
     /**
@@ -58,13 +81,13 @@ class GuruController extends Controller
     public function create()
     {
         $breadcrumbs = [
-            ['label' => 'Manage Guru', 'url' => route('admin.guru.index')],
+            ['label' => 'Manage Guru', 'url' => route('guru.index')],
             ['label' => 'Create Guru'],
         ];
 
         $title = 'Create Guru';
 
-        return view('admin.guru.create', compact('breadcrumbs', 'title'));
+        return view('guru.create', compact('breadcrumbs', 'title'));
     }
 
     /**
@@ -75,46 +98,53 @@ class GuruController extends Controller
         $validated = $request->validate([
             'email' => 'required|email|unique:users,email',
             'nama' => 'required|string|max:255',
-            'nip' => 'nullable|string|unique:guru,nip|max:20',
-            'no_hp' => 'nullable|string|max:20',
+            'nip' => 'nullable|string|max:20|unique:guru,nip',
+            'no_hp' => [
+                'nullable',
+                'string',
+                'max:20',
+                'regex:/^(0|62)[0-9]{9,}$/'
+            ],
             'alamat' => 'nullable|string|max:500',
             'jenis_kelamin' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
+            'status' => ['required', Rule::in(['Aktif', 'Pensiun', 'Mutasi', 'Resign'])],
         ]);
 
+        // Normalisasi no_hp
+        if (!empty($validated['no_hp'])) {
+            $noHp = preg_replace('/[^0-9]/', '', $validated['no_hp']);
+            if (str_starts_with($noHp, '0')) {
+                $noHp = '62' . substr($noHp, 1);
+            }
+            $validated['no_hp'] = $noHp;
+        }
+
         try {
-            // Ambil nama depan
             $namaDepan = strtolower(str_replace(' ', '', explode(' ', $validated['nama'])[0]));
-
-            // 4 digit awal dari NIP, atau 4 digit random
             $kodeUnik = $validated['nip'] ? substr($validated['nip'], 0, 4) : str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
-
-            // Gabungkan jadi username
             $username = $namaDepan . $kodeUnik;
 
-            // Pastikan username unik
-            $i = 1;
+            // Buat username unik
             $originalUsername = $username;
+            $i = 1;
             while (User::where('username', $username)->exists()) {
-                $username = $originalUsername . $i;
-                $i++;
+                $username = $originalUsername . $i++;
             }
+
+            $password = 'password123';
 
             $user = User::create([
                 'username' => $username,
                 'email' => $validated['email'],
-                'password' => Hash::make('password123'), // Default password
+                'password' => Hash::make($password),
             ]);
 
-            // Ambil role guru dan attach ke user
-            $guruRole = Role::where('name', 'guru')->first();
-
-            // Cek apakah user sudah punya role siswa
             if ($user->roles()->where('name', 'siswa')->exists()) {
-                // Optional: hapus user jika baru dibuat
                 $user->delete();
                 return back()->withErrors('User ini sudah memiliki role siswa dan tidak bisa dijadikan guru.');
             }
 
+            $guruRole = Role::where('name', 'guru')->first();
             $user->roles()->attach($guruRole);
 
             Guru::create([
@@ -124,11 +154,13 @@ class GuruController extends Controller
                 'no_hp' => $validated['no_hp'],
                 'alamat' => $validated['alamat'],
                 'jenis_kelamin' => $validated['jenis_kelamin'],
+                'status' => $validated['status'],
             ]);
 
-            return redirect()->route('admin.guru.index')
-                ->with('success', "Data guru berhasil ditambahkan. Username: <strong>{$username}</strong> | Password: <strong>password123</strong>");
+            return redirect()->route('guru.index')
+                ->with('success', "Data guru berhasil ditambahkan. Username: <strong>{$username}</strong> | Password: <strong>{$password}</strong>");
         } catch (\Exception $e) {
+            report($e); // log error
             return back()->withErrors('Gagal menyimpan data guru: ' . $e->getMessage());
         }
     }
@@ -149,13 +181,13 @@ class GuruController extends Controller
         $guru = Guru::findOrFail($id);
 
         $breadcrumbs = [
-            ['label' => 'Manage Guru', 'url' => route('admin.guru.index')],
+            ['label' => 'Manage Guru', 'url' => route('guru.index')],
             ['label' => 'Edit Guru'],
         ];
 
         $title = 'Edit Guru';
 
-        return view('admin.guru.edit', compact('guru', 'breadcrumbs', 'title'));
+        return view('guru.edit', compact('guru', 'breadcrumbs', 'title'));
     }
 
     /**
@@ -163,7 +195,7 @@ class GuruController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $guru = Guru::with('user.roles')->findOrFail($id); // Pastikan load user & roles
+        $guru = Guru::with('user.roles')->findOrFail($id);
         $user = $guru->user;
 
         // Cek apakah user valid
@@ -171,30 +203,39 @@ class GuruController extends Controller
             return back()->withErrors('Data user tidak ditemukan untuk guru ini.');
         }
 
-        // Cek apakah user memiliki role siswa
-        if ($user && $user->hasRole('siswa')) {
+        if ($user->hasRole('siswa')) {
             return back()->withErrors('User ini sudah memiliki role siswa dan tidak bisa dijadikan guru.');
         }
 
-        // Validasi input
+        // Validasi Input
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'nip' => ['nullable', 'string', 'max:20', Rule::unique('guru', 'nip')->ignore($guru->id)],
-            'no_hp' => 'nullable|string|max:20',
+            'no_hp' => [
+                'nullable',
+                'string',
+                'max:20',
+                'regex:/^(0|62)[0-9]{9,}$/'
+            ],
             'alamat' => 'nullable|string|max:500',
             'jenis_kelamin' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
+            'status' => ['required', Rule::in(['Aktif', 'Pensiun', 'Mutasi', 'Resign'])],
         ]);
+
+        // Normalisasi dan simpan no_hp
+        if (!empty($validated['no_hp'])) {
+            $noHp = preg_replace('/[^0-9]/', '', $validated['no_hp']);
+            if (str_starts_with($noHp, '0')) {
+                $noHp = '62' . substr($noHp, 1);
+            }
+            $validated['no_hp'] = $noHp;
+        }
 
         // Update data guru
         $guru->update($validated);
+        $user->update(['name' => $validated['nama']]);
 
-        // Optional: update juga user name
-        $user->update([
-            'name' => $validated['nama'],
-        ]);
-
-        return redirect()->route('admin.guru.index')
-            ->with('success', 'Data guru berhasil diperbarui.');
+        return redirect()->route('guru.index')->with('success', 'Data guru berhasil diperbarui.');
     }
 
     /**
@@ -202,10 +243,16 @@ class GuruController extends Controller
      */
     public function destroy(string $id)
     {
-        $guru = Guru::findOrFail($id);
+        $guru = Guru::with('user')->findOrFail($id);
+        $user = $guru->user;
+
         $guru->delete();
 
-        return redirect()->route('admin.guru.index')
-            ->with('success', 'Data guru berhasil dihapus.');
+        // Optional: ikut hapus user jika tidak digunakan di tempat lain
+        if ($user && $user->roles->count() === 1 && $user->hasRole('guru')) {
+            $user->delete();
+        }
+
+        return redirect()->route('guru.index')->with('success', 'Data guru berhasil dihapus.');
     }
 }

@@ -1,4 +1,4 @@
-@props([
+{{-- @props([
     'title',
     'icon' => 'heroicon-o-document',
     'href' => '#',
@@ -20,4 +20,4 @@
             {{ $title }}
         </span>
     </a>
-</li>
+</li> --}}

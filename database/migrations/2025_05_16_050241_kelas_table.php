@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('kelas', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
+            $table->foreignId('fase_id')->constrained('fase')->onDelete('restrict'); // Fase A, B, C
             $table->timestamps();
         });
     }

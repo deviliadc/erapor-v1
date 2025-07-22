@@ -1,4 +1,4 @@
-<x-app-layout>
+{{-- <x-app-layout>
     <div class="p-4 mx-auto max-w-screen-2xl md:p-6">
         <!-- Breadcrumb -->
         <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
@@ -110,4 +110,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-app-layout> --}}

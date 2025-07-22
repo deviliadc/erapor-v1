@@ -16,11 +16,12 @@ class GuruKelas extends Model
         'kelas_id',
         'mapel_id',
         'tahun_semester_id',
+        'peran',
     ];
 
     public function guru()
     {
-        return $this->belongsTo(Guru::class);
+        return $this->belongsTo(Guru::class, 'guru_id');
     }
 
     public function kelas()
@@ -31,6 +32,11 @@ class GuruKelas extends Model
     public function mapel()
     {
         return $this->belongsTo(Mapel::class);
+    }
+
+    public function lingkupMateri()
+    {
+        return $this->hasMany(LingkupMateri::class);
     }
 
     public function tahunSemester()

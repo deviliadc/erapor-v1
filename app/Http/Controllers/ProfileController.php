@@ -2,35 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
     public function show(Request $request)
     {
-        $user = $request->user(); // User yang sedang login
-        $phone = $user->siswa->phone ?? $user->guru->phone ?? null;
-
-        $breadcrumbs = [
-            ['label' => 'Profile', 'url' => route('profile.edit')],
-        ];
-
-        $title = 'User Profile';
-
-        return view('profile.edit', [
-            'user' => $user,
-            'phone' => $phone,
-            'breadcrumbs' => $breadcrumbs,
-            'title' => $title,
-            'page' => 'Profile', // Untuk aktivasi menu sidebar
-        ]);
+        //
     }
+
     /**
      * Display the user's profile form.
      */
@@ -53,19 +37,19 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
 
         $validated = $request->validate([
             'email' => ['required', 'email', 'unique:users,email,' . $user->id],
             'phone' => ['nullable', 'string', 'max:25'],
-            'profile_photo_path' => ['nullable', 'image', 'max:2048'], // 2MB
+            // 'profile_photo' => ['nullable', 'image', 'max:2048'], // Field sesuai name input
         ]);
 
-        // Simpan email dan phone
         $user->email = $validated['email'];
-        // $user->phone = $validated['phone'] ?? null;
+
+        // Simpan nomor HP ke siswa atau guru
         if (!empty($validated['phone'])) {
             if ($user->siswa) {
                 $user->siswa->phone = $validated['phone'];
@@ -76,22 +60,19 @@ class ProfileController extends Controller
             }
         }
 
-        // Reset verifikasi email jika diubah
+        // Reset email verification jika email berubah
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
 
-        // Upload foto jika ada
-        if ($request->$request->hasFile('profile_photo')) {
-            $path = $request->file('profile_photo')->store('profile-photos', 'public');
-
-            // Hapus foto lama jika ada
-            if ($user->profile_photo_path) {
-                Storage::disk('public')->delete($user->profile_photo_path);
-            }
-
-            $user->profile_photo_path = $path;
-        }
+        // Upload foto profil (aktifkan jika ingin)
+        // if ($request->hasFile('profile_photo')) {
+        //     $path = $request->file('profile_photo')->store('profile-photos', 'public');
+        //     if ($user->profile_photo_path) {
+        //         Storage::disk('public')->delete($user->profile_photo_path);
+        //     }
+        //     $user->profile_photo_path = $path;
+        // }
 
         $user->save();
 

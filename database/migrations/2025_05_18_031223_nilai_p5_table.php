@@ -13,14 +13,28 @@ return new class extends Migration
     {
         Schema::create('nilai_p5', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade');
-            $table->foreignId('kelas_id')->constrained('kelas')->onDelete('cascade');
-            $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
-            $table->foreignId('p5_id')->constrained('p5')->onDelete('cascade');
-            $table->foreignId('rapor_id')->constrained('rapor')->onDelete('cascade');
-            $table->enum('predikat', ['Sangat Berkembang', 'Berkembang Sesuai Harapan', 'Mulai Berkembang', 'Belum Berkembang']);
+            $table->foreignId('kelas_siswa_id')->constrained('kelas_siswa')->onDelete('cascade');
+            // $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade');
+            // $table->foreignId('kelas_id')->constrained('kelas')->onDelete('cascade');
+            // $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
+            $table->foreignId('p5_proyek_id')->constrained('p5_proyek')->onDelete('cascade');
+            $table->foreignId('p5_sub_elemen_id')->constrained('p5_sub_elemen')->onDelete('cascade');
+            $table->enum('predikat', ['Sangat Baik', 'Baik', 'Cukup', 'Perlu Bimbingan'])->nullable();
             $table->text('deskripsi')->nullable();
+            $table->enum('periode', ['tengah', 'akhir'])->default('akhir'); // tengah = UTS, akhir = rapor akhir
+            // $table->float('nilai_akhir')->nullable();
+            $table->boolean('is_validated')->default(false);
             $table->timestamps();
+
+            $table->unique([
+                'kelas_siswa_id',
+                // 'siswa_id',
+                'p5_proyek_id',
+                'p5_sub_elemen_id',
+                'periode',
+            ],
+                'nilai_p5_unik'
+            );
         });
     }
 

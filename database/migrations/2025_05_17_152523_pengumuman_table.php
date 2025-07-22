@@ -15,13 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('judul');
             $table->text('isi');
+            $table->string('gambar')->nullable();
             $table->string('lampiran')->nullable(); // opsional: file seperti PDF, gambar
             $table->date('tanggal_mulai'); // pengumuman mulai ditampilkan
             $table->date('tanggal_berakhir')->nullable(); // setelah ini dianggap diarsip
             $table->foreignId('dibuat_oleh')->constrained('users')->onDelete('cascade');
 
             // opsional: ditujukan untuk role tertentu (admin, guru, wali, siswa)
-            $table->enum('ditujukan_ke', ['semua', 'admin', 'guru', 'wali', 'siswa'])->nullable();
+            $table->enum('ditujukan_ke', ['Semua', 'Admin', 'Guru', 'Kepala Sekolah', 'Siswa'])->nullable();
 
             $table->timestamps();
         });

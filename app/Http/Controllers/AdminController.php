@@ -16,28 +16,28 @@ class AdminController extends Controller
      */
     public function index()
     {
-        $breadcrumbs = [
-            ['label' => 'Dashboard', 'url' => route('admin.dashboard')],
-        ];
+        // $breadcrumbs = [
+        //     ['label' => 'Dashboard', 'url' => route('dashboard.admin')],
+        // ];
 
-        $title = 'Dashboard';
+        // $title = 'Dashboard';
 
-        // Pastikan import model yang diperlukan di atas controller
-        $totalSiswa = Siswa::count();
-        $totalGuru = Guru::count();
-        $totalMapel = Mapel::count();
-        $totalEkstra = Ekstra::count();
-        $totalP5 = P5::count();
+        // // Pastikan import model yang diperlukan di atas controller
+        // $totalSiswa = Siswa::count();
+        // $totalGuru = Guru::count();
+        // $totalMapel = Mapel::count();
+        // $totalEkstra = Ekstra::count();
+        // $totalP5 = P5::count();
 
-        return view('admin.dashboard', compact(
-            'breadcrumbs',
-            'title',
-            'totalSiswa',
-            'totalGuru',
-            'totalMapel',
-            'totalEkstra',
-            'totalP5'
-        ));
+        // return view('admin.dashboard', compact(
+        //     'breadcrumbs',
+        //     'title',
+        //     'totalSiswa',
+        //     'totalGuru',
+        //     'totalMapel',
+        //     'totalEkstra',
+        //     'totalP5'
+        // ));
     }
 
     /**

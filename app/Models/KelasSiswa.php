@@ -34,4 +34,19 @@ class KelasSiswa extends Model
     {
         return $this->belongsTo(TahunSemester::class);
     }
+
+    // Relasi ke Rekap Absensi
+    public function rekapAbsensi()
+    {
+        return $this->hasOne(RekapAbsensi::class, 'siswa_id', 'siswa_id')
+            ->where('tahun_semester_id', request('tahun_semester_id'))
+            ->where('periode', request('periode'));
+    }
+
+    public function ekstrakurikuler()
+    {
+        return $this->belongsToMany(Ekstra::class, 'siswa_ekstrakurikuler')
+            ->withPivot('tahun_semester_id')
+            ->withTimestamps();
+    }
 }

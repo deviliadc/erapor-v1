@@ -61,4 +61,12 @@ class RaporController extends Controller
     {
         //
     }
+
+    /**
+     * Generate a report.
+     */
+    public function print(Request $request)
+    {
+        // Validate the request data
+    }
 }

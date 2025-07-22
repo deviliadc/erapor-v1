@@ -19,6 +19,7 @@ class Guru extends Model
         'no_hp',
         'alamat',
         'jenis_kelamin',
+        'status',
     ];
 
     public function user()
@@ -29,5 +30,20 @@ class Guru extends Model
     public function kelas()
     {
         return $this->hasMany(Kelas::class); // sebagai wali kelas
+    }
+
+    public function guruKelas()
+    {
+        return $this->hasMany(GuruKelas::class);
+    }
+
+    public function isPengajar()
+    {
+        return $this->guruKelas()->where('peran', 'pengajar')->exists();
+    }
+
+    public function isWaliKelas()
+    {
+        return $this->guruKelas()->where('peran', 'wali')->exists();
     }
 }

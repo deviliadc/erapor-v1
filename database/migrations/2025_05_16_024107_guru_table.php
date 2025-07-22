@@ -17,8 +17,9 @@ return new class extends Migration
             $table->string('nama');
             $table->string('nip')->unique()->nullable(); // Boleh null jika guru honorer
             $table->string('no_hp')->nullable();
-            $table->string('alamat')->nullable();
+            $table->text('alamat')->nullable();
             $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan']);
+            $table->enum('status', ['Aktif', 'Pensiun', 'Mutasi', 'Resign'])->default('Aktif');
             $table->timestamps();
         });
     }
