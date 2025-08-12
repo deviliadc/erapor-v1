@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\TahunSemester;
 use Illuminate\Http\Request;
@@ -16,12 +17,9 @@ class TahunSemesterController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-
         $query = TahunSemester::query();
-
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
-
         $tahun_semester = $paginator->through(function ($item) {
             $siswa_count = KelasSiswa::where('tahun_semester_id', $item->id)->count();
             return [
@@ -29,14 +27,12 @@ class TahunSemesterController extends Controller
                 'tahun' => $item->tahun,
                 'semester' => $item->semester,
                 'status' => $item->is_active,
-                'siswa_count' => $siswa_count, // jumlah siswa
+                'siswa_count' => $siswa_count,
             ];
         });
-
         $breadcrumbs = [
-            ['label' => 'Manage Tahun Ajaran & Semester', 'url' => route('tahun-semester.index')],
+            ['label' => 'Manage Tahun Ajaran & Semester'],
         ];
-
         $title = 'Manage Tahun Ajaran & Semester';
 
         return view('tahun-semester.index', compact('tahun_semester', 'totalCount', 'breadcrumbs', 'title'));
@@ -47,14 +43,7 @@ class TahunSemesterController extends Controller
      */
     public function create()
     {
-        $breadcrumbs = [
-            ['label' => 'Manage Tahun Ajaran & Semester', 'url' => route('tahun-semester.index')],
-            ['label' => 'Create Tahun Ajaran & Semester'],
-        ];
-
-        $title = 'Create Tahun Ajaran & Semester';
-
-        return view('tahun-semester.create', compact('breadcrumbs', 'title'));
+        //
     }
 
     /**
@@ -67,20 +56,17 @@ class TahunSemesterController extends Controller
             'semester' => 'required|in:Ganjil,Genap',
             'is_active' => 'nullable|boolean',
         ]);
-
         $isActive = $request->has('is_active');
-
         if ($isActive) {
             TahunSemester::where('is_active', true)->update(['is_active' => false]);
         }
-
         TahunSemester::create([
             'tahun' => $validated['tahun'],
             'semester' => $validated['semester'],
             'is_active' => $isActive,
         ]);
 
-        return redirect()->route('tahun-semester.index')->with('success', 'Data berhasil ditambahkan.');
+        return redirect()->to(role_route('tahun-semester.index'))->with('success', 'Data berhasil ditambahkan.');
     }
 
     /**
@@ -90,9 +76,11 @@ class TahunSemesterController extends Controller
     {
         $tahunSemester = TahunSemester::findOrFail($id);
 
+        $kelasList = Kelas::all();
+
         // Ambil semua kelas_siswa pada tahun semester ini dengan paging
         $perPage = request()->input('per_page', 10);
-        $kelasSiswaQuery = KelasSiswa::with('siswa')
+        $kelasSiswaQuery = KelasSiswa::with('siswa', 'kelas')
             ->where('tahun_semester_id', $tahunSemester->id);
 
         $totalCount = $kelasSiswaQuery->count();
@@ -103,33 +91,48 @@ class TahunSemesterController extends Controller
         $l_count = $kelasSiswaPaginator->getCollection()->where('siswa.jenis_kelamin', 'Laki-laki')->count();
         $p_count = $kelasSiswaPaginator->getCollection()->where('siswa.jenis_kelamin', 'Perempuan')->count();
 
+        // Data chart per kelas
+    $kelasGenderChart = [
+        'labels' => [],
+        'laki' => [],
+        'perempuan' => [],
+    ];
+    foreach ($kelasList as $kelas) {
+        $laki = KelasSiswa::where('kelas_id', $kelas->id)
+            ->where('tahun_semester_id', $tahunSemester->id)
+            ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Laki-laki'))->count();
+        $perempuan = KelasSiswa::where('kelas_id', $kelas->id)
+            ->where('tahun_semester_id', $tahunSemester->id)
+            ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Perempuan'))->count();
+        $kelasGenderChart['labels'][] = $kelas->nama;
+        $kelasGenderChart['laki'][] = $laki;
+        $kelasGenderChart['perempuan'][] = $perempuan;
+    }
+
         $tahun_semester_detail = $kelasSiswaPaginator->through(function ($item) use ($tahunSemester, $siswa_count, $l_count, $p_count) {
             return [
-                'id' => $item->id,
-                'tahun_semester' => $tahunSemester->tahun . ' - ' . $tahunSemester->semester,
+            'id' => $item->id,
+                'nama' => $item->siswa->nama ?? '-',
+            'kelas' => $item->kelas->nama ?? '-',
+            'nis' => $item->siswa->nis ?? '-',
+            'nisn' => $item->siswa->nisn ?? '-',
+            'jenis_kelamin' => $item->siswa->jenis_kelamin ?? '-',
+                // 'tahun_semester' => $tahunSemester->tahun . ' - ' . $tahunSemester->semester,
                 // 'nama_siswa' => $item->siswa->nama ?? '-',
                 // 'jenis_kelamin' => $item->siswa->jenis_kelamin ?? '-',
                 // 'no_absen' => $item->no_absen ?? '-',
-                'siswa_count' => $siswa_count,
-        'l_count' => $l_count,
-        'p_count' => $p_count,
+                // 'siswa_count' => $siswa_count,
+        // 'l_count' => $l_count,
+        // 'p_count' => $p_count,
             ];
         });
 
         $breadcrumbs = [
-            ['label' => 'Manage Tahun Ajaran & Semester', 'url' => route('tahun-semester.index')],
+            ['label' => 'Manage Tahun Ajaran & Semester', 'url' => role_route('tahun-semester.index')],
             ['label' => $tahunSemester->tahun . ' - ' . $tahunSemester->semester],
         ];
 
         $title = 'Detail Tahun Ajaran & Semester';
-
-        // Untuk filter dropdown
-        $tahunSemesterSelect = TahunSemester::all()->map(function ($ts) {
-            return [
-                'id' => $ts->id,
-                'name' => $ts->tahun . ' - ' . $ts->semester,
-            ];
-        });
 
         return view('tahun-semester.show', compact(
             'tahunSemester',
@@ -137,10 +140,11 @@ class TahunSemesterController extends Controller
             'totalCount',
             'breadcrumbs',
             'title',
-            'tahunSemesterSelect',
+            // 'tahunSemesterSelect',
             'siswa_count',
             'l_count',
-            'p_count'
+            'p_count',
+            'kelasGenderChart',
         ));
     }
 
@@ -151,14 +155,18 @@ class TahunSemesterController extends Controller
     {
         $item = TahunSemester::findOrFail($id);
 
-        $title = 'Edit Tahun Ajaran & Semester';
+        // $title = 'Edit Tahun Ajaran & Semester';
 
-        $breadcrumbs = [
-            ['label' => 'Manage Tahun Ajaran & Semester', 'url' => route('tahun-semester.index')],
-            ['label' => 'Edit Tahun Ajaran & Semester'],
-        ];
+        // $breadcrumbs = [
+        //     ['label' => 'Manage Tahun Ajaran & Semester', 'url' => role_route('tahun-semester.index')],
+        //     ['label' => 'Edit Tahun Ajaran & Semester'],
+        // ];
 
-        return view('tahun-semester.edit', compact('item', 'title', 'breadcrumbs'));
+        return view('tahun-semester.edit', compact(
+            'item',
+            // 'title',
+            // 'breadcrumbs'
+        ));
     }
 
     /**
@@ -171,34 +179,27 @@ class TahunSemesterController extends Controller
             'semester' => 'required|in:Ganjil,Genap',
             'is_active' => 'nullable|boolean',
         ]);
-
         $item = TahunSemester::findOrFail($id);
         $isActive = $request->has('is_active');
 
-        // Cek jika user ingin menonaktifkan tahun semester yang sedang aktif
         if (!$isActive && $item->is_active) {
-            // Hitung jumlah tahun semester yang aktif selain yang sedang diedit
             $activeCount = TahunSemester::where('is_active', true)->where('id', '!=', $id)->count();
-
-            // Jika tidak ada tahun semester aktif lain, tolak update
             if ($activeCount === 0) {
                 return redirect()->back()
                     ->withInput()
                     ->withErrors(['is_active' => 'Minimal harus ada satu Tahun Semester yang aktif.']);
             }
         }
-
         if ($isActive) {
             TahunSemester::where('is_active', true)->where('id', '!=', $id)->update(['is_active' => false]);
         }
-
         $item->update([
             'tahun' => $validated['tahun'],
             'semester' => $validated['semester'],
             'is_active' => $isActive,
         ]);
 
-        return redirect()->route('tahun-semester.index')->with('success', 'Data berhasil diperbarui.');
+        return redirect()->to(role_route('tahun-semester.index'))->with('success', 'Data berhasil diperbarui.');
     }
 
     /**
@@ -207,16 +208,13 @@ class TahunSemesterController extends Controller
     public function destroy(string $id)
     {
         $item = TahunSemester::findOrFail($id);
-
-        // Cegah penghapusan jika tahun semester sedang aktif
         if ($item->is_active) {
-            return redirect()->route('tahun-semester.index')
+            return redirect()->to(role_route('tahun-semester.index'))
                 ->with('error', 'Tahun Semester yang sedang aktif tidak dapat dihapus.');
         }
-
         $item->delete();
 
-        return redirect()->route('tahun-semester.index')
+        return redirect()->to(role_route('tahun-semester.index'))
             ->with('success', 'Data berhasil dihapus.');
     }
 }

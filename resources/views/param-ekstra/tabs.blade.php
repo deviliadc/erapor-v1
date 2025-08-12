@@ -1,3 +1,7 @@
+@php
+    $isGuru = auth()->user()->hasRole('guru');
+@endphp
+
 {{-- Form Tambah Parameter Ekstra --}}
 @include('param-ekstra.create')
 
@@ -5,13 +9,13 @@
 @include('param-ekstra.edit')
 
 {{-- Toolbar Table --}}
-<x-table.toolbar {{-- :filters="$filters" --}}
-    :enable-add-button="true"
+<x-table.toolbar
+    :enable-add-button="!$isGuru"
     :enable-import="false"
     :enable-export="false"
     :enable-search="true"
     tabName="parameter"
-    :route="route('ekstra.index')">
+    :route="role_route('ekstra.index')">
     <x-slot name="addButton">
         <button type="button"
             onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-parameter' }))"
@@ -31,10 +35,10 @@
     'ekstra' => ['label' => 'Ekstrakurikuler', 'sortable' => false],
     'parameter' => ['label' => 'Parameter', 'sortable' => true],
 ]" :data="$parameterEkstra" :total-count="$parameterEkstraTotal" row-view="param-ekstra.partials.row" :actions="[
-    'edit' => true,
-    'delete' => true,
+    'edit' => !$isGuru,
+    'delete' => !$isGuru,
     'routes' => [
-        'delete' => fn($item) => route('param-ekstra.destroy', $item['id']),
+        'delete' => fn($item) => role_route('param-ekstra.destroy', ['param_ekstra' => $item['id']]),
     ],
 ]"
     :use-modal-edit="true" />

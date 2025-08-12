@@ -6,16 +6,23 @@
         {{-- Nama Kelas --}}
         <x-form.input label="Nama Kelas" name="nama" :value="old('nama')" required />
 
-        {{-- Wali kelas --}}
+        {{-- Fase --}}
         <x-form.select
+            label="Fase"
+            name="fase_id"
+            :options="$faseList"
+            :selected="old('fase_id')"
+            required />
+
+        {{-- Wali kelas --}}
+        {{-- <x-form.select
             name="wali_kelas_id"
             label="Wali Kelas"
             :options="$guru"
             placeholder="Pilih Wali Kelas"
             :selected="old('wali_kelas_id')"
             :searchable="true"
-            required
-        />
+        /> --}}
 
         {{-- Tombol Submit --}}
         <div class="flex justify-end">

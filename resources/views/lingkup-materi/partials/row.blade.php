@@ -25,7 +25,7 @@
     {{ $item['tujuan_pembelajaran_count'] }} Tujuan
 </td> --}}
 <td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">
-    <a href="{{ route('lingkup-materi.show', $item['id']) }}"
+    <a href="{{ role_route('lingkup-materi.show', ['lingkup_materi' => $item['id']]) }}"
     class="text-brand-500 hover:underline">
         {{ $item['tujuan_pembelajaran_count'] }} Tujuan
     </a>

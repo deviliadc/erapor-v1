@@ -9,12 +9,14 @@ class NilaiMapel extends Model
     protected $table = 'nilai_mapel';
     protected $fillable = [
         'kelas_siswa_id',
-        // 'siswa_id',
+        'siswa_id',
         'mapel_id',
         // 'tahun_semester_id',
         'nilai_akhir',
         'deskripsi_tertinggi',
         'deskripsi_terendah',
+        'periode',
+        'is_validated',
     ];
 
     public function kelasSiswa()
@@ -36,13 +38,6 @@ class NilaiMapel extends Model
     {
         return $this->belongsTo(TahunSemester::class);
     }
-
-    // public function detail()
-    // {
-    //     return $this->hasMany(NilaiMapelDetail::class, 'siswa_id', 'siswa_id')
-    //         ->whereColumn('nilai_mapel_detail.mapel_id', 'nilai_mapel.mapel_id')
-    //         ->whereColumn('nilai_mapel_detail.tahun_semester_id', 'nilai_mapel.tahun_semester_id');
-    // }
 
     public function detail()
     {

@@ -5,7 +5,7 @@
     'rowView' => null,
     'bulkDeleteRoute' => null,
     'selectable' => true,
-    'actions' => ['detail' => true, 'edit' => true, 'delete' => true],
+    'actions' => ['detail' => false, 'edit' => false, 'delete' => false],
     'sortPrefix' => '',
 ])
 
@@ -59,7 +59,8 @@
                         </th>
                     @endforeach
                     {{-- Kolom Aksi --}}
-                    @if ($actions['detail'] ?? (false || $actions['edit'] ?? (false || $actions['delete'] ?? false)))
+                    {{-- @if ($actions['detail'] ?? (false || $actions['edit'] ?? (false || $actions['delete'] ?? false))) --}}
+                    @if (($actions['detail'] ?? false) || ($actions['edit'] ?? false) || ($actions['delete'] ?? false))
                         <th
                             class="px-4 py-3 text-center w-32 text-sm font-medium text-gray-900 dark:text-gray-400 whitespace-nowrap">
                             Aksi
@@ -68,8 +69,8 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                {{-- @if ($data->isEmpty()) --}}
-                @if (empty($data) || (is_array($data) && count($data) === 0))
+                @if ($data->isEmpty())
+                {{-- @if (empty($data) || (is_array($data) && count($data) === 0)) --}}
                     <tr>
                         @php
                             $showActions =
@@ -79,7 +80,7 @@
                         @endphp
                         <td colspan="{{ $colspan }}"
                             class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                            Tidak ada data
+                            Tidak ada data yang bisa ditampilkan
                         </td>
                     </tr>
                 @else
@@ -109,8 +110,10 @@
                                 @endforeach
                             @endif
                             {{-- Action --}}
-                            @if ($actions['detail'] ?? (false || $actions['edit'] ?? (false || $actions['delete'] ?? false)))
-                                <td class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-400 whitespace-nowrap"
+                            {{-- @if ($actions['detail'] ?? (false || $actions['edit'] ?? (false || $actions['delete'] ?? false))) --}}
+                            {{-- @if (($actions['detail'] ?? false) || ($actions['edit'] ?? false) || ($actions['delete'] ?? false)) --}}
+                            @if (($actions['detail'] ?? false) || ($actions['edit'] ?? false) || ($actions['delete'] ?? false))
+                            <td class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-400 whitespace-nowrap"
                                     data-column="action">
                                     <div class="flex justify-center gap-2 items-center">
 
@@ -182,7 +185,7 @@
         </table>
     </div>
 
-    {{-- Pagination --}}
+        {{-- Pagination --}}
     <div class="border-t border-gray-200 px-6 py-4 dark:border-gray-800 pagination-wrapper">
         <div class="flex items-center justify-between">
             {{-- Previous --}}
@@ -192,7 +195,7 @@
                     Previous
                 </span>
             @else
-                <a href="{{ $data->previousPageUrl() }}"
+                <a href="{{ $data->previousPageUrl() }}{{ request('tab') ? (Str::contains($data->previousPageUrl(), '?') ? '&' : '?') . 'tab=' . request('tab') : '' }}"
                     class="text-sm rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
                     Previous
                 </a>
@@ -204,7 +207,7 @@
 
             {{-- Next --}}
             @if ($data->hasMorePages())
-                <a href="{{ $data->nextPageUrl() }}"
+                <a href="{{ $data->nextPageUrl() }}{{ request('tab') ? (Str::contains($data->nextPageUrl(), '?') ? '&' : '?') . 'tab=' . request('tab') : '' }}"
                     class="text-sm rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
                     Next
                 </a>

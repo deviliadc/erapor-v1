@@ -1,6 +1,6 @@
 @props(['label'])
 
-<div x-data="{ open: false }" class="relative inline-block">
+<div x-data="{ open: false }" class="flex flex-wrap gap-4 relative z-20">
     <button @click.prevent="open = !open"
         class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 w-full sm:w-auto">
                         {{ $label }}

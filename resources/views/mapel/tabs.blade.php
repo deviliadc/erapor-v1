@@ -1,5 +1,7 @@
 @php
     $activeTab = request('tab', 'mapel');
+    // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
+    $isGuru = auth()->user()->hasRole('guru');
 @endphp
 
 {{-- Form Tambah Mapel --}}
@@ -9,12 +11,12 @@
 
 {{-- Toolbar Table --}}
 <x-table.toolbar
-    :enable-add-button="true"
+    :enable-add-button="!$isGuru"
     :enable-import="false"
     :enable-export="false"
     :enable-search="false"
     tabName="mapel"
-    :route="route('mapel.index')">
+    :route="role_route('mapel.index')">
     <x-slot name="addButton">
         <button type="button"
             onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-mapel' }))"
@@ -34,16 +36,23 @@
     'kode_mapel' => ['label' => 'Kode Mapel', 'sortable' => true],
     'nama' => ['label' => 'Nama', 'sortable' => true],
     'kategori' => ['label' => 'Kategori', 'sortable' => true],
+    'agama' => ['label' => 'Agama', 'sortable' => true],
 ]"
     :data="$mapel"
     :total-count="$mapelTotal"
     row-view="mapel.partials.row"
     :actions="[
-        'edit' => true,
-        'delete' => true,
-        'routes' => [
-            'delete' => fn($item) => route('mapel.destroy', $item['id']),
-        ],
+        'edit' => !$isGuru,
+        'delete' => !$isGuru,
+        // 'routes' => [
+        //     'delete' => fn($item) => route('mapel.destroy', $item['id']),
+        // ],
+        // 'delete' => $canDelete,
+            'routes' => [
+                // 'edit' => fn($item) => role_route('mapel.edit', ['mapel' => $item['id']]),
+                // 'detail' => fn($item) => role_route('siswa.show', ['siswa' => $item['id']]),
+                'delete' => fn($item) => role_route('mapel.destroy', ['mapel' => $item['id']]),
+            ]
     ]"
     :use-modal-edit="true"
 />

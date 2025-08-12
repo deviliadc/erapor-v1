@@ -1,5 +1,5 @@
 <x-modal name="form-create-bab" title="Tambah Bab" maxWidth="2xl">
-    <form action="{{ route('bab.store', ['tab' => request('tab', 'bab')]) }}" method="POST" enctype="multipart/form-data"
+    <form action="{{ role_route('bab.store', ['tab' => request('tab', 'bab')]) }}" method="POST" enctype="multipart/form-data"
         class="space-y-6 sm:p-6">
         @csrf
         {{-- <input type="hidden" name="tab" value="{{ request('tab', 'dimensi') }}"> --}}

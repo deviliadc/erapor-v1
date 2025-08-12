@@ -16,7 +16,7 @@
             :enable-import="true"
             :enable-export="true"
             :enable-search="true"
-            :route="route('tujuan-pembelajaran.index')">
+            :route="role_route('tujuan-pembelajaran.index')">
             <x-slot name="addButton">
                 <button type="button"
                     onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-tujuan' }))"
@@ -47,7 +47,11 @@
             :actions="[
                 'detail' => false,
                 'edit' => true,
-                'delete' => true,
+                // 'delete' => true,
+                'routes' => [
+                    // 'edit' => fn($item) => role_route('tujuan-pembelajaran.edit', ['tujuan_pembelajaran' => $item['id']]),
+                    'delete' => fn($item) => role_route('tujuan-pembelajaran.destroy', ['tujuan_pembelajaran' => $item['id']]),
+                ],
             ]"
             :use-modal-edit="true" />
     </div>

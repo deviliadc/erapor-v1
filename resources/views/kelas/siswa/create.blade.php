@@ -1,6 +1,6 @@
 {{-- filepath: d:\DEVI\DRAFT\erapor-v1\resources\views\kelas\siswa\create.blade.php --}}
 <x-modal name="form-create-kelas-siswa" title="Tambah Siswa" maxWidth="2xl">
-    <form action="{{ route('kelas.siswa.store', ['kelas' => $kelas->id]) }}" method="POST" enctype="multipart/form-data"
+    <form action="{{ role_route('kelas.siswa.store', ['kelas' => $kelas->id]) }}" method="POST" enctype="multipart/form-data"
         class="space-y-6 sm:p-6">
         @csrf
         <input type="hidden" name="tahun_semester_id" value="{{ $tahunSemesterId }}">

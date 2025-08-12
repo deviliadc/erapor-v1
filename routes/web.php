@@ -8,35 +8,35 @@ use App\Http\Controllers\{
     GuruController,
     SiswaController,
     WaliMuridController,
+    FaseController,
     KelasController,
     TahunSemesterController,
-    AbsensiController,
-    NilaiController,
     RaporController,
     MapelController,
     BabController,
     LingkupMateriController,
     TujuanPembelajaranController,
     EkstraController,
-    ExportController,
     ParamEkstraController,
     P5MasterController,
     P5TemaController,
     P5DimensiController,
     P5ElemenController,
     P5SubElemenController,
+    P5CapaianController,
     P5ProyekController,
-    P5DokumentasiController,
     KelasMapelController,
     KelasSiswaController,
-    KepalaSekolahMenuController,
     NilaiMapelController,
     NilaiEkstraController,
     NilaiP5Controller,
+    P5ProyekDetailController,
     PresensiHarianController,
     PresensiDetailController,
     RekapAbsensiController,
-    SiswaMenuController
+    SiswaMenuController,
+    KepalaSekolahMenuController,
+    PengaturanRaporController
 };
 
 // Halaman Awal
@@ -54,15 +54,25 @@ Route::middleware('auth')->group(function () {
 // ==========================
 // Routes  for Authentication
 // ==========================
-Route::middleware(['auth', 'checkrole:admin'])->group(function () {
-    Route::get('/admin', [DashboardController::class, 'index'])->name('dashboard.admin');
+Route::middleware(['auth', 'checkrole:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('user', UserController::class);
+    // Route::get('/user/export', [UserController::class, 'export'])->name('user.export');
     Route::resource('guru', GuruController::class);
-    Route::resource('siswa', SiswaController::class);
+    Route::get('siswa/template', [SiswaController::class, 'template'])->name('siswa.template');
+    Route::get('siswa/export', [SiswaController::class, 'export'])->name('siswa.export');
+    Route::post('siswa/import', [SiswaController::class, 'import'])->name('siswa.import');
     Route::get('siswa/atur-kelas', [SiswaController::class, 'editKelas'])->name('siswa.aturKelas');
     Route::post('siswa/update-kelas', [SiswaController::class, 'updateKelas'])->name('siswa.updateKelas');
+    Route::resource('siswa', SiswaController::class);
+    // Route::get('siswa/atur-kelas', [SiswaController::class, 'editKelas'])->name('siswa.aturKelas');
+    // Route::post('siswa/update-kelas', [SiswaController::class, 'updateKelas'])->name('siswa.updateKelas');
+    // Route::get('siswa/export', [SiswaController::class, 'export'])->name('siswa.export');
+    // Route::get('siswa/template', [SiswaController::class, 'template'])->name('siswa.template');
+    // Route::post('siswa/import', [SiswaController::class, 'import'])->name('siswa.import');
     Route::resource('wali-murid', WaliMuridController::class);
+    Route::resource('fase', FaseController::class);
     Route::resource('kelas', KelasController::class);
     Route::resource('kelas-mapel', KelasMapelController::class);
     Route::prefix('kelas/{kelas}')->name('kelas.')->group(function () {
@@ -73,99 +83,147 @@ Route::middleware(['auth', 'checkrole:admin'])->group(function () {
     });
     Route::match(['get', 'post'], '/kelas/{kelas}/generate-absen', [KelasSiswaController::class, 'generateAbsen'])
         ->name('kelas.generate.absen');
-    Route::post('/kelas/promote', [KelasSiswaController::class, 'promote'])
-        ->middleware('checkrole:admin,kepala_sekolah')
+    Route::post('kelas/promote', [KelasSiswaController::class, 'promote'])
+        ->middleware('checkrole:admin,guru')
         ->name('kelas.siswa.promote');
     Route::resource('tahun-semester', TahunSemesterController::class);
     // Route::resource('mapel', MapelMasterController::class);
     Route::resource('mapel', MapelController::class);
     Route::resource('bab', BabController::class);
     Route::resource('lingkup-materi', LingkupMateriController::class);
-    Route::post('/lingkup-materi/duplikat', [LingkupMateriController::class, 'duplikatLingkupMateri'])->name('lingkup-materi.duplikat');
+    Route::post('lingkup-materi/duplikat', [LingkupMateriController::class, 'duplikatLingkupMateri'])->name('lingkup-materi.duplikat');
     Route::resource('tujuan-pembelajaran', TujuanPembelajaranController::class);
     Route::resource('ekstra', EkstraController::class);
     Route::get('ekstrakurikuler/{ekstra}/kelas', [EkstraController::class, 'kelas'])
         ->name('ekstra.kelas');
     Route::resource('param-ekstra', ParamEkstraController::class);
     Route::resource('p5', P5MasterController::class);
-    Route::resource('p5-tema', P5TemaController::class);
+    // Route::resource('p5-tema', P5TemaController::class);
     Route::resource('p5-dimensi', P5DimensiController::class);
     Route::resource('p5-elemen', P5ElemenController::class);
     Route::resource('p5-subelemen', P5SubElemenController::class);
+    Route::resource('p5-capaian', P5CapaianController::class);
     Route::resource('p5-proyek', P5ProyekController::class);
-    Route::resource('p5-dokumentasi', P5DokumentasiController::class);
+    // Route::get('/p5-proyek/{id}', [P5ProyekController::class, 'show'])->name('p5-proyek.show');
+    Route::resource('p5-proyek-detail', P5ProyekDetailController::class);
+    // Route::resource('p5-dokumentasi', P5DokumentasiController::class);
     // Route::resource('p5-proyek-dimensi', P5ProyekDimensiController::class);
     // Route::resource('p5-proyek-subelemen', P5ProyekSubElemenController::class);
     // Route::resource('dimensi-p5', DimensiP5Controller::class);
     Route::resource('rekap-absensi', RekapAbsensiController::class);
-    Route::post('/rekap-absensi/update-batch', [RekapAbsensiController::class, 'updateBatch'])->name('rekap-absensi.update-batch');
+    Route::post('rekap-absensi/update-batch', [RekapAbsensiController::class, 'updateBatch'])->name('rekap-absensi.update-batch');
     Route::resource('presensi-harian', PresensiHarianController::class);
-    Route::get('/presensi-harian/{id}/detail', [PresensiDetailController::class, 'show'])->name('presensi-detail.show');
-    Route::resource('presaensi-detail', PresensiDetailController::class);
+    Route::get('presensi-harian/{id}/detail', [PresensiDetailController::class, 'show'])->name('presensi-detail.show');
+    Route::resource('presensi-detail', PresensiDetailController::class);
     Route::resource('nilai-mapel',  NilaiMapelController::class);
-    Route::post('/nilai-mapel/bulk-store', [NilaiMapelController::class, 'bulkStore'])->name('nilai-mapel.bulk-store');
-    Route::get('nilai-mapel/sumatif', [NilaiMapelController::class, 'sumatif'])->name('nilai-mapel.sumatif');
+    Route::post('nilai-mapel/pilih-materi', [NilaiMapelController::class, 'pilihMateri'])->name('nilai-mapel.pilih-materi');
+    Route::post('nilai-mapel/bulk-store', [NilaiMapelController::class, 'bulkStore'])->name('nilai-mapel.bulk-store');
+    // Route::get('nilai-mapel/sumatif', [NilaiMapelController::class, 'sumatif'])->name('nilai-mapel.sumatif');
     Route::resource('nilai-ekstra',  NilaiEkstraController::class);
-    Route::post('/nilai-ekstra/update-batch', [NilaiEkstraController::class, 'updateBatch'])->name('nilai-ekstra.update-batch');
+    Route::post('nilai-ekstra/update-batch', [NilaiEkstraController::class, 'updateBatch'])->name('nilai-ekstra.update-batch');
     Route::resource('nilai-p5',  NilaiP5Controller::class);
+    // Route::post('/nilai-p5/proyek-store', [NilaiP5Controller::class, 'proyekStore'])->name('nilai-p5.proyek-store');
+    Route::post('nilai-p5/update-batch', [NilaiP5Controller::class, 'updateBatch'])->name('nilai-p5.update-batch');
     Route::resource('rapor',  RaporController::class);
-    Route::get('/export', [ExportController::class, 'export'])->name('export.excel');
+    Route::resource('pengaturan-rapor',  PengaturanRaporController::class);
 });
 
-Route::middleware(['auth', 'checkrole:guru'])->get('/pilih-peran', function () {
-    return view('pilih-peran');
-})->name('pilih-peran');
+Route::middleware(['auth', 'checkrole:guru'])->prefix('guru')->name('guru.')->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::middleware(['auth', 'checkrole:guru'])->group(function () {
-    Route::get('/dashboard/guru', [DashboardController::class, 'index'])->name('dashboard.guru');
-    Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
-    Route::post('/absensi', [AbsensiController::class, 'store'])->name('absensi.store');
-    Route::get('/absensi/{kelas}/{tanggal}', [AbsensiController::class, 'show'])->name('absensi.show');
-
-    Route::get('/nilai', [NilaiController::class, 'index'])->name('nilai.index');
-    Route::post('/nilai', [NilaiController::class, 'store'])->name('nilai.store');
-    Route::get('/nilai/siswa/{siswa}', [NilaiController::class, 'show'])->name('nilai.show');
-
-    Route::prefix('nilai')->group(function () {
-        Route::get('/mapel', [NilaiMapelController::class, 'mapel'])->name('nilai.mapel');
-        Route::post('/mapel', [NilaiController::class, 'simpanMapel'])->name('nilai.mapel.simpan');
-
-        Route::get('/ekstra', [NilaiController::class, 'ekstra'])->name('nilai.ekstra');
-        Route::post('/ekstra', [NilaiController::class, 'simpanEkstra'])->name('nilai.ekstra.simpan');
-
-        Route::get('/p5', [NilaiController::class, 'p5'])->name('nilai.p5');
-        Route::post('/p5', [NilaiController::class, 'simpanP5'])->name('nilai.p5.simpan');
+    Route::get('siswa/template', [SiswaController::class, 'template'])->name('siswa.template');
+    Route::get('siswa/export', [SiswaController::class, 'export'])->name('siswa.export');
+    Route::post('siswa/import', [SiswaController::class, 'import'])->name('siswa.import');
+    Route::get('siswa/atur-kelas', [SiswaController::class, 'editKelas'])->name('siswa.aturKelas');
+    Route::post('siswa/update-kelas', [SiswaController::class, 'updateKelas'])->name('siswa.updateKelas');
+    Route::resource('siswa', SiswaController::class)->except(['destroy']);
+    // Route::get('siswa/atur-kelas', [SiswaController::class, 'editKelas'])->name('siswa.aturKelas');
+    // Route::post('siswa/update-kelas', [SiswaController::class, 'updateKelas'])->name('siswa.updateKelas');
+    // Route::get('siswa/import', [SiswaController::class, 'importForm'])->name('siswa.import.form');
+    // Route::get('/siswa/header', [SiswaController::class, 'header'])->name('siswa.header');
+    // Route::get('siswa/export', [SiswaController::class, 'export'])->name('siswa.export');
+    // Route::get('siswa/template', [SiswaController::class, 'template'])->name('siswa.template');
+    // Route::post('siswa/import', [SiswaController::class, 'import'])->name('siswa.import');
+    Route::resource('wali-murid', WaliMuridController::class)->except(['destroy']);
+    // Route::resource('fase', FaseController::class);
+    // Route::resource('kelas', KelasController::class);
+    // Route::resource('kelas-mapel', KelasMapelController::class);
+    Route::prefix('kelas/{kelas}')->name('kelas.')->group(function () {
+        Route::resource('mapel', KelasMapelController::class)->names('mapel');
     });
-});
-
-Route::middleware(['auth', 'checkrole:wali_kelas'])->group(function () {
-    Route::get('/dashboard/wali-kelas', [DashboardController::class, 'index'])->name('dashboard.wali-kelas');
+    Route::prefix('kelas/{kelas}')->name('kelas.')->group(function () {
+        Route::resource('siswa', KelasSiswaController::class)->names('siswa');
+    });
+    Route::match(['get', 'post'], '/kelas/{kelas}/generate-absen', [KelasSiswaController::class, 'generateAbsen'])
+        ->name('kelas.generate.absen');
+    Route::post('kelas/promote', [KelasSiswaController::class, 'promote'])
+        ->middleware('checkrole:admin,guru')
+        ->name('kelas.siswa.promote');
+    Route::resource('mapel', MapelController::class);
+    Route::resource('bab', BabController::class);
+    Route::resource('lingkup-materi', LingkupMateriController::class);
+    Route::post('lingkup-materi/duplikat', [LingkupMateriController::class, 'duplikatLingkupMateri'])->name('lingkup-materi.duplikat');
+    Route::resource('tujuan-pembelajaran', TujuanPembelajaranController::class);
+    Route::resource('ekstra', EkstraController::class);
+    Route::get('ekstrakurikuler/{ekstra}/kelas', [EkstraController::class, 'kelas'])
+        ->name('ekstra.kelas');
+    Route::resource('param-ekstra', ParamEkstraController::class);
+    Route::resource('p5', P5MasterController::class);
+    // Route::resource('p5-tema', P5TemaController::class);
+    Route::resource('p5-dimensi', P5DimensiController::class);
+    Route::resource('p5-elemen', P5ElemenController::class);
+    Route::resource('p5-subelemen', P5SubElemenController::class);
+    Route::resource('p5-capaian', P5CapaianController::class);
+    Route::resource('p5-proyek', P5ProyekController::class);
+    // Route::get('/p5-proyek/{id}', [P5ProyekController::class, 'show'])->name('p5-proyek.show');
+    Route::resource('p5-proyek-detail', P5ProyekDetailController::class);
+    // Route::resource('p5-dokumentasi', P5DokumentasiController::class);
+    // Route::resource('p5-proyek-dimensi', P5ProyekDimensiController::class);
+    // Route::resource('p5-proyek-subelemen', P5ProyekSubElemenController::class);
+    // Route::resource('dimensi-p5', DimensiP5Controller::class);
+    Route::resource('rekap-absensi', RekapAbsensiController::class);
+    Route::post('rekap-absensi/update-batch', [RekapAbsensiController::class, 'updateBatch'])->name('rekap-absensi.update-batch');
+    Route::resource('presensi-harian', PresensiHarianController::class);
+    Route::get('presensi-harian/{id}/detail', [PresensiDetailController::class, 'show'])->name('presensi-detail.show');
+    Route::resource('presensi-detail', PresensiDetailController::class);
+    Route::resource('nilai-mapel',  NilaiMapelController::class);
+    Route::post('nilai-mapel/pilih-materi', [NilaiMapelController::class, 'pilihMateri'])->name('nilai-mapel.pilih-materi');
+    Route::post('nilai-mapel/bulk-store', [NilaiMapelController::class, 'bulkStore'])->name('nilai-mapel.bulk-store');
+    // Route::get('nilai-mapel/sumatif', [NilaiMapelController::class, 'sumatif'])->name('nilai-mapel.sumatif');
+    Route::resource('nilai-ekstra',  NilaiEkstraController::class);
+    Route::post('nilai-ekstra/update-batch', [NilaiEkstraController::class, 'updateBatch'])->name('nilai-ekstra.update-batch');
+    Route::resource('nilai-p5',  NilaiP5Controller::class);
+    // Route::post('/nilai-p5/proyek-store', [NilaiP5Controller::class, 'proyekStore'])->name('nilai-p5.proyek-store');
+    Route::post('nilai-p5/update-batch', [NilaiP5Controller::class, 'updateBatch'])->name('nilai-p5.update-batch');
+    Route::resource('rapor',  RaporController::class);
+    Route::get('rapor/export', [RaporController::class, 'export'])->name('rapor.export');
+    Route::resource('pengaturan-rapor',  PengaturanRaporController::class);
 });
 
 Route::middleware(['auth', 'checkrole:kepala_sekolah'])->group(function () {
-    Route::get('/dashboard/kepala-sekolah', [DashboardController::class, 'index'])->name('dashboard.kepala-sekolah');
-    Route::get('/kepala-sekolah/data-guru', [KepalaSekolahMenuController::class, 'dataGuru'])->name('data-guru.index');
-    Route::get('/kepala-sekolah/data-siswa', [KepalaSekolahMenuController::class, 'dataSiswa'])->name('data-siswa.index');
-    Route::get('/kepala-sekolah/data-wali-murid', [KepalaSekolahMenuController::class, 'dataWaliMurid'])->name('data-wali-murid.index');
-    Route::get('/kepala-sekolah/rekap-absensi', [KepalaSekolahMenuController::class, 'rekapAbsensi'])->name('data-rekap-absensi.index');
-    Route::get('/kepala-sekolah/nilai-mapel', [KepalaSekolahMenuController::class, 'nilaiMapel'])->name('data-nilai-mapel.index');
-    Route::get('/kepala-sekolah/nilai-ekstra', [KepalaSekolahMenuController::class, 'nilaiEkstra'])->name('data-nilai-ekstra.index');
-    Route::get('/kepala-sekolah/nilai-p5', [KepalaSekolahMenuController::class, 'nilaiP5'])->name('data-nilai-p5.index');
-    Route::get('/kepala-sekolah/rapor', [KepalaSekolahMenuController::class, 'rapor'])->name('data-rapor.index');
+    Route::get('dashboard/kepala-sekolah', [DashboardController::class, 'index'])->name('dashboard.kepala-sekolah');
+    Route::get('kepala-sekolah/data-guru', [KepalaSekolahMenuController::class, 'dataGuru'])->name('data-guru.index');
+    // Route::get('/siswa', [SiswaController::class, 'index'])->name('kepsek.siswa.index');
+    // Route::get('/siswa/{id}', [SiswaController::class, 'show'])->name('kepsek.siswa.show');
+    Route::get('kepala-sekolah/data-siswa', [KepalaSekolahMenuController::class, 'dataSiswa'])->name('data-siswa.index');
+    Route::get('kepala-sekolah/data-wali-murid', [KepalaSekolahMenuController::class, 'dataWaliMurid'])->name('data-wali-murid.index');
+    Route::get('kepala-sekolah/rekap-absensi', [KepalaSekolahMenuController::class, 'rekapAbsensi'])->name('data-rekap-absensi.index');
+    Route::get('kepala-sekolah/nilai-mapel', [KepalaSekolahMenuController::class, 'nilaiMapel'])->name('data-nilai-mapel.index');
+    Route::get('kepala-sekolah/nilai-ekstra', [KepalaSekolahMenuController::class, 'nilaiEkstra'])->name('data-nilai-ekstra.index');
+    Route::get('kepala-sekolah/nilai-p5', [KepalaSekolahMenuController::class, 'nilaiP5'])->name('data-nilai-p5.index');
+    Route::get('kepala-sekolah/rapor', [KepalaSekolahMenuController::class, 'rapor'])->name('data-rapor.index');
 });
 
 Route::middleware(['auth', 'checkrole:siswa'])->group(function () {
-    Route::get('/dashboard/siswa', [DashboardController::class, 'index'])->name('dashboard.siswa');
-    Route::get('/absensi-siswa', [SiswaMenuController::class, 'absensi'])->name('absensi-siswa.index');
-    Route::get('/nilai-mapel-siswa', [SiswaMenuController::class, 'nilaiMapel'])->name('nilai-mapel-siswa.index');
-    Route::get('/nilai-ekstra-siswa', [SiswaMenuController::class, 'nilaiEkstra'])->name('nilai-ekstra-siswa.index');
-    Route::get('/nilai-p5-siswa', [SiswaMenuController::class, 'nilaiP5'])->name('nilai-p5-siswa.index');
+    Route::get('dashboard/siswa', [DashboardController::class, 'index'])->name('dashboard.siswa');
+    Route::get('absensi-siswa', [SiswaMenuController::class, 'absensi'])->name('absensi-siswa');
+    Route::get('nilai-mapel-siswa', [SiswaMenuController::class, 'nilaiMapel'])->name('nilai-mapel-siswa');
+    Route::get('nilai-ekstra-siswa', [SiswaMenuController::class, 'nilaiEkstra'])->name('nilai-ekstra-siswa');
+    Route::get('nilai-p5-siswa', [SiswaMenuController::class, 'nilaiP5'])->name('nilai-p5-siswa');
 });
 
 
 // Profil Sekolah (umum)
 // Route::get('/profil-sekolah', fn() => view('profil-sekolah'))->name('profil.sekolah');
-
-Route::get('/export', [ExportController::class, 'export'])->name('export.excel');
 
 require __DIR__ . '/auth.php';

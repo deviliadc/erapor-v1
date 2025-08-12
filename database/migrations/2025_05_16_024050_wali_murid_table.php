@@ -9,27 +9,27 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('wali_murid', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama_ayah');
-            $table->string('nama_ibu');
-            $table->string('nama_wali')->nullable();
-            $table->string('no_hp')->nullable();
-            $table->string('pekerjaan_ayah');
-            $table->string('pekerjaan_ibu');
-            $table->string('pekerjaan_wali')->nullable();
-            $table->text('alamat');
-            $table->timestamps();
-        });
-    }
+    // public function up(): void
+    // {
+    //     Schema::create('wali_murid', function (Blueprint $table) {
+    //         $table->id();
+    //         $table->string('nama_ayah');
+    //         $table->string('nama_ibu');
+    //         $table->string('nama_wali')->nullable();
+    //         $table->string('no_hp')->nullable();
+    //         $table->string('pekerjaan_ayah');
+    //         $table->string('pekerjaan_ibu');
+    //         $table->string('pekerjaan_wali')->nullable();
+    //         $table->text('alamat');
+    //         $table->timestamps();
+    //     });
+    // }
 
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        Schema::dropIfExists('wali_murid');
-    }
+    // public function down(): void
+    // {
+    //     Schema::dropIfExists('wali_murid');
+    // }
 };

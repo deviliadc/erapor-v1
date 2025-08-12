@@ -1,5 +1,5 @@
 <x-modal name="form-create-mapel"  title="Tambah Mata Pelajaran" maxWidth="2xl">
-    <form action="{{ route('mapel.store') }}" method="POST"
+    <form action="{{ role_route('mapel.store') }}" method="POST"
         enctype="multipart/form-data"
         class="space-y-6 sm:p-6"
     >

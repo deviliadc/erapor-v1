@@ -42,7 +42,7 @@ class P5DimensiController extends Controller
             'deskripsi' => $validated['deskripsi_dimensi'] ?? null, // mapping ke field database 'deskripsi'
         ]);
 
-        return redirect()->route('p5.index', ['tab' => $request->tab ?? 'dimensi'])->with('success', 'Dimensi P5 berhasil ditambahkan.');
+        return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'dimensi']))->with('success', 'Dimensi P5 berhasil ditambahkan.');
     }
 
     /**
@@ -87,20 +87,35 @@ class P5DimensiController extends Controller
             'deskripsi' => $validated['deskripsi_dimensi'] ?? null,
         ]);
 
-        return redirect()->route('p5.index', ['tab' => $request->tab ?? 'dimensi'])->with('success', 'Dimensi P5 berhasil diperbarui.');
+        return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'dimensi']))->with('success', 'Dimensi P5 berhasil diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         try {
             $p5_dimensi = P5Dimensi::findOrFail($id);
+
+            // Cek apakah masih digunakan di tabel p5_elemen
+            if ($p5_dimensi->elemen()->exists()) {
+                return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'dimensi']))
+                    ->with('error', 'Dimensi tidak dapat dihapus karena masih digunakan pada elemen.');
+            }
+
+            // Cek apakah masih digunakan di tabel p5_proyek_detail
+            if ($p5_dimensi->proyekDetail()->exists()) {
+                return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'dimensi']))
+                    ->with('error', 'Dimensi tidak dapat dihapus karena masih digunakan pada proyek.');
+            }
+
             $p5_dimensi->delete();
-            return redirect()->route('p5.index', ['tab' => $request->tab ?? 'dimensi'])->with('success', 'Dimensi P5 berhasil dihapus.');
+            return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'dimensi']))
+                ->with('success', 'Dimensi P5 berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('p5.index', ['tab' => $request->tab ?? 'dimensi'])->with('error', 'Gagal menghapus Dimensi P5. Pastikan tidak sedang digunakan.');
+            return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'dimensi']))
+                ->with('error', 'Gagal menghapus Dimensi P5. Pastikan tidak sedang digunakan.');
         }
     }
 }

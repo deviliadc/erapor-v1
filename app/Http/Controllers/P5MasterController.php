@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Fase;
 use App\Models\Guru;
 use App\Models\Kelas;
+use App\Models\P5CapaianFase;
 use App\Models\P5Dimensi;
 use App\Models\P5Elemen;
 use App\Models\P5Proyek;
@@ -21,10 +23,11 @@ class P5MasterController extends Controller
     {
         $perPage = $request->input('per_page', 10);
 
-        $tema = $this->getTemaData($request, $perPage);
+        // $tema = $this->getTemaData($request, $perPage);
         $dimensi = $this->getDimensiData($request, $perPage);
         $elemen = $this->getElemenData($request, $perPage);
         $subElemen = $this->getSubElemenData($request, $perPage);
+        $capaian = $this->getCapaianData($request, $perPage);
         $proyek = $this->getProyekData($request, $perPage);
 
         $breadcrumbs = [
@@ -35,46 +38,47 @@ class P5MasterController extends Controller
 
         return view('p5.index', array_merge(
             compact('title', 'breadcrumbs'),
-            $tema,
+            // $tema,
             $dimensi,
             $elemen,
             $subElemen,
+            $capaian,
             $proyek,
         ));
     }
 
-    private function getTemaData(Request $request, $perPage)
-    {
-        $searchTema = $request->input('search_tema');
-        $temaQuery = P5Tema::query();
+    // private function getTemaData(Request $request, $perPage)
+    // {
+    //     $searchTema = $request->input('search_tema');
+    //     $temaQuery = P5Tema::query();
 
-        if ($searchTema) {
-            $temaQuery->where('nama_tema', 'like', "%$searchTema%");
-        }
+    //     if ($searchTema) {
+    //         $temaQuery->where('nama_tema', 'like', "%$searchTema%");
+    //     }
 
-        $prefix = 'tema';
-        $sortBy = $request->input("sortBy_{$prefix}", 'id');
-        $sortDirection = $request->input("sortDirection_{$prefix}", 'asc');
-        $columnMap = [
-            'id' => 'id',
-            'nama_tema' => 'nama_tema',
-            'deskripsi_tema' => 'deskripsi',
-        ];
-        $temaQuery->orderBy($columnMap[$sortBy] ?? 'id', $sortDirection);
+    //     $prefix = 'tema';
+    //     $sortBy = $request->input("sortBy_{$prefix}", 'id');
+    //     $sortDirection = $request->input("sortDirection_{$prefix}", 'asc');
+    //     $columnMap = [
+    //         'id' => 'id',
+    //         'nama_tema' => 'nama_tema',
+    //         'deskripsi_tema' => 'deskripsi',
+    //     ];
+    //     $temaQuery->orderBy($columnMap[$sortBy] ?? 'id', $sortDirection);
 
-        $temaPaginator = $temaQuery->paginate($perPage)->withQueryString();
-        $tema = $temaPaginator->through(fn($item) => [
-            'id' => $item->id,
-            'nama_tema' => $item->nama_tema,
-            'deskripsi_tema' => $item->deskripsi ?? '-',
-        ]);
-        $temaTotal = $temaQuery->count();
+    //     $temaPaginator = $temaQuery->paginate($perPage)->withQueryString();
+    //     $tema = $temaPaginator->through(fn($item) => [
+    //         'id' => $item->id,
+    //         'nama_tema' => $item->nama_tema,
+    //         'deskripsi_tema' => $item->deskripsi ?? '-',
+    //     ]);
+    //     $temaTotal = $temaQuery->count();
 
-        return [
-            'tema' => $tema,
-            'temaTotal' => $temaTotal,
-        ];
-    }
+    //     return [
+    //         'tema' => $tema,
+    //         'temaTotal' => $temaTotal,
+    //     ];
+    // }
 
 
     private function getDimensiData(Request $request, $perPage)
@@ -181,10 +185,52 @@ class P5MasterController extends Controller
         ];
     }
 
+    private function getCapaianData(Request $request, $perPage)
+    {
+        $faseList = Fase::pluck('nama', 'id')->toArray();
+        $subElemenList = P5SubElemen::pluck('nama_sub_elemen', 'id')->toArray();
+        $searchCapaian = $request->input('search_capaian');
+        $capaianQuery = P5CapaianFase::with('fase', 'subElemen.elemen');
+
+        if ($searchCapaian) {
+            $capaianQuery->where('capaian', 'like', "%$searchCapaian%");
+        }
+
+        $prefix = 'capaian';
+        $sortBy = $request->input("sortBy_{$prefix}", 'id');
+        $sortDirection = $request->input("sortDirection_{$prefix}", 'asc');
+        $columnMap = [
+            'id' => 'id',
+            'fase_id' => 'fase_id',
+            'p5_sub_elemen_id' => 'p5_sub_elemen_id',
+            'capaian' => 'capaian',
+        ];
+        $capaianQuery->orderBy($columnMap[$sortBy] ?? 'id', $sortDirection);
+
+        $capaianPaginator = $capaianQuery->paginate($perPage)->withQueryString();
+        $capaian = $capaianPaginator->through(fn($item) => [
+            'id' => $item->id,
+            'fase_id' => $item->fase_id,
+            'nama_fase' => $item->fase->nama ?? '-',
+            'p5_sub_elemen_id' => $item->p5_sub_elemen_id,
+            'nama_sub_elemen' => $item->subElemen->nama_sub_elemen ?? '-',
+            // 'nama_elemen' => $item->subElemen->elemen->nama_elemen ?? '-',
+            'capaian' => $item->capaian,
+        ]);
+        $capaianTotal = $capaianQuery->count();
+
+        return [
+            'capaian' => $capaian,
+            'capaianTotal' => $capaianTotal,
+            'faseList' => $faseList,
+            'subElemenList' => $subElemenList,
+        ];
+    }
+
     private function getProyekData(Request $request, $perPage)
     {
         $searchProyek = $request->input('search_proyek');
-        $proyekQuery = P5Proyek::with(['tema', 'kelas', 'guru', 'tahunSemester', 'dimensi', 'subElemen']);
+        $proyekQuery = P5Proyek::with(['tahunSemester']);
         if ($searchProyek) {
             $proyekQuery->where('nama_proyek', 'like', "%$searchProyek%");
         }
@@ -195,9 +241,9 @@ class P5MasterController extends Controller
             'id' => 'p5_proyek.id',
             'nama_proyek' => 'p5_proyek.nama_proyek',
             'deskripsi_proyek' => 'p5_proyek.deskripsi',
-            'p5_tema_id' => 'p5_proyek.p5_tema_id',
-            'kelas_id' => 'p5_proyek.kelas_id',
-            'guru_id' => 'p5_proyek.guru_id',
+            // 'p5_tema_id' => 'p5_proyek.p5_tema_id',
+            // 'kelas_id' => 'p5_proyek.kelas_id',
+            // 'guru_id' => 'p5_proyek.guru_id',
             'tahun_semester_id' => 'p5_proyek.tahun_semester_id',
         ];
         $proyekQuery->orderBy($columnMap[$sortBy] ?? 'p5_proyek.id', $sortDirection);
@@ -207,18 +253,18 @@ class P5MasterController extends Controller
             'id' => $item->id,
             'nama_proyek' => $item->nama_proyek,
             'deskripsi_proyek' => $item->deskripsi ?? '-',
-            'p5_tema_id' => $item->p5_tema_id,
-            'nama_tema' => $item->tema->nama_tema ?? '-',
-            'kelas_id' => $item->kelas_id,
-            'nama_kelas' => $item->kelas->nama ?? '-',
-            'guru_id' => $item->guru_id,
-            'nama_guru' => $item->guru->nama ?? '-',
-            'dimensi' => $item->dimensi->pluck('nama_dimensi')->implode(', '),
-            'elemen' => $item->subElemen
-                ->map(fn($sub) => $sub->elemen->nama_elemen ?? '-')
-                ->unique()
-                ->implode(', '),
-            'sub_elemen' => $item->subElemen->pluck('nama_sub_elemen')->implode(', '),
+            // 'p5_tema_id' => $item->p5_tema_id,
+            // 'nama_tema' => $item->tema->nama_tema ?? '-',
+            // 'kelas_id' => $item->kelas_id,
+            // 'nama_kelas' => $item->kelas->nama ?? '-',
+            // 'guru_id' => $item->guru_id,
+            // 'nama_guru' => $item->guru->nama ?? '-',
+            // 'dimensi' => $item->dimensi->pluck('nama_dimensi')->implode(', '),
+            // 'elemen' => $item->subElemen
+            //     ->map(fn($sub) => $sub->elemen->nama_elemen ?? '-')
+            //     ->unique()
+            //     ->implode(', '),
+            // 'sub_elemen' => $item->subElemen->pluck('nama_sub_elemen')->implode(', '),
             'tahun_semester_id' => $item->tahun_semester_id,
             'nama_tahun_semester' => $item->tahunSemester->nama_tahun_semester
                 ?? ($item->tahunSemester ? ($item->tahunSemester->tahun . ' - ' . ucfirst($item->tahunSemester->semester)) : '-'),
@@ -226,10 +272,10 @@ class P5MasterController extends Controller
         $proyekTotal = $proyekQuery->count();
 
         // INISIASI DATA SELECT UNTUK MODAL CREATE
-        $temaList = P5Tema::pluck('nama_tema', 'id');
-        $dimensiList = P5Dimensi::pluck('nama_dimensi', 'id');
-        $elemenList = P5Elemen::pluck('nama_elemen', 'id');
-        $subElemenList = P5SubElemen::pluck('nama_sub_elemen', 'id')->toArray();
+        // $temaList = P5Tema::pluck('nama_tema', 'id');
+        // $dimensiList = P5Dimensi::pluck('nama_dimensi', 'id');
+        // $elemenList = P5Elemen::pluck('nama_elemen', 'id');
+        // $subElemenList = P5SubElemen::pluck('nama_sub_elemen', 'id')->toArray();
 
         // $dimensiToSubElemen = [];
         // foreach (P5Dimensi::with('elemen.subElemen')->get() as $dimensi) {
@@ -242,17 +288,17 @@ class P5MasterController extends Controller
         //     $dimensiToSubElemen[$dimensi->id] = $sub;
         // }
 
-        $dimensiToSubElemen = [];
+        // $dimensiToSubElemen = [];
 
-        P5Dimensi::with('elemen.subElemen')->get()->each(function ($dimensi) use (&$dimensiToSubElemen) {
-            $dimensiToSubElemen[$dimensi->id] = [];
+        // P5Dimensi::with('elemen.subElemen')->get()->each(function ($dimensi) use (&$dimensiToSubElemen) {
+        //     $dimensiToSubElemen[$dimensi->id] = [];
 
-            foreach ($dimensi->elemen as $elemen) {
-                foreach ($elemen->subElemen as $subElemen) {
-                    $dimensiToSubElemen[$dimensi->id][$subElemen->id] = "{$elemen->nama_elemen}: {$subElemen->nama_sub_elemen}";
-                }
-            }
-        });
+        //     foreach ($dimensi->elemen as $elemen) {
+        //         foreach ($elemen->subElemen as $subElemen) {
+        //             $dimensiToSubElemen[$dimensi->id][$subElemen->id] = "{$elemen->nama_elemen}: {$subElemen->nama_sub_elemen}";
+        //         }
+        //     }
+        // });
 
 
         $tahunSemesterList = TahunSemester::orderBy('tahun', 'desc')
@@ -270,11 +316,11 @@ class P5MasterController extends Controller
         return [
             'proyek' => $proyek,
             'proyekTotal' => $proyekTotal,
-            'temaList' => $temaList,
-            'dimensiList' => $dimensiList,
-            'elemenList' => $elemenList,
-            'subElemenList' => $subElemenList,
-            'dimensiToSubElemen' => $dimensiToSubElemen,
+            // 'temaList' => $temaList,
+            // 'dimensiList' => $dimensiList,
+            // 'elemenList' => $elemenList,
+            // 'subElemenList' => $subElemenList,
+            // 'dimensiToSubElemen' => $dimensiToSubElemen,
             'tahunSemesterList' => $tahunSemesterList,
             'kelasList' => $kelasList,
             'guruList' => $guruList,

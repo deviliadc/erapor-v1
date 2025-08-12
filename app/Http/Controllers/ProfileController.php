@@ -20,14 +20,14 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
         $breadcrumbs = [
             ['label' => 'Edit Profile', 'url' => route('profile.edit')],
         ];
-
         $title = 'Edit Profile';
 
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
             'breadcrumbs' => $breadcrumbs,
             'title' => $title,
             'page' => 'Profile',
@@ -44,7 +44,6 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'email', 'unique:users,email,' . $user->id],
             'phone' => ['nullable', 'string', 'max:25'],
-            // 'profile_photo' => ['nullable', 'image', 'max:2048'], // Field sesuai name input
         ]);
 
         $user->email = $validated['email'];
@@ -64,15 +63,6 @@ class ProfileController extends Controller
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
-
-        // Upload foto profil (aktifkan jika ingin)
-        // if ($request->hasFile('profile_photo')) {
-        //     $path = $request->file('profile_photo')->store('profile-photos', 'public');
-        //     if ($user->profile_photo_path) {
-        //         Storage::disk('public')->delete($user->profile_photo_path);
-        //     }
-        //     $user->profile_photo_path = $path;
-        // }
 
         $user->save();
 

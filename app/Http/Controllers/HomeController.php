@@ -7,11 +7,11 @@ use Illuminate\Http\Request;
 class HomeController extends Controller
 {
     public function index(){
-        return view('admin.dashboard');
+        // return view('dashboard');
     }
 
     public function profil()
     {
-        return view('profil-sekolah');
+        // return view('profil-sekolah');
     }
 }

@@ -13,35 +13,7 @@ class ParamEkstraController extends Controller
      */
     public function index(Request $request)
     {
-        // $perPage = $request->input('per_page', 10);
-
-        // $query = ParamEkstra::with('ekstra');
-
-        // if ($search = $request->input('search')) {
-        //     $query->where('ekstra', 'like', "%$search%");
-        // }
-
-        // $totalCount = $query->count();
-        // $paginator = $query->paginate($perPage)->withQueryString();
-
-        // $param_ekstra = $paginator->through(function ($item) {
-        //     return [
-        //         'id' => $item->id,
-        //         'ekstra_id' => $item->ekstra_id,
-        //         'ekstra' => $item->ekstra ? $item->ekstra->nama : '-',
-        //         'parameter' => $item->parameter,
-        //     ];
-        // });
-
-        // $ekstra = Ekstra::pluck('nama', 'id');
-
-        // $breadcrumbs = [
-        //     ['label' => 'Manage Parameter Ekstrakurikuler', 'url' => route('param-ekstra.index')]
-        // ];
-
-        // $title = 'Manage Parameter Ekstrakurikuler';
-
-        // return view('param-ekstra.index',  compact('param_ekstra', 'totalCount', 'breadcrumbs', 'title', 'ekstra'));
+        //
     }
 
     /**
@@ -67,8 +39,9 @@ class ParamEkstraController extends Controller
 
         ParamEkstra::create($validated);
 
-        return redirect()->route('ekstra.index', ['tab' => request('tab', 'parameter')])->with('success', 'Parameter Ekstrakurikuler berhasil ditambahkan.');
-
+        // return redirect()->to(role_route('ekstra.index', ['tab' => request('tab', 'parameter')]))->with('success', 'Parameter Ekstrakurikuler berhasil ditambahkan.');
+        $redirect = $request->input('redirect_to') ?? role_route('param-ekstra.index');
+        return redirect()->to($redirect)->with('success', 'Parameter berhasil ditambahkan.');
     }
 
     /**
@@ -93,8 +66,12 @@ class ParamEkstraController extends Controller
         // ];
         // $title = 'Edit Parameter Ekstrakurikuler';
 
-        return view('param-ekstra.edit', compact('param_ekstra', 'ekstra', 'breadcrumbs', 'title'));
-
+        return view('param-ekstra.edit', compact(
+            'param_ekstra',
+            'ekstra',
+            'breadcrumbs',
+            'title'
+        ));
     }
 
     /**
@@ -112,21 +89,27 @@ class ParamEkstraController extends Controller
 
         $param_ekstra->update($validated);
 
-        return redirect()->route('ekstra.index', ['tab' => request('tab', 'parameter')])->with('success', 'Parameter Ekstrakurikuler berhasil diperbarui.');
+        // return redirect()->to(role_route('ekstra.index', ['tab' => request('tab', 'parameter')]))->with('success', 'Parameter Ekstrakurikuler berhasil diperbarui.');
+        $param_ekstra->update($validated);
 
+        $redirect = $request->input('redirect_to') ?? role_route('param-ekstra.index');
+        return redirect()->to($redirect)->with('success', 'Parameter Ekstrakurikuler berhasil diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         try {
             $param_ekstra = ParamEkstra::findOrFail($id);
             $param_ekstra->delete();
-            return redirect()->route('ekstra.index', ['tab' => request('tab', 'parameter')])->with('success', 'Parameter Ekstrakurikuler berhasil dihapus.');
+
+            $redirect = $request->input('redirect_to') ?? role_route('param-ekstra.index');
+            return redirect()->to($redirect)->with('success', 'Parameter Ekstrakurikuler berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('ekstra.index', ['tab' => request('tab', 'parameter')])->with('error', 'Gagal menghapus Parameter Ekstrakurikuler. Pastikan tidak sedang digunakan.');
+            $redirect = $request->input('redirect_to') ?? role_route('param-ekstra.index');
+            return redirect()->to($redirect)->with('error', 'Gagal menghapus Parameter Ekstrakurikuler. Pastikan tidak sedang digunakan.');
         }
     }
 }

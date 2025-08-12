@@ -1,4 +1,4 @@
-@php
+{{-- @php
 $filters = [
     [
         'name' => 'tahun_semester_id',
@@ -14,6 +14,10 @@ $filters = [
         'enabled' => true,
     ],
 ];
+@endphp --}}
+@php
+    $isGuru = auth()->user()->hasRole('guru');
+    // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
 @endphp
 
 {{-- Form Tambah Ekstrakurikuler --}}
@@ -25,10 +29,10 @@ $filters = [
 {{-- <div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]"> --}}
     {{-- Toolbar Table --}}
     <x-table.toolbar
-        :filters="$filters"
-        :enable-add-button="true"
-        :enable-import="true"
-        :enable-export="true"
+        {{-- :filters="$filters" --}}
+        :enable-add-button="!$isGuru"
+        :enable-import="false"
+        :enable-export="false"
         :enable-search="true"
         tabName="ekstra"
         :route="role_route('ekstrakurikuler.index')">
@@ -51,16 +55,20 @@ $filters = [
         // 'id' => ['label' => 'ID', 'sortable' => true],
         'nama' => ['label' => 'Nama', 'sortable' => true],
         'jumlah_parameter' => ['label' => 'Jumlah Parameter', 'sortable' => false],
-        'kelas' => ['label' => 'Kelas', 'sortable' => false],
+        // 'kelas' => ['label' => 'Kelas', 'sortable' => false],
         // 'action' => ['label' => 'Aksi', 'sortable' => false],
     ]" :data="$ekstra" :total-count="$ekstraTotal" row-view="ekstrakurikuler.partials.row"
         :actions="[
             'detail' => true,
-            'edit' => true,
-            'delete' => true,
+            'edit' => !$isGuru,
+            'delete' => !$isGuru,
+            // 'routes' => [
+            //     'detail' => fn($item) => route('ekstra.show', $item['id']),
+            //     'delete' => fn($item) => route('ekstra.destroy', $item['id']),
+            // ],
             'routes' => [
-                'detail' => fn($item) => route('ekstra.show', $item['id']),
-                'delete' => fn($item) => route('ekstra.destroy', $item['id']),
+                'detail' => fn($item) => role_route('ekstra.show', ['ekstra' => $item['id']]),
+                'delete' => fn($item) => role_route('ekstra.destroy', ['ekstra' => $item['id']]),
             ],
             // 'editRoute' => role_route('ekstrakurikuler.edit'),
         ]" :use-modal-edit="true" />

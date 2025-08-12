@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\P5Elemen;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 class P5ElemenController extends Controller
 {
@@ -46,7 +44,7 @@ class P5ElemenController extends Controller
             'deskripsi' => $validated['deskripsi_elemen'] ?? null,
         ]);
 
-        return redirect()->route('p5.index', ['tab' => $request->tab ?? 'elemen'])->with('success', 'Elemen P5 berhasil ditambahkan.');
+        return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'elemen']))->with('success', 'Elemen P5 berhasil ditambahkan.');
     }
 
     /**
@@ -93,7 +91,7 @@ class P5ElemenController extends Controller
             'deskripsi' => $validated['deskripsi_elemen'] ?? null,
         ]);
 
-        return redirect()->route('p5.index', ['tab' => $request->tab ?? 'elemen'])->with('success', 'Elemen P5 berhasil diperbarui.');
+        return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'elemen']))->with('success', 'Elemen P5 berhasil diperbarui.');
     }
 
     /**
@@ -103,10 +101,25 @@ class P5ElemenController extends Controller
     {
         try {
             $p5_elemen = P5Elemen::findOrFail($id);
+
+            // Cek apakah elemen masih digunakan di tabel p5_sub_elemen
+            // if ($p5_elemen->subElemen()->exists()) {
+            //     return redirect()->to(role_route('p5.index', ['tab' => request('tab') ?? 'elemen']))
+            //         ->with('error', 'Elemen tidak dapat dihapus karena masih digunakan pada sub elemen.');
+            // }
+
+            // Cek apakah elemen masih digunakan di tabel p5_proyek_detail
+            // if ($p5_elemen->proyekDetail()->exists()) {
+            //     return redirect()->to(role_route('p5.index', ['tab' => request('tab') ?? 'elemen']))
+            //         ->with('error', 'Elemen tidak dapat dihapus karena masih digunakan pada proyek.');
+            // }
+
             $p5_elemen->delete();
-            return redirect()->route('p5.index', ['tab' => $request->tab ?? 'elemen'])->with('success', 'Elemen P5 berhasil dihapus.');
+            return redirect()->to(role_route('p5.index', ['tab' => request('tab') ?? 'elemen']))
+                ->with('success', 'Elemen P5 berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('p5.index', ['tab' => $request->tab ?? 'elemen'])->with('error', 'Gagal menghapus Elemen P5. Pastikan tidak sedang digunakan.');
+            return redirect()->to(role_route('p5.index', ['tab' => request('tab') ?? 'elemen']))
+                ->with('error', 'Gagal menghapus Elemen P5. Pastikan tidak sedang digunakan.');
         }
     }
 }

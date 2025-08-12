@@ -69,7 +69,7 @@ class GuruController extends Controller
             ];
         });
 
-        $breadcrumbs = [['label' => 'Manage Guru', 'url' => route('guru.index')]];
+        $breadcrumbs = [['label' => 'Manage Guru']];
         $title = 'Manage Guru';
 
         return view('guru.index', compact('guru', 'totalCount', 'breadcrumbs', 'title'));
@@ -80,14 +80,14 @@ class GuruController extends Controller
      */
     public function create()
     {
-        $breadcrumbs = [
-            ['label' => 'Manage Guru', 'url' => route('guru.index')],
-            ['label' => 'Create Guru'],
-        ];
+        // $breadcrumbs = [
+        //     ['label' => 'Manage Guru', 'url' => route('guru.index')],
+        //     ['label' => 'Create Guru'],
+        // ];
 
-        $title = 'Create Guru';
+        // $title = 'Create Guru';
 
-        return view('guru.create', compact('breadcrumbs', 'title'));
+        // return view('guru.create', compact('breadcrumbs', 'title'));
     }
 
     /**
@@ -157,7 +157,7 @@ class GuruController extends Controller
                 'status' => $validated['status'],
             ]);
 
-            return redirect()->route('guru.index')
+            return redirect()->to(role_route('guru.index'))
                 ->with('success', "Data guru berhasil ditambahkan. Username: <strong>{$username}</strong> | Password: <strong>{$password}</strong>");
         } catch (\Exception $e) {
             report($e); // log error
@@ -180,14 +180,14 @@ class GuruController extends Controller
     {
         $guru = Guru::findOrFail($id);
 
-        $breadcrumbs = [
-            ['label' => 'Manage Guru', 'url' => route('guru.index')],
-            ['label' => 'Edit Guru'],
-        ];
+        // $breadcrumbs = [
+        //     ['label' => 'Manage Guru', 'url' => route('guru.index')],
+        //     ['label' => 'Edit Guru'],
+        // ];
 
-        $title = 'Edit Guru';
+        // $title = 'Edit Guru';
 
-        return view('guru.edit', compact('guru', 'breadcrumbs', 'title'));
+        return view('guru.edit', compact('guru',));
     }
 
     /**
@@ -235,7 +235,7 @@ class GuruController extends Controller
         $guru->update($validated);
         $user->update(['name' => $validated['nama']]);
 
-        return redirect()->route('guru.index')->with('success', 'Data guru berhasil diperbarui.');
+        return redirect()->to(role_route('guru.index'))->with('success', 'Data guru berhasil diperbarui.');
     }
 
     /**
@@ -253,6 +253,6 @@ class GuruController extends Controller
             $user->delete();
         }
 
-        return redirect()->route('guru.index')->with('success', 'Data guru berhasil dihapus.');
+        return redirect()->to(role_route('guru.index'))->with('success', 'Data guru berhasil dihapus.');
     }
 }

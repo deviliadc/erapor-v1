@@ -1,8 +1,7 @@
 <x-modal name="form-promote-siswa" title="Promosikan Siswa ke Kelas Baru" maxWidth="2xl">
-    <form action="{{ route('kelas.siswa.promote') }}" method="POST" enctype="multipart/form-data" class="space-y-6 sm:p-6">
+    <form action="{{ role_route('kelas.siswa.promote') }}" method="POST" enctype="multipart/form-data" class="space-y-6 sm:p-6">
         @csrf
-        <input type="hidden" name="tahun_lama_id"
-            value="{{ request('tahun_semester_filter') ?? ($tahunAktif->id ?? null) }}">
+        <input type="hidden" name="tahun_lama_id" value="{{ request('tahun_semester_filter') ?? ($tahunAktif->id ?? null) }}">
 
         <x-form.select
             name="kelas_lama_id"

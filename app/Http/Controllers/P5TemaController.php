@@ -41,7 +41,7 @@ class P5TemaController extends Controller
             'deskripsi' => $validated['deskripsi_tema'] ?? null, // mapping ke field database 'deskripsi'
         ]);
 
-        return redirect()->route('p5.index', ['tab' => $request->tab ?? 'tema'])->with('success', 'Tema P5 berhasil ditambahkan.');
+        return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'tema']))->with('success', 'Tema P5 berhasil ditambahkan.');
     }
 
     /**
@@ -86,7 +86,7 @@ class P5TemaController extends Controller
             'deskripsi' => $validated['deskripsi_tema'] ?? null,
         ]);
 
-        return redirect()->route('p5.index', ['tab' => $request->tab ?? 'tema'])->with('success', 'Tema P5 berhasil diperbarui.');
+        return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'tema']))->with('success', 'Tema P5 berhasil diperbarui.');
     }
 
     /**
@@ -96,10 +96,19 @@ class P5TemaController extends Controller
     {
         try {
             $p5_tema = P5Tema::findOrFail($id);
+
+            // Cek apakah tema masih digunakan di tabel p5_proyek
+            if ($p5_tema->proyek()->exists()) {
+                return redirect()->to(role_route('p5.index', ['tab' => request('tab') ?? 'tema']))
+                    ->with('error', 'Tema tidak dapat dihapus karena masih digunakan pada proyek.');
+            }
+
             $p5_tema->delete();
-            return redirect()->route('p5.index', ['tab' => $request->tab ?? 'tema'])->with('success', 'Tema P5 berhasil dihapus.');
+            return redirect()->to(role_route('p5.index', ['tab' => request('tab') ?? 'tema']))
+                ->with('success', 'Tema P5 berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('p5.index', ['tab' => $request->tab ?? 'tema'])->with('error', 'Gagal menghapus Tema P5. Tema masih digunakan pada data lain.');
+            return redirect()->to(role_route('p5.index', ['tab' => request('tab') ?? 'tema']))
+                ->with('error', 'Gagal menghapus Tema P5. Tema masih digunakan pada data lain.');
         }
     }
 }

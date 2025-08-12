@@ -9,7 +9,7 @@
         <x-form.input label="Username" name="username" :value="old('username')" required />
 
         {{-- Email --}}
-        <x-form.input label="Email" name="email" :value="old('email')" type="email" required />
+        <x-form.input label="Email" name="email" :value="old('email')" type="email" />
 
         {{-- Password --}}
         @php

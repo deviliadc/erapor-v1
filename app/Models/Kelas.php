@@ -13,7 +13,13 @@ class Kelas extends Model
 
     protected $fillable = [
         'nama',
+        'fase_id',
     ];
+
+    public function fase()
+    {
+        return $this->belongsTo(Fase::class, 'fase_id');
+    }
 
     public function siswa()
     {
@@ -35,22 +41,50 @@ class Kelas extends Model
         return $this->hasMany(LingkupMateri::class);
     }
 
-    public function waliKelas()
-    {
-        return $this->belongsTo(Guru::class, 'guru_id');
-    }
+    // public function waliKelas()
+    // {
+    //     return $this->belongsTo(Guru::class, 'guru_id');
+    // }
 
     public function guruKelas()
     {
         return $this->hasMany(GuruKelas::class, 'kelas_id');
     }
 
-    public function mapel()
+    // Mendapatkan wali kelas (melalui guru_kelas dengan peran = 'wali')
+    public function waliKelas($tahunSemesterId = null)
     {
-        return $this->belongsToMany(Mapel::class, 'guru_kelas', 'kelas_id', 'mapel_id')
-            ->where('peran', 'pengajar');
+        $query = $this->guruKelas()->where('peran', 'wali');
+        if ($tahunSemesterId) {
+            $query->where('tahun_semester_id', $tahunSemesterId);
+        } else {
+            // Default: ambil dari tahun semester aktif
+            $tahunAktif = TahunSemester::where('is_active', true)->first();
+            if ($tahunAktif) {
+                $query->where('tahun_semester_id', $tahunAktif->id);
+            }
+        }
+
+        return $query->with('guru')->first()?->guru; // ambil relasi guru dari guru_kelas
     }
 
+    public function guruKelasMapel()
+    {
+        return $this->hasMany(GuruKelas::class, 'kelas_id')->where('peran', 'pengajar');
+    }
+
+    // Mendapatkan daftar pengajar mapel (melalui guru_kelas)
+    public function getMapel($tahunSemesterId = null)
+    {
+        $query = GuruKelas::where('kelas_id', $this->id)
+            ->where('peran', 'pengajar');
+
+        if ($tahunSemesterId) {
+            $query->where('tahun_semester_id', $tahunSemesterId);
+        }
+
+        return $query->with('mapel')->get()->pluck('mapel');
+    }
     public function mapelAktif()
     {
         $tahunAktif = TahunSemester::where('is_active', true)->first();

@@ -31,14 +31,14 @@
                     @endforeach
                 </select>
             </div>
-            <div>
+            {{-- <div>
                 <label for="periode" class="block text-sm font-medium">Periode</label>
                 <select name="periode" id="periode" onchange="this.form.submit()"
                     class="mt-1 rounded border px-3 py-2">
                     <option value="tengah" {{ $periode == 'tengah' ? 'selected' : '' }}>Tengah Semester</option>
                     <option value="akhir" {{ $periode == 'akhir' ? 'selected' : '' }}>Akhir Semester</option>
                 </select>
-            </div>
+            </div> --}}
         </form>
 
         <!-- Tab Ekstra Tanpa Reload -->
@@ -57,110 +57,91 @@
         </div>
 
         <!-- Tombol Edit -->
-        <div class="mb-4">
+        <div class="flex justify-end gap-2 mb-4">
             <button type="button" @click="editMode = !editMode"
                 class="px-4 py-3 text-sm font-medium text-white rounded-lg bg-blue-light-500 shadow hover:bg-blue-light-600">
-                <span x-show="!editMode">Edit Nilai Ekstra</span>
+                <span x-show="!editMode">Edit Nilai</span>
                 <span x-show="editMode">Batal Edit</span>
             </button>
         </div>
 
         @foreach ($daftarEkstra as $ekstra)
             <div x-show="activeEkstra === '{{ $ekstra->id }}'" x-cloak>
-                <form action="{{ route('nilai-ekstra.update-batch') }}" method="POST">
+                <form action="{{ role_route('nilai-ekstra.update-batch') }}" method="POST">
                     @csrf
                     <input type="hidden" name="tahun_semester_id" value="{{ $selectedTahunSemester->id }}">
-                    <input type="hidden" name="periode" value="{{ $periode }}">
+                    {{-- <input type="hidden" name="periode" value="{{ $periode }}"> --}}
+                    <input type="hidden" name="periode" value="akhir">
                     <input type="hidden" name="ekstra_id" value="{{ $ekstra->id }}">
                     <input type="hidden" name="kelas_id" value="{{ $kelasId }}">
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full table-auto text-sm border border-gray-300 dark:border-gray-600">
-                            <thead class="bg-yellow-400 text-black">
+                    <div class="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                                <table class="min-w-[1200px] w-full text-sm text-center table-auto whitespace-nowrap">
+                            <thead class="text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-200">
                                 <tr>
-                                    <th class="px-3 py-2 text-left align-middle" rowspan="2">No</th>
-                                    <th class="px-3 py-2 text-left align-middle" rowspan="2">Nama</th>
-                                    <th class="px-3 py-2 text-center"
+                                    <th class="px-3 py-2 bg-gray dark:bg-gray-900 text-left align-middle" rowspan="2">No</th>
+                                    <th class="px-3 py-2 bg-gray dark:bg-gray-900 text-left align-middle" rowspan="2">Nama</th>
+                                    <th class="px-3 py-2 bg-gray dark:bg-gray-900 text-center"
                                         colspan="{{ $daftarParameter[$ekstra->id]->count() }}">
                                         Parameter Ekstra</th>
-                                    <th class="px-3 py-2 text-center align-middle" rowspan="2">Rata-rata</th>
-                                    <th class="px-3 py-2 text-center align-middle" rowspan="2">Deskripsi</th>
+                                    <th class="px-3 py-2 bg-gray dark:bg-gray-900 text-center align-middle" rowspan="2">Rata-rata</th>
+                                    <th class="px-3 py-2 bg-gray dark:bg-gray-900 text-center align-middle" rowspan="2">Deskripsi</th>
                                 </tr>
                                 <tr>
                                     @foreach ($daftarParameter[$ekstra->id] as $param)
-                                        <th class="px-3 py-2 text-center">{{ $param->parameter }}</th>
+                                        <th class="px-3 py-2 bg-gray dark:bg-gray-900 text-center">{{ $param->parameter }}</th>
                                     @endforeach
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($siswaKelas as $ks)
                                     @php
-                                        $nilai = $nilaiMap[$ekstra->id][$ks->id]['param'] ?? [];
-                                        $nilaiParam = [];
-                                        foreach ($daftarParameter[$ekstra->id] as $param) {
-                                            $nilaiParam[$param->id] = $nilai[$param->id] ?? null;
-                                        }
-                                        $avg = collect($nilaiParam)->filter(fn($v) => is_numeric($v))->avg();
-                                        $avg = $avg ? ceil($avg / 10) * 10 : null;
+                                        $nilaiDetail = $nilaiMap[$ekstra->id][$ks->id]['predikat_param'] ?? [];
+                                        $avg = collect($nilaiDetail)->filter(fn($v) => is_numeric($v))->avg();
+                                        $avg = $avg !== null ? ceil($avg) : null;
                                     @endphp
                                     <tr>
                                         <td class="px-3 py-2">{{ $loop->iteration }}</td>
                                         <td class="px-3 py-2">{{ $ks->siswa->nama ?? '-' }}</td>
+
+                                        {{-- Tampilkan nilai parameter --}}
                                         @foreach ($daftarParameter[$ekstra->id] as $param)
+                                            @php
+                                                $nilaiPredikat = $nilaiDetail[$param->id] ?? null;
+                                            @endphp
                                             <td class="px-3 py-2 text-center">
                                                 <template x-if="editMode">
                                                     <select
                                                         name="nilai[{{ $ks->id }}][predikat][{{ $param->id }}]"
                                                         class="border rounded w-14 text-center">
+                                                        <option value=""
+                                                            {{ $nilaiPredikat === null || $nilaiPredikat === '' ? 'selected' : '' }}>
+                                                            -</option>
                                                         @for ($i = 0; $i <= 4; $i++)
                                                             <option value="{{ $i }}"
-                                                                {{ isset($predikatParam[$param->id]) && $predikatParam[$param->id] == $i ? 'selected' : '' }}>
-                                                                {{ $i }}</option>
+                                                                {{ (string) $nilaiPredikat === (string) $i ? 'selected' : '' }}>
+                                                                {{ $i }}
+                                                            </option>
                                                         @endfor
                                                     </select>
                                                 </template>
                                                 <template x-if="!editMode">
-                                                    <span>{{ $predikatParam[$param->id] ?? '-' }}</span>
+                                                    <span>{{ $nilaiPredikat ?? '-' }}</span>
                                                 </template>
                                             </td>
                                         @endforeach
+
+                                        {{-- Nilai Rata-rata --}}
                                         <td class="px-3 py-2 text-center font-bold">
                                             {{ $avg ?? '-' }}
                                         </td>
-                                        <td class="px-3 py-2 text-left">
-                                            @php
-                                                $predikatParam = $nilaiMap[$ekstra->id][$ks->id]['param'] ?? [];
-                                                $avg = collect($predikatParam)->filter(fn($v) => is_numeric($v))->avg();
-                                                $avg = $avg !== null ? ceil($avg) : null;
 
-                                                $max = collect($predikatParam)->max();
-                                                $min = collect($predikatParam)->min();
-
-                                                $paramMap = $daftarParameter[$ekstra->id]->keyBy('id');
-                                                $namaTertinggi =
-                                                    $paramMap[$max !== null ? array_search($max, $predikatParam) : '']
-                                                        ?->parameter ?? '';
-                                                $namaTerendah =
-                                                    $paramMap[$min !== null ? array_search($min, $predikatParam) : '']
-                                                        ?->parameter ?? '';
-
-                                                $predikatText = [
-                                                    0 => 'masih perlu bimbingan dalam',
-                                                    1 => 'masih perlu bimbingan dalam',
-                                                    2 => 'cukup mahir dalam',
-                                                    3 => 'mahir dalam',
-                                                    4 => 'sangat mahir dalam',
-                                                ];
-
-                                                $deskripsi =
-                                                    $max !== null && $min !== null
-                                                        ? "Ananda {$ks->siswa->nama} {$predikatText[$max]} {$namaTertinggi} dan {$predikatText[$min]} {$namaTerendah}."
-                                                        : '-';
-                                            @endphp
-
-                                            <span>{{ $deskripsi }}</span>
+                                        {{-- Deskripsi --}}
+                                        <td class="px-3 py-2 text-left" style="max-width: 250px;">
+                                            {{ $nilaiMap[$ekstra->id][$ks->id]['deskripsi'] ?? '-' }}
                                         </td>
 
+                                        {{-- Hidden Inputs --}}
                                         <input type="hidden" name="nilai[{{ $ks->id }}][kelas_siswa_id]"
                                             value="{{ $ks->id }}">
                                         <input type="hidden" name="nilai[{{ $ks->id }}][ekstra_id]"

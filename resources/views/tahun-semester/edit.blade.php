@@ -1,20 +1,16 @@
 @foreach ($tahun_semester as $item)
     <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Tahun Pelajatan & Semester" maxWidth="2xl">
-        <form action="{{ route('tahun-semester.update', $item['id']) }}" method="POST" class="space-y-6 sm:p-6">
+        <form action="{{ role_route('tahun-semester.update', ['tahun_semester' => $item['id']]) }}" method="POST" class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')
-
             {{-- Tahun --}}
             <x-form.input name="tahun" label="Tahun Ajaran" :value="old('tahun', $item['tahun'])" required />
-
             {{-- Semester --}}
             <x-form.select name="semester" label="Semester" :options="['Ganjil' => 'Ganjil', 'Genap' => 'Genap']" placeholder="Pilih semester"
                 :selected="old('semester', $item['semester'])" required />
-
             {{-- Status --}}
             <div x-data="{ isActive: {{ old('is_active', $item['status']) ? 'true' : 'false' }} }" @click.stop @mousedown.stop>
                 <input type="hidden" name="is_active" value="0">
-
                 <label for="is_active_{{ $item['id'] }}"
                     class="flex items-center text-sm font-medium text-gray-700 cursor-pointer select-none dark:text-gray-400"
                     @click.stop @mousedown.stop>
@@ -22,7 +18,6 @@
                         <input type="checkbox" id="is_active_{{ $item['id'] }}" name="is_active" value="1"
                             class="sr-only" @click.stop @mousedown.stop @change="isActive = !isActive"
                             :checked="isActive">
-
                         <div :class="isActive ? 'border-brand-500 bg-brand-500' :
                             'bg-transparent border-gray-300 dark:border-gray-700'"
                             class="mr-3 flex h-5 w-5 items-center justify-center rounded-md border-[1.25px] transition-colors duration-200">
@@ -38,35 +33,12 @@
                     </div>
                     Aktifkan Tahun & Semester ini <span class="text-error-500">*</span>
                 </label>
-
                 @error('is_active')
                     <div class="mt-1 text-sm text-red-600 dark:text-red-400">
                         {{ $message }}
                     </div>
                 @enderror
             </div>
-
-
-
-            {{-- <div class="flex items-center gap-2">
-                <input type="hidden" name="is_active" value="0">
-                <input
-                    type="checkbox"
-                    id="is_active"
-                    name="is_active"
-                    value="1"
-                    class="rounded border-gray-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                    {{ old('is_active', $item['status']) ? 'checked' : '' }}>
-                <label for="is_active" class="text-sm text-gray-700 dark:text-gray-400">
-                    Aktifkan Tahun & Semester ini <span class="text-error-500">*</span>
-                </label>
-            </div>
-            @if ($errors->has('is_active'))
-                <div class="alert alert-danger">
-                    {{ $errors->first('is_active') }}
-                </div>
-            @endif --}}
-
             {{-- Tombol Submit --}}
             <div class="flex justify-end">
                 <button type="submit"

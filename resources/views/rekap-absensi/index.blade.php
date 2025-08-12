@@ -74,7 +74,7 @@
 
         <!-- Form Absensi -->
         @if ($selectedTahunSemester)
-            <form action="{{ route('rekap-absensi.update-batch') }}" method="POST">
+            <form action="{{ role_route('rekap-absensi.update-batch') }}" method="POST">
                 @csrf
                 <input type="hidden" name="kelas_id" x-bind:value="activeKelas">
                 <input type="hidden" name="tahun_semester_id" value="{{ $selectedTahunSemester->id }}">

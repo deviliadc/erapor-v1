@@ -16,7 +16,7 @@
             :enable-import="false"
             :enable-export="false"
             :enable-search="true"
-            :route="route('tahun-semester.index')">
+            :route="role_route('tahun-semester.index')">
             <x-slot name="addButton">
                 <button type="button"
                     onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-tahun' }))"

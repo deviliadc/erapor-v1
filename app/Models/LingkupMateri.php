@@ -9,15 +9,27 @@ class LingkupMateri extends Model
     protected $table = 'lingkup_materi';
 
     protected $fillable = [
-        'guru_kelas_id',
+        // 'guru_kelas_id',
+        'mapel_id',
+        'kelas_id',
         'bab_id',
         'nama',
         'periode',
     ];
 
-    public function guruKelas()
+    // public function guruKelas()
+    // {
+    //     return $this->belongsTo(GuruKelas::class);
+    // }
+    
+    public function mapel()
     {
-        return $this->belongsTo(GuruKelas::class);
+        return $this->belongsTo(Mapel::class);
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
     }
 
     public function bab()

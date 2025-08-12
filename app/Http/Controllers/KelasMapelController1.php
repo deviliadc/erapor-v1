@@ -14,7 +14,7 @@ class KelasMapelController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, $kelas)
     {
         $perPage = $request->input('per_page', 10);
 
@@ -71,8 +71,8 @@ class KelasMapelController extends Controller
 
         $title = 'Mapel Kelas ' . $kelas->nama;
         $breadcrumbs = [
-            ['label' => 'Kelas', 'url' => route('mapel.index')],
-            ['label' => 'Mapel', 'url' => route('kelas-mapel.index', $kelas->id)],
+            ['label' => 'Kelas', 'url' => role_route('mapel.index')],
+            ['label' => 'Mapel', 'url' => role_route('kelas-mapel.index', $kelas->id)],
         ];
 
         $mapelTerpakai = GuruKelas::where('kelas_id', $kelas->id)
@@ -97,8 +97,8 @@ class KelasMapelController extends Controller
         $kelas = Kelas::findOrFail($kelas);
 
         $breadcrumbs = [
-            ['label' => 'Kelas', 'url' => route('mapel.index')],
-            ['label' => 'Mapel', 'url' => route('kelas-mapel.index', $kelas->id)],
+            ['label' => 'Kelas', 'url' => role_route('mapel.index')],
+            ['label' => 'Mapel', 'url' => role_route('kelas-mapel.index', $kelas->id)],
             ['label' => 'Tambah Mapel'],
         ];
 
@@ -145,7 +145,7 @@ class KelasMapelController extends Controller
             ]);
         }
 
-        return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'kelas'])->with('success', 'Mapel berhasil ditambahkan.');
+        return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'kelas']))->with('success', 'Mapel berhasil ditambahkan.');
     }
 
     /**
@@ -186,7 +186,7 @@ class KelasMapelController extends Controller
             'guru_id' => $request->guru_id,
         ]);
 
-        return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'kelas'])->with('success', 'Mapel berhasil diperbarui.');
+        return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'kelas']))->with('success', 'Mapel berhasil diperbarui.');
     }
 
     /**
@@ -197,6 +197,6 @@ class KelasMapelController extends Controller
         $guruKelas = GuruKelas::findOrFail($id);
         $guruKelas->delete();
 
-        return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'kelas'])->with('success', 'Mapel berhasil dihapus.');
+        return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'kelas']))->with('success', 'Mapel berhasil dihapus.');
     }
 }

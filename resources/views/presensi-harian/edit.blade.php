@@ -1,6 +1,6 @@
 @foreach ($data as $item)
     <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Presensi Harian" maxWidth="2xl">
-        <form action="{{ route('presensi-harian.update', ['presensi_harian' => $item['id']]) }}" method="POST"
+        <form action="{{ role_route('presensi-harian.update', ['presensi_harian' => $item['id']]) }}" method="POST"
             class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')

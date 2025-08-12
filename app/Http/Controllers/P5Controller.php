@@ -13,45 +13,6 @@ class P5Controller extends Controller
     /**
      * Display a listing of the resource.
      */
-    // public function index(Request $request)
-    // {
-    //     $perPage = $request->input('per_page', 10);
-
-    //     $query = P5::with('tahunSemester');
-
-    //     if ($search = $request->input('search')) {
-    //         $query->where('proyek', 'like', "%$search%");
-    //     }
-
-    //     $totalCount = $query->count();
-    //     $paginator = $query->paginate($perPage)->withQueryString();
-
-    //     // data untuk tampilan
-    //     $p5 = $paginator->through(function ($item) {
-    //         return [
-    //             'id' => $item->id,
-    //             'proyek' => $item->proyek,
-    //             'deskripsi' => $item->deskripsi,
-    //             'tahun_semester' => $item->tahunSemester ? $item->tahunSemester->tahun . ' - ' . $item->tahunSemester->semester : '-',
-    //             'tahun_semester_id' => $item->tahun_semester_id,
-    //         ];
-    //     });
-
-    //     $tahunOptions = TahunSemester::orderBy('tahun', 'desc')
-    //         ->get()
-    //         ->mapWithKeys(function ($item) {
-    //             return [$item->id => $item->tahun . ' - ' . $item->semester];
-    //         });
-
-    //     $breadcrumbs = [
-    //         ['label' => 'Manage P5', 'url' => route('p5.index')]
-    //     ];
-
-    //     $title = 'Manage P5';
-
-    //     return view('p5.index',  compact('p5', 'totalCount', 'breadcrumbs', 'title', 'tahunOptions'));
-    // }
-
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);

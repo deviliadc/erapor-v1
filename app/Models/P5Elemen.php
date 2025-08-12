@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class P5Elemen extends Model
 {
     protected $table = 'p5_elemen';
-    protected $fillable = ['p5_dimensi_id', 'nama_elemen', 'deskripsi'];
+    protected $fillable = [
+        'p5_dimensi_id',
+        'nama_elemen',
+        // 'deskripsi'
+    ];
 
     public function dimensi()
     {

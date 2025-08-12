@@ -1,3 +1,9 @@
+@php
+    // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
+    // $canDelete = auth()->user()->hasRole('admin'); // contoh: hanya admin bisa hapus
+    $isGuru = auth()->user()->hasRole('guru');
+@endphp
+
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
@@ -23,7 +29,7 @@
             :enable-import="false"
             :enable-export="false"
             :enable-search="true"
-            :route="route('kelas.mapel.index', ['kelas' => $kelas->id])">
+            :route="role_route('kelas.mapel.index', ['kelas' => $kelas->id])">
             <x-slot name="addButton">
                 <button type="button"
                     onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-kelas-mapel' }))"
@@ -53,11 +59,20 @@
             'edit' => true,
             'delete' => true,
             'routes' => [
-                'delete' => fn($item) => route('kelas.mapel.destroy', [
+                'delete' => fn($item) => role_route('kelas.mapel.destroy', [
                     'kelas' => $kelas->id,
-                    'mapel' => $item['id'], // ini ID dari GuruKelas
+                    'mapel' => $item['id'],
                 ]),
             ],
+            // 'delete' => $canDelete,
+            // 'routes' => [
+            //     // 'edit' => fn($item) => role_route('kelas.mapel.update', ['kelas' => $kelas->id,
+            //     //     'mapel' => $item['id'],]),
+            //     'delete' => $canDelete
+            //         ? fn($item) => role_route('kelas.mapel.destroy', ['kelas' => $kelas->id,
+            //         'mapel' => $item['id'],])
+            //         : null,
+            // ]
         ]"
         :use-modal-edit="true"/>
     </div>

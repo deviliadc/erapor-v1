@@ -1,4 +1,7 @@
 @php
+    // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
+    // $canDelete = auth()->user()->hasRole('admin');
+    $isGuru = auth()->user()->hasRole('guru');
     $filters = [
         [
             'name' => 'tahun_semester_filter',
@@ -35,8 +38,13 @@
     <!-- Wrapper -->
     <div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
         {{-- Toolbar Table --}}
-        <x-table.toolbar :filters="$filters" :enable-add-button="true" :enable-import="false" :enable-export="false" :enable-search="true"
-            :route="route('kelas.siswa.index', ['kelas' => $kelas->id])">
+        <x-table.toolbar
+            :filters="$filters"
+            :enable-add-button="true"
+            :enable-import="false"
+            :enable-export="false"
+            :enable-search="true"
+            :route="role_route('kelas.siswa.index', ['kelas' => $kelas->id])">
 
             <x-slot name="addButton">
                 <div class="flex gap-2">
@@ -56,7 +64,8 @@
                         </a>
 
                         {{-- Tombol Promosi --}}
-                        <button type="button" {{-- <a href="{{ route('kelas.siswa.promote', $kelas->id) }}" --}} {{-- onclick="return confirm('Apakah Anda yakin ingin mempromosikan siswa ke kelas berikutnya?')" --}}
+                        <button type="button"
+                        {{-- <a href="{{ route('kelas.siswa.promote', $kelas->id) }}" onclick="return confirm('Apakah Anda yakin ingin mempromosikan siswa ke kelas berikutnya?')"  </a> --}}
                             onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-promote-siswa' }))"
                             class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -65,7 +74,6 @@
                                     d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
                             </svg>
                             Promosikan Siswa
-                            {{-- </a> --}}
                         </button>
 
                         {{-- Tombol Tambah --}}
@@ -96,19 +104,34 @@
                 'detail' => true,
                 'edit' => true,
                 'delete' => true,
+                // 'routes' => [
+                //     'detail' => fn($item) => route('siswa.show', $item['siswa_id']),
+                //     'delete' => fn($item) => route('kelas.siswa.destroy', [
+                //         'kelas' => $kelas->id,
+                //         'siswa' => $item['id'], // ID dari KelasSiswa (pivot)
+                //     ]),
+                // ],
+                // 'delete' => $canDelete,
                 'routes' => [
-                    'detail' => fn($item) => route('siswa.show', $item['siswa_id']),
-                    'delete' => fn($item) => route('kelas.siswa.destroy', [
-                        'kelas' => $kelas->id,
-                        'siswa' => $item['id'], // ID dari KelasSiswa (pivot)
+                    'detail' => fn($item) => role_route('siswa.show', [
+                        // 'kelas' => $kelas->id,
+                        'siswa' => $item['siswa_id'],
                     ]),
-                ],
+                    // 'delete' => $canDelete
+                    //     ? fn($item) => role_route('kelas.siswa.destroy', [
+                    //         'kelas' => $kelas->id,
+                    //         'mapel' => $item['id'],])
+                    //     : null,
+                    'delete' =>  fn($item) => role_route('kelas.siswa.destroy', [
+                        'kelas' => $kelas->id,
+                        'siswa' => $item['id'],]),
+                ]
             ]" :use-modal-edit="true" />
     </div>
 
     <x-modal name="form-generate-absen" title="Generate Nomor Absen" maxWidth="md">
         <form
-            action="{{ route('kelas.generate.absen', [
+            action="{{ role_route('kelas.generate.absen', [
                 'kelas' => $kelas->id,
                 'tahun_semester_filter' => request('tahun_semester_filter') ?? ($tahunSemesterId ?? $tahunAktif?->id),
             ]) }}"

@@ -10,7 +10,7 @@
     :enable-import="false"
     :enable-export="false"
     :enable-search="true"
-    :route="route('mapel.index')">
+    :route="role_route('mapel.index')">
     <x-slot name="addButton">
         <button type="button"
             onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-tujuan' }))"
@@ -41,5 +41,8 @@
     :actions="[
         'edit' => true,
         'delete' => true,
+        'routes' => [
+            'delete' => fn($item) => role_route('tujuan-pembelajaran.destroy', ['tujuan_pembelajaran' => $item['id']]),
+        ],
     ]"
     :use-modal-edit="true" />

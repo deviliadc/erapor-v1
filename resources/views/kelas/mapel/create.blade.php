@@ -1,5 +1,5 @@
-<x-modal name="form-create-kelas-mapel" title="Tambah Kelas" maxWidth="2xl">
-    <form action="{{ route('kelas.mapel.store', ['kelas' => $kelas->id]) }}" method="POST" enctype="multipart/form-data"
+<x-modal name="form-create-kelas-mapel" title="Tambah Mata Pelajaran" maxWidth="2xl">
+    <form action="{{ role_route('kelas.mapel.store', ['kelas' => $kelas->id]) }}" method="POST" enctype="multipart/form-data"
         class="space-y-6 sm:p-6">
         @csrf
 
@@ -14,7 +14,7 @@
             multiple
             required
         />
-        
+
 
         {{-- Guru Pengajar --}}
         <x-form.select

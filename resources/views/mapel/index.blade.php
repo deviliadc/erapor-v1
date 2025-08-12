@@ -1,5 +1,17 @@
 @php
+    $isGuru = auth()->user()->hasRole('guru');
+    // $activeTab = request('tab')
+    //     ?? ($isGuru ? 'lingkup-materi' : 'mapel');
     $activeTab = request('tab', 'mapel');
+    // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
+    // $tabs = [
+    //     ...(!$isGuru ? [
+    //         'mapel' => 'Mata Pelajaran',
+    //         'bab' => 'Bab',
+    //     ] : []),
+    //     'lingkup-materi' => 'Lingkup Materi',
+    //     'tujuan-pembelajaran' => 'Tujuan Pembelajaran',
+    // ];
 @endphp
 
 <x-app-layout>
@@ -14,9 +26,8 @@
             'bab' => 'Bab',
             'lingkup-materi' => 'Lingkup Materi',
             'tujuan-pembelajaran' => 'Tujuan Pembelajaran',
-            // 'kelas' => 'Kelas',
-            // 'guru' => 'Guru',
         ]" :active="$activeTab">
+        {{-- <x-tabs :tabs="$tabs" :active="$activeTab"> --}}
 
             <div x-show="activeTab === 'mapel'" x-cloak>
                 @include('mapel.tabs', ['data' => $mapel])

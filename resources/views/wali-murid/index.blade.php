@@ -1,3 +1,8 @@
+@php
+    // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
+    $isGuru = auth()->user()->hasRole('guru');
+@endphp
+
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
@@ -11,17 +16,16 @@
     <div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
         {{-- Toolbar Table --}}
         <x-table.toolbar
-            {{-- :filters="$filters" --}}
-            :enable-add-button="true"
-            :enable-import="true"
-            :enable-export="true"
+            :enable-add-button="auth()->user()->hasRole('admin') || auth()->user()->hasRole('guru')"
             :enable-search="true"
-            {{-- :route-create="role_route('wali-murid.create')" --}}
+            :enable-import="false"
+            :enable-export="false"
             :route="role_route('wali-murid.index')">
             <x-slot name="addButton">
                 <button type="button"
                     onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-wali-murid' }))"
-                    class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
+                    class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5
+                    text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
                     Tambah
                     <svg class="fill-current" width="20" height="20" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" clip-rule="evenodd"
@@ -35,7 +39,6 @@
         <x-table
         :columns="[
             'no' => ['label' => 'No', 'sortable' => false],
-            // 'id' => ['label' => 'ID', 'sortable' => true],
             'nama_ayah' => ['label' => 'Nama Ayah', 'sortable' => true],
             'nama_ibu' => ['label' => 'Nama Ibu', 'sortable' => true],
             'nama_wali' => ['label' => 'Nama Wali (Opsional)', 'sortable' => true],
@@ -45,7 +48,6 @@
             'pekerjaan_ibu' => ['label' => 'Pekerjaan Ibu', 'sortable' => true],
             'pekerjaan_wali' => ['label' => 'Pekerjaan Wali (Opsional)', 'sortable' => true],
             'alamat' => ['label' => 'Alamat Lengkap', 'sortable' => false],
-            // 'action' => ['label' => 'Aksi', 'sortable' => false],
         ]"
         :data="$wali_murid"
         :total-count="$totalCount"
@@ -53,13 +55,13 @@
         :actions="[
             'detail' => true,
             'edit' => true,
-            'delete' => true,
+            'delete' => !$isGuru,
             'routes' => [
-                'detail' => fn($item) => route('wali-murid.show', $item['id']),
-            ],
-            // 'editRoute' => role_route('wali-murid.edit'),
+                'detail' => fn($item) => role_route('wali-murid.show', ['wali_murid' => $item['id']]),
+                // 'edit' => fn($item) => role_route('wali-murid.edit', ['wali_murid' => $item['id']]),
+                'delete' => fn($item) => role_route('wali-murid.destroy', ['wali_murid' => $item['id']]),
+            ]
         ]"
-        :use-modal-edit="true"
-        />
+        :use-modal-edit="true"/>
     </div>
 </x-app-layout>

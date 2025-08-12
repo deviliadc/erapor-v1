@@ -20,26 +20,20 @@
     <link href="{{ asset('tailadmin/build/style.css') }}" rel="stylesheet">
 </head>
 
-<body class="font-sans text-gray-900 antialiased bg-gray-100 min-h-screen flex items-center justify-center">
-
-    <main class="w-full min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
-        <div class="w-full max-w-6xl flex flex-col lg:flex-row overflow-hidden shadow-xl
-            bg-white dark:bg-gray-950
-            rounded-none sm:rounded-2xl
-            sm:my-8 mx-auto">
-
-            <!-- Kiri: Gambar hanya di desktop -->
-            <div class="hidden lg:block w-2/3 h-screen">
-                <img src="{{ asset('images/sekolah.jpeg') }}" alt="Foto Sekolah"
-                    class="w-full h-full object-cover" />
-            </div>
-
-            <!-- Kanan: Slot Konten -->
-            <div class="w-full lg:w-1/3 flex items-center justify-center p-6 sm:p-8">
+<body class="font-sans text-gray-900 antialiased bg-gray-100 min-h-screen">
+    <main class="flex flex-col lg:flex-row h-screen w-screen bg-gray-100 dark:bg-gray-900">
+        {{-- Kiri: Gambar (hanya desktop) --}}
+        <div class="hidden lg:flex lg:w-1/2 h-64 lg:h-full items-center justify-center bg-gray-200">
+            <img src="{{ asset('images/sekolah.jpeg') }}" alt="Foto Sekolah"
+                class="w-full h-full object-cover object-center" />
+        </div>
+        {{-- Kanan: Konten --}}
+        <div class="w-full lg:w-1/2 bg-white dark:bg-gray-950">
+            <div class="min-h-screen flex items-center justify-center p-8 lg:min-h-0">
                 <div class="w-full max-w-md">
-                    <!-- Logo Mobile -->
+                    {{-- Logo hanya di mobile --}}
                     <div class="flex justify-center mb-6 lg:hidden">
-                        <img src="{{ asset('images/logo-app.png') }}" alt="Logo Sekolah" class="w-16 h-16" />
+                        <img src="{{ asset('images/logo-app.png') }}" alt="Logo Sekolah" class="w-20 h-20" />
                     </div>
                     {{ $slot }}
                 </div>
@@ -49,6 +43,6 @@
 
     @stack('modals')
     @include('components.script')
-
 </body>
+
 </html>

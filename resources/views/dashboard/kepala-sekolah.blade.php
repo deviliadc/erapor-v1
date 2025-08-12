@@ -9,9 +9,9 @@
         <x-dashboard.card title="Total Wali Kelas" :value="$totalWali ?? '-'" icon="user-tie" color="pink" />
     </div>
 
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+    {{-- <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
         <x-dashboard.card title="Nilai P5 Terinput" :value="$nilaiP5 ?? '-'" icon="star" color="yellow" />
         <x-dashboard.card title="Nilai Ekstra" :value="$nilaiEkstra ?? '-'" icon="running" color="pink" />
         <x-dashboard.card title="Rapor Final" :value="$raporSelesai ?? '-'" icon="file-alt" color="teal" />
-    </div>
+    </div> --}}
 </x-app-layout>

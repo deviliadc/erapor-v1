@@ -6,9 +6,11 @@ use App\Models\Ekstra;
 use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\NilaiEkstra;
+use App\Models\NilaiEkstraDetail;
 use App\Models\ParamEkstra;
 use App\Models\TahunSemester;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class NilaiEkstraController extends Controller
 {
@@ -17,13 +19,52 @@ class NilaiEkstraController extends Controller
      */
     public function index(Request $request)
     {
-        $tahunSemesterList = TahunSemester::orderByDesc('tahun')->orderByDesc('semester')->get();
-        $tahunAktif = TahunSemester::where('is_active', true)->first();
+        $user = Auth::user();
+        $isAdmin = $user->hasRole('admin');
+        $isWali = false;
 
+        if ($isAdmin) {
+            // Admin: semua tahun semester & semua kelas
+            $tahunSemesterList = TahunSemester::orderByDesc('tahun')->orderByDesc('semester')->get();
+            $kelasList = Kelas::all();
+        } elseif ($user->hasRole('guru')) {
+            $guru = $user->guru;
+            // Tahun semester di mana guru ini pernah jadi wali
+            $tahunIds = \App\Models\GuruKelas::where('guru_id', $guru->id)
+                ->where('peran', 'wali')
+                ->pluck('tahun_semester_id')
+                ->unique()
+                ->values();
+            $tahunSemesterList = TahunSemester::whereIn('id', $tahunIds)
+                ->orderByDesc('tahun')
+                ->orderByDesc('semester')
+                ->get();
+            $isWali = $tahunIds->isNotEmpty();
+        } else {
+            $tahunSemesterList = collect();
+            $kelasList = collect();
+        }
+
+        // Default tahun semester: aktif, atau tahun wali pertama
+        $tahunAktif = $tahunSemesterList->firstWhere('is_active', true) ?? $tahunSemesterList->first();
         $tahunSemesterId = $request->tahun_semester_id ?? $tahunAktif?->id;
-        $kelasList = Kelas::all();
+
+        // Kelas: admin semua kelas, wali hanya kelas yang diampu pada tahun semester terpilih
+        if ($isAdmin) {
+            $kelasList = Kelas::all();
+        } elseif ($user->hasRole('guru')) {
+            $guru = $user->guru;
+            $kelasIds = \App\Models\GuruKelas::where('guru_id', $guru->id)
+                ->where('tahun_semester_id', $tahunSemesterId)
+                ->where('peran', 'wali')
+                ->pluck('kelas_id')
+                ->unique()
+                ->values();
+            $kelasList = Kelas::whereIn('id', $kelasIds)->get();
+        }
+
         $kelasId = $request->kelas_id ?? $kelasList->first()?->id;
-        $periode = $request->input('periode', 'tengah');
+        $periode = 'akhir';
 
         $daftarEkstra = Ekstra::all();
         $ekstraId = $request->ekstra_id ?? $daftarEkstra->first()?->id;
@@ -43,24 +84,33 @@ class NilaiEkstraController extends Controller
         foreach ($daftarEkstra as $ekstra) {
             $daftarParameter[$ekstra->id] = ParamEkstra::where('ekstra_id', $ekstra->id)->get();
 
-            $nilaiList = NilaiEkstra::where('periode', $periode)
-                ->where('ekstra_id', $ekstra->id)
-                ->whereHas('kelasSiswa', function ($q) use ($tahunSemesterId, $kelasId) {
-                    $q->where('tahun_semester_id', $tahunSemesterId)
-                        ->where('kelas_id', $kelasId);
-                })
-                ->get();
+            foreach ($siswaKelas as $ks) {
+                $nilaiEkstra = NilaiEkstra::where('ekstra_id', $ekstra->id)
+                    ->where('kelas_siswa_id', $ks->id)
+                    ->where('periode', 'akhir')
+                    ->first();
 
-            $nilaiMap[$ekstra->id] = [];
-            foreach ($nilaiList as $nilai) {
-                $nilaiMap[$ekstra->id][$nilai->kelas_siswa_id] = [
-                    'param' => $nilai->param_nilai ?? [],
-                ];
+                if ($nilaiEkstra) {
+                    $detail = NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
+                        ->where('periode', 'akhir')
+                        ->pluck('nilai', 'param_ekstra_id')
+                        ->toArray();
+
+                    $nilaiMap[$ekstra->id][$ks->id] = [
+                        'predikat_param' => $detail,
+                        'deskripsi' => $nilaiEkstra->deskripsi ?? null,
+                    ];
+                } else {
+                    $nilaiMap[$ekstra->id][$ks->id] = [
+                        'predikat_param' => [],
+                        'deskripsi' => null,
+                    ];
+                }
             }
         }
 
         $breadcrumbs = [
-            ['label' => 'Nilai Ekstrakurikuler', 'url' => route('nilai-ekstra.index')],
+            ['label' => 'Nilai Ekstrakurikuler'],
         ];
         $title = 'Nilai Ekstrakurikuler';
 
@@ -82,12 +132,28 @@ class NilaiEkstraController extends Controller
         ));
     }
 
-
     public function updateBatch(Request $request)
     {
+        $user = Auth::user();
+        $isAdmin = $user->hasRole('admin');
+        $isWali = false;
+
+        if ($user->hasRole('guru')) {
+            $guru = $user->guru;
+            $isWali = \App\Models\GuruKelas::where('guru_id', $guru->id)
+                ->where('kelas_id', $request->kelas_id)
+                ->where('tahun_semester_id', $request->tahun_semester_id)
+                ->where('peran', 'wali')
+                ->exists();
+        }
+
+        if (!$isAdmin && !$isWali) {
+            return abort(403, 'Hanya admin atau wali kelas yang dapat mengisi nilai ekstrakurikuler.');
+        }
+
         $request->validate([
             'tahun_semester_id' => 'required|exists:tahun_semester,id',
-            'periode' => 'required|in:tengah,akhir',
+            'periode' => 'required|in:akhir',
             'nilai' => 'required|array',
             'nilai.*.kelas_siswa_id' => 'required|exists:kelas_siswa,id',
             'nilai.*.ekstra_id' => 'required|exists:ekstra,id',
@@ -95,20 +161,64 @@ class NilaiEkstraController extends Controller
         ]);
 
         foreach ($request->nilai as $item) {
+            $kelasSiswa = KelasSiswa::find($item['kelas_siswa_id']);
+            $siswaId = $kelasSiswa ? $kelasSiswa->siswa_id : null;
             $predikatParam = $item['predikat'] ?? [];
-            $avg = collect($predikatParam)->filter(fn($v) => is_numeric($v))->avg();
+
+            // Filter hanya nilai yang diisi (numeric dan tidak kosong)
+            $predikatParamFiltered = [];
+            foreach ($predikatParam as $paramId => $nilai) {
+                if ($nilai !== null && $nilai !== '' && is_numeric($nilai)) {
+                    $predikatParamFiltered[$paramId] = $nilai;
+                }
+            }
+
+            // Jika semua nilai kosong/-, hapus data jika ada
+            if (empty($predikatParamFiltered)) {
+                $nilaiEkstra = NilaiEkstra::where([
+                    'kelas_siswa_id' => $item['kelas_siswa_id'],
+                    'ekstra_id' => $item['ekstra_id'],
+                    'periode' => $request->periode,
+                ])->first();
+
+                if ($nilaiEkstra) {
+                    NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
+                        ->where('periode', $request->periode)
+                        ->delete();
+                    $nilaiEkstra->delete();
+                }
+                continue;
+            }
+
+            $avg = collect($predikatParamFiltered)->avg();
             $nilaiAkhir = $avg !== null ? ceil($avg) : null;
 
-            $deskripsi = '';
-            if (!empty($predikatParam)) {
+            // Deskripsi hanya dibuat jika nilai akhir ada
+            $deskripsi = null;
+            if ($nilaiAkhir !== null) {
                 $paramIds = array_keys($predikatParam);
                 $params = ParamEkstra::whereIn('id', $paramIds)->pluck('parameter', 'id');
+
+                // $max = collect($predikatParam)->max();
+                // $min = collect($predikatParam)->min();
+
+                // $tertinggi = collect($predikatParam)->filter(fn($v) => $v == $max)->keys()->first();
+                // $terendah = collect($predikatParam)->filter(fn($v) => $v == $min)->keys()->first();
 
                 $max = collect($predikatParam)->max();
                 $min = collect($predikatParam)->min();
 
-                $tertinggi = collect($predikatParam)->filter(fn($v) => $v == $max)->keys()->first();
-                $terendah = collect($predikatParam)->filter(fn($v) => $v == $min)->keys()->first();
+                $paramKeys = array_keys($predikatParam);
+
+                if ($max === $min && count($paramKeys) > 1) {
+                    // Semua nilai sama, pilih dua parameter berbeda secara acak
+                    shuffle($paramKeys);
+                    $tertinggi = $paramKeys[0];
+                    $terendah = $paramKeys[1];
+                } else {
+                    $tertinggi = collect($predikatParam)->filter(fn($v) => $v == $max)->keys()->first();
+                    $terendah = collect($predikatParam)->filter(fn($v) => $v == $min)->keys()->first();
+                }
 
                 $namaTertinggi = $params[$tertinggi] ?? '';
                 $namaTerendah = $params[$terendah] ?? '';
@@ -121,28 +231,58 @@ class NilaiEkstraController extends Controller
                     4 => 'sangat mahir dalam',
                 ];
 
-                $deskripsi = "Ananda " . ($item['nama'] ?? '') . " " .
+                $namaSiswa = $kelasSiswa && $kelasSiswa->siswa ? $kelasSiswa->siswa->nama : '';
+                $deskripsi = "Ananda " . $namaSiswa . " " .
                     ($text[$max] ?? '') . " " . $namaTertinggi .
                     " dan " .
                     ($text[$min] ?? '') . " " . $namaTerendah . ".";
             }
 
-            NilaiEkstra::updateOrCreate(
+            $nilaiEkstra = NilaiEkstra::updateOrCreate(
                 [
                     'kelas_siswa_id' => $item['kelas_siswa_id'],
                     'ekstra_id' => $item['ekstra_id'],
                     'periode' => $request->periode,
                 ],
                 [
-                    'param_nilai' => [], // nilai angka jika ada
-                    'predikat_param' => $predikatParam,
+                    'siswa_id' => $siswaId,
+                    'param_nilai' => [],
+                    'predikat_param' => $predikatParamFiltered,
                     'nilai_akhir' => $nilaiAkhir,
                     'deskripsi' => $deskripsi,
                 ]
             );
+
+            foreach ($predikatParamFiltered as $paramId => $nilai) {
+                NilaiEkstraDetail::updateOrCreate(
+                    [
+                        'nilai_ekstra_id' => $nilaiEkstra->id,
+                        'param_ekstra_id' => $paramId,
+                        'periode' => $request->periode,
+                    ],
+                    [
+                        'nilai' => $nilai,
+                    ]
+                );
+            }
+
+            // Hapus detail yang tidak diisi
+            $paramIds = array_keys($predikatParam);
+            $toDelete = array_diff($paramIds, array_keys($predikatParamFiltered));
+            if (!empty($toDelete)) {
+                NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
+                    ->whereIn('param_ekstra_id', $toDelete)
+                    ->where('periode', $request->periode)
+                    ->delete();
+            }
         }
 
-        return back()->with('success', 'Nilai berhasil disimpan!');
+        return redirect()->to(role_route('nilai-ekstra.index', [
+            'tahun_semester_id' => $request->tahun_semester_id,
+            'kelas_id' => $request->kelas_id,
+            'periode' => $request->periode,
+            'ekstra_id' => $request->ekstra_id, // tambahkan ini
+        ]))->with('success', 'Nilai ekstra berhasil disimpan.');
     }
 
     /**
@@ -158,30 +298,7 @@ class NilaiEkstraController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'kelas_id' => 'required',
-            'ekstra_id' => 'required',
-            'tahun_semester_id' => 'required',
-            'nilai.*.siswa_id' => 'required|exists:siswa,id',
-            'nilai.*.predikat' => 'required|in:A,B,C,D',
-            'nilai.*.deskripsi' => 'nullable|string',
-        ]);
-
-        foreach ($request->nilai as $item) {
-            NilaiEkstra::updateOrCreate(
-                [
-                    'siswa_id' => $item['siswa_id'],
-                    'ekstra_id' => $request->ekstra_id,
-                    'tahun_semester_id' => $request->tahun_semester_id,
-                ],
-                [
-                    'predikat' => $item['predikat'],
-                    'deskripsi' => $item['deskripsi'] ?? '',
-                ]
-            );
-        }
-
-        return redirect()->route('nilai-ekstra.index')->with('success', 'Nilai berhasil disimpan');
+        //
     }
 
     /**

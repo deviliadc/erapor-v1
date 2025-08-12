@@ -1,5 +1,6 @@
 @php
-    $activeTab = request('tab', 'dimensi');
+    // $activeTab = request('tab', 'dimensi');
+    $isGuru = auth()->user()->hasRole('guru');
 @endphp
 
 {{-- Form Tambah Dimensi --}}
@@ -8,8 +9,14 @@
 @include('p5-dimensi.edit')
 
 {{-- Toolbar Table --}}
-<x-table.toolbar :enable-add-button="true" :enable-import="false" :enable-export="false" :enable-search="true" searchName="search_dimensi"
-    tabName="dimensi" :route="route('p5.index')">
+<x-table.toolbar
+    :enable-add-button="!$isGuru"
+    :enable-import="false"
+    :enable-export="false"
+    :enable-search="true"
+    searchName="search_dimensi"
+    tabName="dimensi"
+    :route="role_route('p5.index')">
     <x-slot name="addButton">
         <button type="button"
             onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-p5-dimensi' }))"
@@ -24,15 +31,19 @@
 </x-table.toolbar>
 
 {{-- Table Dimensi --}}
-<x-table :columns="[
+<x-table
+:columns="[
     'no' => ['label' => 'No', 'sortable' => false],
     'nama_dimensi' => ['label' => 'Nama Dimensi', 'sortable' => true],
     'deskripsi_dimensi' => ['label' => 'Deskripsi', 'sortable' => true],
-]" :data="$dimensi" :total-count="$dimensiTotal" row-view="p5-dimensi.partials.row" :actions="[
-    'edit' => true,
-    'delete' => true,
+]" :data="$dimensi"
+:total-count="$dimensiTotal"
+row-view="p5-dimensi.partials.row"
+:actions="[
+    'edit' => !$isGuru,
+    'delete' => !$isGuru,
     'routes' => [
-        'delete' => fn($item) => route('p5-dimensi.destroy', $item['id']),
+        'delete' => fn($item) => role_route('p5-dimensi.destroy', ['p5_dimensi' => $item['id']]),
     ],
 ]"
     :use-modal-edit="true"

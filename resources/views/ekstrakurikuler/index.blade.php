@@ -1,5 +1,6 @@
 @php
     $activeTab = request('tab', 'ekstra');
+    // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
 @endphp
 
 <x-app-layout>

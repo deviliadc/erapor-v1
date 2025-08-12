@@ -46,9 +46,14 @@ class RekapAbsensiController extends Controller
                 });
         }
 
+        $breadcrumbs = [
+            ['label' => 'Rekap Absensi', 'url' => role_route('rekap-absensi.index')],
+        ];
+        $title = 'Rekap Absensi';
+        
         return view('rekap-absensi.index', [
-            'breadcrumbs' => [['label' => 'Rekap Absensi', 'url' => route('rekap-absensi.index')]],
-            'title' => 'Rekap Absensi',
+            'breadcrumbs' => $breadcrumbs,
+            'title' => $title,
             'tahunSemesterList' => $tahunSemesterList,
             'selectedTahunSemester' => $selectedTahunSemester,
             'kelasList' => $kelasList,
@@ -94,12 +99,11 @@ class RekapAbsensiController extends Controller
             );
         }
 
-        return redirect()
-            ->route('rekap-absensi.index', [
+        return redirect()->to(role_route('rekap-absensi.index', [
                 'tahun_semester_id' => $request->tahun_semester_id,
                 'periode' => $request->periode,
                 'kelas_id' => $request->kelas_id, // tambahkan ini
-            ])
+            ]))
             ->with('success', 'Rekap presensi berhasil diperbarui.');
     }
 

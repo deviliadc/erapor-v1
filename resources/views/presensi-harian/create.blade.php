@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
     <div class="space-y-6">
 
         <!-- Wrapper -->
@@ -9,8 +10,8 @@
                 </h3>
             </div>
 
-            <!-- Langkah 1: Pilih Kelas -->
-            <form method="GET" action="{{ route('presensi-harian.create') }}" class="p-5 space-y-6">
+            <!-- Langkah 1: Pilih Kelas dan periode-->
+            {{-- <form method="GET" action="{{ role_route('presensi-harian.create') }}" class="p-5 space-y-6">
                 <x-form.select
                     name="kelas_id"
                     label="Pilih Kelas"
@@ -20,13 +21,39 @@
                     required
                     onchange="this.form.submit()"
                 />
+            </form> --}}
+            <form method="GET" action="{{ role_route('presensi-harian.create') }}" class="p-5 space-y-6">
+                <div class="flex flex-col sm:flex-row gap-4 items-end">
+                    <div class="flex-1">
+                        <x-form.select
+                            name="kelas_id"
+                            label="Pilih Kelas"
+                            :options="$kelas->pluck('nama', 'id')"
+                            placeholder="-- Pilih Kelas --"
+                            :selected="request()->filled('kelas_id') ? request('kelas_id') : ''"
+                            required
+                            onchange="this.form.submit()"
+                        />
+                    </div>
+                    {{-- <div class="flex-1">
+                        <x-form.select
+                            name="periode"
+                            label="Periode"
+                            :options="['tengah' => 'Tengah', 'akhir' => 'Akhir']"
+                            :selected="request()->filled('periode') ? request('periode') : 'tengah'"
+                            required
+                            onchange="this.form.submit()"
+                        />
+                    </div> --}}
+                </div>
             </form>
 
-            <!-- Langkah 2: Form Presensi -->
+            <!-- Form Presensi -->
             @if (request('kelas_id'))
-                <form method="POST" action="{{ route('presensi-harian.store') }}" class="px-5 pb-5 space-y-6 mt-4">
+                <form method="POST" action="{{ role_route('presensi-harian.store') }}" class="px-5 pb-5 space-y-6 mt-4">
                     @csrf
                     <input type="hidden" name="kelas_id" value="{{ request('kelas_id') }}">
+                    {{-- <input type="hidden" name="periode" value="{{ request('periode', 'tengah') }}"> --}}
 
                     <!-- Tanggal Presensi -->
                     <x-form.date-picker

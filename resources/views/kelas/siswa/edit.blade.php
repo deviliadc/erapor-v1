@@ -1,6 +1,6 @@
 @foreach ($siswa as $item)
     <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Nomor Absen" maxWidth="2xl">
-        <form action="{{ route('kelas.siswa.update', ['kelas' => $kelas->id, 'siswa' => $item['id']]) }}" method="POST" class="space-y-6 sm:p-6">
+        <form action="{{ role_route('kelas.siswa.update', ['kelas' => $kelas->id, 'siswa' => $item['id']]) }}" method="POST" class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')
             <input type="hidden" name="tahun_semester_id" value="{{ $tahunSemesterId }}">

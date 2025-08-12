@@ -1,5 +1,5 @@
 <x-modal name="form-create-parameter" title="Tambah Parameter Ekstrakurikuler" maxWidth="2xl">
-    <form action="{{ route('param-ekstra.store', ['tab' => request('tab', 'parameter')]) }}" method="POST" enctype="multipart/form-data"
+    <form action="{{ role_route('param-ekstra.store', ['tab' => request('tab', 'parameter')]) }}" method="POST" enctype="multipart/form-data"
         class="space-y-6 sm:p-6">
         @csrf
         <input type="hidden" name="tab" value="parameter">

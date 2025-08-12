@@ -1,6 +1,6 @@
 @foreach ($parameterEkstra as $item)
     <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Parameter Ekstrakurikuler" maxWidth="2xl">
-        <form action="{{ route('param-ekstra.update', ['param_ekstra' => $item['id']], ['tab' => request('tab', 'parameter')]) }}" method="POST"
+        <form action="{{ role_route('param-ekstra.update', ['param_ekstra' => $item['id']], ['tab' => request('tab', 'parameter')]) }}" method="POST"
             class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')

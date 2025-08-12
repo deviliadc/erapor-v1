@@ -15,7 +15,7 @@ class WaliMurid extends Model
         'no_hp',
         'pekerjaan_ayah',
         'pekerjaan_ibu',
-        'pekerjaan_Wali',
+        'pekerjaan_wali',
         'alamat',
     ];
 

@@ -8,16 +8,81 @@ use App\Models\RekapAbsensi;
 use App\Models\NilaiMapel;
 use App\Models\NilaiEkstra;
 use App\Models\NilaiP5;
+use App\Models\PresensiDetail;
+use App\Models\TahunSemester;
 
 class SiswaMenuController extends Controller
 {
-    public function absensi()
+    public function absensi(Request $request)
     {
         $user = Auth::user();
         $siswa = $user->siswa;
-        $absensi = RekapAbsensi::where('siswa_id', $siswa->id)->get();
 
-        return view('menu-siswa.absensi', compact('siswa', 'absensi'));
+        $daftarTahunSemester = TahunSemester::orderByDesc('tahun')->orderByDesc('semester')->get();
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+        $tahunSemesterId = $request->input('tahun_semester_id', $tahunAktif->id);
+
+        $kelasSiswaAktif = $siswa->kelasSiswa()->where('tahun_semester_id', $tahunSemesterId)->first();
+
+        // Rekap absensi untuk tahun semester yang dipilih
+        $rekapAbsensi = RekapAbsensi::with('kelasSiswa.kelas')
+            ->whereHas('kelasSiswa', function ($q) use ($siswa, $tahunSemesterId) {
+                $q->where('siswa_id', $siswa->id)
+                    ->where('tahun_semester_id', $tahunSemesterId);
+            })->first();
+
+        // Presensi harian detail untuk tahun semester yang dipilih, paginated
+        $perPage = $request->input('per_page', 10);
+        $presensiQuery = PresensiDetail::with(['presensiHarian.kelas.tahunSemester'])
+            ->where('kelas_siswa_id', $kelasSiswaAktif?->id)
+            ->orderBy('presensi_harian_id');
+
+        $paginator = $presensiQuery->paginate($perPage)->withQueryString();
+
+        // Mapping data untuk x-table.table
+        $data = $paginator->through(function ($item) {
+            return [
+                'id' => $item->id,
+                'tanggal' => $item->tanggal,
+                'status' => ucfirst($item->status),
+                'keterangan' => $item->keterangan ?? '-',
+            ];
+        });
+
+        // Untuk chart
+        $allPresensi = $presensiQuery->get();
+        $chartTanggal = $allPresensi->pluck('presensiHarian.tanggal')->unique()->values();
+        $chartHadir = [];
+        $chartSakit = [];
+        $chartIzin = [];
+        $chartAlfa = [];
+        foreach ($chartTanggal as $tgl) {
+            $chartHadir[] = $allPresensi->where('presensiHarian.tanggal', $tgl)->where('status', 'hadir')->count();
+            $chartSakit[] = $allPresensi->where('presensiHarian.tanggal', $tgl)->where('status', 'sakit')->count();
+            $chartIzin[] = $allPresensi->where('presensiHarian.tanggal', $tgl)->where('status', 'izin')->count();
+            $chartAlfa[] = $allPresensi->where('presensiHarian.tanggal', $tgl)->where('status', 'alfa')->count();
+        }
+
+        $breadcrumbs = [
+            ['label' => 'Absensi', 'url' => route('absensi-siswa')],
+        ];
+        $title = 'Rekap Absensi Siswa';
+
+        return view('menu-siswa.absensi', compact(
+            'siswa',
+            'rekapAbsensi',
+            'data',
+            'paginator',
+            'tahunAktif',
+            'daftarTahunSemester',
+            'chartTanggal',
+            'chartHadir',
+            'chartSakit',
+            'chartIzin',
+            'chartAlfa',
+            'breadcrumbs',
+            'title'
+        ));
     }
 
     public function nilaiMapel()
@@ -26,25 +91,144 @@ class SiswaMenuController extends Controller
         $siswa = $user->siswa;
         $nilaiMapel = NilaiMapel::where('kelas_siswa_id', $siswa->kelasSiswaAktif()?->id)->get();
 
-        return view('menu-siswa.nilai-mapel', compact('siswa', 'nilaiMapel'));
+        $breadcrumbs = [
+            ['label' => 'Nilai Mata Pelajaran', 'url' => route('nilai-mapel-siswa')],
+        ];
+        $title = 'Rekap Nilai Mapel Siswa';
+
+        return view('menu-siswa.nilai-mapel', compact(
+            'siswa',
+            'nilaiMapel',
+            'breadcrumbs',
+            'title'
+        ));
     }
 
-    public function nilaiEkstra()
+    public function nilaiEkstra(Request $request)
     {
         $user = Auth::user();
         $siswa = $user->siswa;
-        $nilaiEkstra = NilaiEkstra::where('kelas_siswa_id', $siswa->kelasSiswaAktif()?->id)->get();
+        $perPage = $request->input('per_page', 10);
+        $sortBy = $request->input('sortBy', 'id');
+        $sortDirection = $request->input('sortDirection', 'asc');
 
-        return view('menu-siswa.nilai-ekstra', compact('siswa', 'nilaiEkstra'));
+        // Mapping kolom untuk sorting aman
+        $columnMap = [
+            'id' => 'nilai_ekstra.id',
+            'ekstra' => 'ekstra.nama',
+            'nilai_akhir' => 'nilai_ekstra.nilai_akhir',
+            'deskripsi' => 'nilai_ekstra.deskripsi',
+            'tahun_semester' => 'tahun_semester.tahun', // sort by tahun
+        ];
+
+        $query = NilaiEkstra::query()
+            ->where('kelas_siswa_id', $siswa->kelasSiswaAktif()?->id)
+            ->leftJoin('ekstra', 'ekstra.id', '=', 'nilai_ekstra.ekstra_id')
+            ->leftJoin('kelas_siswa', 'kelas_siswa.id', '=', 'nilai_ekstra.kelas_siswa_id')
+            ->leftJoin('tahun_semester', 'tahun_semester.id', '=', 'kelas_siswa.tahun_semester_id')
+            ->select(
+                'nilai_ekstra.*',
+                'ekstra.nama as ekstra_nama',
+                'tahun_semester.tahun as tahun',
+                'tahun_semester.semester as semester'
+            );
+
+        // Sorting
+        if (isset($columnMap[$sortBy])) {
+            $query->orderBy($columnMap[$sortBy], $sortDirection);
+        } else {
+            $query->orderBy('nilai_ekstra.id', 'asc');
+        }
+
+        $paginator = $query->paginate($perPage)->withQueryString();
+
+        // Mapping data untuk x-table.table
+        $data = $paginator->through(function ($e) {
+            return [
+                'id' => $e->id,
+                'ekstra' => $e->ekstra_nama ?? '-',
+                'nilai_akhir' => $e->nilai_akhir ?? '-',
+                'deskripsi' => $e->deskripsi ?? '-',
+                'tahun_semester' => ($e->tahun ?? '-') . ' - ' . ucfirst($e->semester ?? '-'),
+            ];
+        });
+
+        $breadcrumbs = [
+            ['label' => 'Nilai Ekstrakurikuler', 'url' => route('nilai-ekstra-siswa')],
+        ];
+        $title = 'Rekap Nilai Ekstrakurikuler Siswa';
+
+        return view('menu-siswa.nilai-ekstra', compact(
+            'siswa',
+            'data',
+            'paginator',
+            'breadcrumbs',
+            'title'
+        ));
     }
 
-    public function nilaiP5()
+    public function nilaiP5(Request $request)
     {
         $user = Auth::user();
         $siswa = $user->siswa;
-        $nilaiP5 = NilaiP5::where('kelas_siswa_id', $siswa->kelasSiswaAktif()?->id)->get();
+        $perPage = $request->input('per_page', 10);
+        $sortBy = $request->input('sortBy', 'id');
+        $sortDirection = $request->input('sortDirection', 'asc');
 
-        return view('menu-siswa.nilai-p5', compact('siswa', 'nilaiP5'));
+        // Mapping kolom untuk sorting aman
+        $columnMap = [
+            'id' => 'nilai_p5.id',
+            'proyek' => 'p5_proyek.nama_proyek',
+            'nilai_akhir' => 'nilai_p5.nilai_akhir',
+            'predikat' => 'nilai_p5.predikat',
+            'tahun_semester' => 'tahun_semester.tahun',
+        ];
+
+        $query = NilaiP5::query()
+            ->where('kelas_siswa_id', $siswa->kelasSiswaAktif()?->id)
+            ->leftJoin('p5_proyek', 'p5_proyek.id', '=', 'nilai_p5.p5_proyek_id')
+            ->leftJoin('kelas_siswa', 'kelas_siswa.id', '=', 'nilai_p5.kelas_siswa_id')
+            ->leftJoin('tahun_semester', 'tahun_semester.id', '=', 'kelas_siswa.tahun_semester_id')
+            ->select(
+                'nilai_p5.*',
+                'p5_proyek.nama_proyek as proyek_nama',
+                'tahun_semester.tahun as tahun',
+                'tahun_semester.semester as semester'
+            );
+
+        // Sorting
+        if (isset($columnMap[$sortBy])) {
+            $query->orderBy($columnMap[$sortBy], $sortDirection);
+        } else {
+            $query->orderBy('nilai_p5.id', 'asc');
+        }
+
+        $paginator = $query->paginate($perPage)->withQueryString();
+
+        // Mapping data untuk x-table.table
+        $data = $paginator->through(function ($p) {
+            return [
+                'id' => $p->id,
+                'proyek' => $p->proyek_nama ?? '-',
+                'sub_elemen' => $p->sub_elemen_nama ?? '-',
+                'nilai_akhir' => $p->nilai_akhir ?? '-',
+                'predikat' => $p->predikat ?? '-',
+                'tahun_semester' => ($p->tahun ?? '-') . ' - ' . ucfirst($p->semester ?? '-'),
+            ];
+        });
+
+        $breadcrumbs = [
+            ['label' => 'Nilai P5', 'url' => route('nilai-p5-siswa')],
+        ];
+        $title = 'Rekap Nilai P5 Siswa';
+
+        return view('menu-siswa.nilai-p5', compact(
+            'siswa',
+            'data',
+            'paginator',
+            'breadcrumbs',
+            'title'
+        ));
     }
 
     /**

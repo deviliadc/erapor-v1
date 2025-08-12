@@ -4,39 +4,88 @@
             toggle: false
         });
     });
-    document.addEventListener('DOMContentLoaded', function() {
-        // Init flatpickr
-        flatpickr(".datepicker", {
-            altInput: true,
-            altFormat: "d-m-Y", // yang dilihat user
-            dateFormat: "Y-m-d", // yang dikirim ke server
-            allowInput: true,
-            maxDate: new Date(), // Tidak bisa pilih tanggal setelah hari ini
-        });
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     // Init flatpickr
+    //     flatpickr(".datepicker", {
+    //         altInput: true,
+    //         altFormat: "d-m-Y", // yang dilihat user
+    //         dateFormat: "Y-m-d", // yang dikirim ke server
+    //         allowInput: true,
+    //         maxDate: new Date(), // Tidak bisa pilih tanggal setelah hari ini
+    //         defaultDate: document.querySelector('.datepicker')?.value ||
+    //     });
 
-        // flatpickr(".datepicker-lahir", {
+    //     // Untuk presensi harian (tidak boleh Sabtu/Minggu & tidak boleh setelah hari ini)
+    //     flatpickr(".datepicker-presensi", {
+    //         altInput: true,
+    //         altFormat: "d-m-Y",
+    //         dateFormat: "Y-m-d",
+    //         allowInput: true,
+    //         maxDate: new Date(),
+    //         // defaultDate: document.querySelector('.datepicker').value
+    //         disable: [
+    //             function(date) {
+    //                 // Disable Sabtu (6) dan Minggu (0)
+    //                 return date.getDay() === 6 || date.getDay() === 0;
+    //             }
+    //         ],
+    //     });
+    // });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Datepicker umum
+        // document.querySelectorAll('.datepicker').forEach(function(el) {
+        //     flatpickr(el, {
+        //         altInput: true,
+        //         altFormat: "d-m-Y",
+        //         dateFormat: "Y-m-d",
+        //         allowInput: true,
+        //         maxDate: new Date(),
+        //         defaultDate: (el.value && /^\d{4}-\d{2}-\d{2}$/.test(el.value.trim())) ? el
+        //             .value.trim() : new Date()
+        //     });
+        // });
+
+        // Untuk tanggal umum (contoh: tanggal lahir) -> biarkan kosong kalau tidak ada
+        // flatpickr(".datepicker", {
         //     altInput: true,
         //     altFormat: "d-m-Y",
         //     dateFormat: "Y-m-d",
-        //     allowInput: true,
-        //     maxDate: new Date(), // Tidak bisa pilih tanggal setelah hari ini
+        //     defaultDate: function(selectedDates, dateStr, instance) {
+        //         return dateStr || null; // kalau ada di input, pakai; kalau tidak, biarkan kosong
+        //     }
         // });
+        document.querySelectorAll('.datepicker').forEach(function(el) {
+            flatpickr(el, {
+                altInput: true,
+                altFormat: "d-m-Y", // Tampil di form: hari-bulan-tahun
+                dateFormat: "Y-m-d", // Value yang dikirim ke server: tahun-bulan-hari
+                allowInput: true,
+                maxDate: new Date(),
+                defaultDate: (el.value && /^\d{4}-\d{2}-\d{2}$/.test(el.value.trim())) ? el
+                    .value.trim() : null
+            });
+        });
 
-        // Untuk presensi harian (tidak boleh Sabtu/Minggu & tidak boleh setelah hari ini)
-        flatpickr(".datepicker-presensi", {
-            altInput: true,
-            altFormat: "d-m-Y",
-            dateFormat: "Y-m-d",
-            allowInput: true,
-            maxDate: new Date(),
-            disable: [
-                function(date) {
-                    // Disable Sabtu (6) dan Minggu (0)
-                    return date.getDay() === 6 || date.getDay() === 0;
-                }
-            ],
+        // Datepicker presensi (tidak boleh Sabtu/Minggu)
+        document.querySelectorAll('.datepicker-presensi').forEach(function(el) {
+            flatpickr(el, {
+                altInput: true,
+                altFormat: "d-m-Y",
+                dateFormat: "Y-m-d",
+                allowInput: true,
+                maxDate: new Date(),
+                defaultDate: el.value && el.value.trim() !== '' ? el.value : new Date(),
+                disable: [
+                    function(date) {
+                        return date.getDay() === 6 || date.getDay() === 0;
+                    }
+                ],
+            });
         });
     });
+
+
+
 
     function dropdown() {
         return {
@@ -93,4 +142,6 @@
 <script defer src="{{ asset('tailadmin/build/bundle.js') }}"></script>
 <!-- JS flatpickr -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css">
+<script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
 @stack('scripts')

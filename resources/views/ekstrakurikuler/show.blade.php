@@ -1,3 +1,7 @@
+@php
+    $isGuru = auth()->user()->hasRole('guru');
+@endphp
+
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
@@ -21,11 +25,11 @@
             </div>
 
             <x-table.toolbar
-                :enable-add-button="true"
+                :enable-add-button="!$isGuru"
                 :enable-import="false"
                 :enable-export="false"
                 :enable-search="true"
-                :route="route('param-ekstra.create')">
+                :route="role_route('param-ekstra.create')">
                 <x-slot name="addButton">
                     <button type="button"
                         onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-parameter' }))"
@@ -41,7 +45,7 @@
 
             {{-- Modal Tambah Parameter Ekstra --}}
             <x-modal name="form-create-parameter" title="Tambah Parameter Ekstra" maxWidth="2xl">
-                <form method="POST" action="{{ route('param-ekstra.store') }}" class="space-y-6 sm:p-6">
+                <form method="POST" action="{{ role_route('param-ekstra.store') }}" class="space-y-6 sm:p-6">
                     @csrf
                     <input type="hidden" name="redirect_to" value="{{ url()->current() }}">
                     <input type="hidden" name="ekstra_id" value="{{ $ekstra->id }}">
@@ -68,22 +72,29 @@
                 row-view="param-ekstra.partials.row-detail"
                 :actions="[
                     // 'detail' => false,
-                    'edit' => true,
-                    'delete' => true,
+                    'edit' => !$isGuru,
+                    'delete' => !$isGuru,
                     // 'editRoute' => role_route('tujuan-pembelajaran.edit'),
+                    'routes' => [
+                        'delete' => fn($item) => role_route('param-ekstra.destroy', ['param_ekstra' => $item['id']]),
+                    ],
                 ]"
                 :use-modal-edit="true"
             />
 
             @foreach ($param_ekstra as $item)
                 <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Parameter Ekstrakurikuler" maxWidth="2xl">
-                    <form method="POST" action="{{ route('param-ekstra.update', ['param_ekstra' => $item['id']]) }}" class="space-y-6 sm:p-6">
+                    <form method="POST" action="{{ role_route('param-ekstra.update', ['param_ekstra' => $item['id']]) }}" class="space-y-6 sm:p-6">
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="redirect_to" value="{{ url()->current() }}">
                         <input type="hidden" name="ekstra_id" value="{{ $ekstra->id }}">
 
-                        <x-form.textarea name="parameter" label="Parameter Ekstrakurikuler" :value="old('parameter', $item['parameter'])" required />
+                        <x-form.textarea
+                            name="parameter"
+                            label="Parameter Ekstrakurikuler"
+                            :value="old('parameter', $item['parameter'])"
+                            required />
 
                         <div class="flex justify-end">
                             <button type="submit"

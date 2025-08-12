@@ -14,8 +14,9 @@ class PresensiHarian extends Model
     protected $fillable = [
         'kelas_id',
         'tanggal',
-        'penginput_id',
+        // 'penginput_id',
         'catatan',
+        'periode',
     ];
 
     public function kelasSiswa()
@@ -24,7 +25,7 @@ class PresensiHarian extends Model
                     ->withPivot('siswa_id')
                     ->using(KelasSiswa::class);
     }
-    
+
     public function kelas()
     {
         return $this->belongsTo(Kelas::class, 'kelas_id');

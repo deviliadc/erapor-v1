@@ -8,7 +8,7 @@
     <x-badge.status :value="$item['status']" />
 </td>
 <td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">
-    <a href="{{ route('tahun-semester.show', $item['id']) }}"
+    <a href="{{ role_route('tahun-semester.show', ['tahun_semester' => $item['id']]) }}"
     class="text-brand-500 hover:underline">
         {{ $item['siswa_count'] }} Siswa
     </a>

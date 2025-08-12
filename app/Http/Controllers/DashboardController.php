@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
 use App\Models\Guru;
 use App\Models\Siswa;
 use App\Models\Mapel;
-use App\Models\Ekstra;
 use App\Models\GuruKelas;
-use App\Models\P5;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -78,14 +74,14 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $siswa = $user->siswa;
-        $waliMurid = $siswa->waliMurid;
+        // $waliMurid = $siswa->waliMurid;
         $breadcrumbs = [['label' => 'Dashboard']];
         $title = 'Dashboard Siswa';
         return view('dashboard.siswa', compact(
             'breadcrumbs',
             'title',
             'siswa',
-            'waliMurid'
+            // 'waliMurid'
         ));
     }
 

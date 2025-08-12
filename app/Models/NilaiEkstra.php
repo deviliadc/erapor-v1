@@ -7,25 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class NilaiEkstra extends Model
 {
     protected $table = 'nilai_ekstra';
-    protected $casts = [
-    'param_nilai' => 'array',
-    'predikat_param' => 'array',
-];
     protected $fillable = [
         'kelas_siswa_id',
-        // 'siswa_id',
+        'siswa_id',
         'ekstra_id',
         // 'kelas_id',
         // 'tahun_semester_id',
-        'rapor_id',
-        'predikat',
+        // 'rapor_id',
+        'nilai_akhir',
+        'periode',
         'deskripsi'
     ];
 
-    // public function siswa()
-    // {
-    //     return $this->belongsTo(Siswa::class);
-    // }
+    public function siswa()
+    {
+        return $this->belongsTo(Siswa::class);
+    }
 
     public function ekstra()
     {

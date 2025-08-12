@@ -14,7 +14,7 @@ class Siswa extends Model
     protected $fillable = [
         'user_id',
         'wali_murid_id',
-        'nis',
+        'nipd',
         'nisn',
         'nama',
         'jenis_kelamin',
@@ -24,6 +24,14 @@ class Siswa extends Model
         'pendidikan_sebelumnya',
         'no_hp',
         'status',
+        'nama_ayah',
+        'nama_ibu',
+        'nama_wali',
+        'no_hp_wali',
+        'pekerjaan_ayah',
+        'pekerjaan_ibu',
+        'pekerjaan_wali',
+        'alamat_wali',
     ];
 
     public function user()
@@ -46,6 +54,13 @@ class Siswa extends Model
     public function kelasSiswa()
     {
         return $this->hasMany(KelasSiswa::class);
+    }
+
+    public function kelasSiswaAktif()
+    {
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+        if (!$tahunAktif) return null;
+        return $this->kelasSiswa()->where('tahun_semester_id', $tahunAktif->id)->first();
     }
 
     public function ekstra()

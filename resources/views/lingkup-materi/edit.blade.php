@@ -1,6 +1,6 @@
 @foreach ($lingkupMateri as $item)
     <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Lingkup Materi" maxWidth="2xl">
-        <form action="{{ route('lingkup-materi.update',['lingkup_materi' => $item['id']], ['tab' => request('tab', 'lingkup-materi')]) }}" method="POST"
+        <form action="{{ role_route('lingkup-materi.update',['lingkup_materi' => $item['id']], ['tab' => request('tab', 'lingkup-materi')]) }}" method="POST"
             class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')
@@ -19,15 +19,17 @@
             />
 
             {{-- Mapel --}}
-            @php
+            {{-- @php
                 $mapelOptions = [];
                 foreach ($guruKelasAll as $gkId => $data) {
                     if ($data['kelas_id'] == $item['kelas_id']) {
                         $mapelOptions[$gkId] = $data['mapel'];
                     }
                 }
-            @endphp
-            <x-form.select
+            @endphp --}}
+
+            {{-- Mapel --}}
+            {{-- <x-form.select
                 name="guru_kelas_id"
                 label="Mapel"
                 id="mapelSelectEdit-{{ $item['id'] }}"
@@ -37,6 +39,15 @@
                 required
                 data-id="{{ $item['id'] }}"
                 data-selected="{{ $item['guru_kelas_id'] }}"
+            /> --}}
+            <x-form.select
+                name="mapel_id"
+                label="Mapel"
+                id="mapelSelectEdit-{{ $item['id'] }}"
+                :options="$mapelSelect"
+                :selected="old('mapel_id', $item['mapel_id'])"
+                placeholder="Pilih Mapel"
+                required
             />
 
             {{-- Bab --}}

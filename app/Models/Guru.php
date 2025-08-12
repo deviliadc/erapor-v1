@@ -37,13 +37,43 @@ class Guru extends Model
         return $this->hasMany(GuruKelas::class);
     }
 
-    public function isPengajar()
+    public function kelasDiampuIds($tahunSemesterId = null)
     {
-        return $this->guruKelas()->where('peran', 'pengajar')->exists();
+        $query = $this->guruKelas();
+        if ($tahunSemesterId) {
+            $query->where('tahun_semester_id', $tahunSemesterId);
+        }
+
+        return $query->pluck('kelas_id')->unique()->toArray();
     }
 
-    public function isWaliKelas()
+    public function kelasDiampu($tahunSemesterId = null)
     {
-        return $this->guruKelas()->where('peran', 'wali')->exists();
+        $query = $this->guruKelas()->with('kelas');
+        if ($tahunSemesterId) {
+            $query->where('tahun_semester_id', $tahunSemesterId);
+        }
+
+        return $query->get()->pluck('kelas')->unique('id');
+    }
+
+    public function isPengajar($tahunSemesterId = null)
+    {
+        $query = $this->guruKelas()->where('peran', 'pengajar');
+        if ($tahunSemesterId) {
+            $query->where('tahun_semester_id', $tahunSemesterId);
+        }
+
+        return $query->exists();
+    }
+
+    public function isWaliKelas($tahunSemesterId = null)
+    {
+        $query = $this->guruKelas()->where('peran', 'wali');
+        if ($tahunSemesterId) {
+            $query->where('tahun_semester_id', $tahunSemesterId);
+        }
+
+        return $query->exists();
     }
 }

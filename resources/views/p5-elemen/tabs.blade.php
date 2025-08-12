@@ -1,5 +1,6 @@
 @php
-    $activeTab = request('tab', 'elemen');
+    // $activeTab = request('tab', 'elemen');
+    $isGuru = auth()->user()->hasRole('guru');
 @endphp
 
 {{-- Form Tambah Elemen --}}
@@ -8,8 +9,14 @@
 @include('p5-elemen.edit')
 
 {{-- Toolbar Table --}}
-<x-table.toolbar :enable-add-button="true" :enable-import="false" :enable-export="false" :enable-search="true" searchName="search_elemen"
-    tabName="elemen" :route="route('p5.index')">
+<x-table.toolbar
+    :enable-add-button="!$isGuru"
+    :enable-import="false"
+    :enable-export="false"
+    :enable-search="true"
+    searchName="search_elemen"
+    tabName="elemen"
+    :route="role_route('p5.index')">
     <x-slot name="addButton">
         <button type="button"
             onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-p5-elemen' }))"
@@ -28,12 +35,15 @@
     'no' => ['label' => 'No', 'sortable' => false],
     'nama_dimensi' => ['label' => 'Nama Dimensi', 'sortable' => true],
     'nama_elemen' => ['label' => 'Nama Elemen', 'sortable' => true],
-    'deskripsi_elemen' => ['label' => 'Deskripsi', 'sortable' => true],
-]" :data="$elemen" :total-count="$elemenTotal" row-view="p5-elemen.partials.row" :actions="[
-    'edit' => true,
-    'delete' => true,
+    // 'deskripsi_elemen' => ['label' => 'Deskripsi', 'sortable' => true],
+]" :data="$elemen"
+    :total-count="$elemenTotal"
+    row-view="p5-elemen.partials.row"
+    :actions="[
+    'edit' => !$isGuru,
+    'delete' => !$isGuru,
     'routes' => [
-        'delete' => fn($item) => route('p5-elemen.destroy', $item['id']),
+        'delete' => fn($item) => role_route('p5-elemen.destroy', ['p5_eleman' => $item['id']]),
     ],
 ]"
     :use-modal-edit="true" />

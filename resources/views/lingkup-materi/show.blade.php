@@ -9,11 +9,13 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Kelas</p>
-                    <p class="text-base font-medium text-gray-800 dark:text-white">{{ $lingkupMateri->guruKelas->kelas->nama }}</p>
+                    {{-- <p class="text-base font-medium text-gray-800 dark:text-white">{{ $lingkupMateri->guruKelas->kelas->nama }}</p> --}}
+                    <p class="text-base font-medium text-gray-800 dark:text-white">{{ $lingkupMateri->kelas->nama }}</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Mata Pelajaran</p>
-                    <p class="text-base font-medium text-gray-800 dark:text-white">{{ $lingkupMateri->guruKelas->mapel->nama }}</p>
+                    {{-- <p class="text-base font-medium text-gray-800 dark:text-white">{{ $lingkupMateri->guruKelas->mapel->nama }}</p> --}}
+                    <p class="text-base font-medium text-gray-800 dark:text-white">{{ $lingkupMateri->mapel->nama }}</p>
                 </div>
                 <div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Bab</p>
@@ -37,7 +39,7 @@
                 :enable-import="false"
                 :enable-export="false"
                 :enable-search="true"
-                :route="route('tujuan-pembelajaran.create')">
+                :route="role_route('tujuan-pembelajaran.create')">
                 <x-slot name="addButton">
                     <button type="button"
                         onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-tujuan' }))"
@@ -53,13 +55,20 @@
 
             {{-- Modal Tambah Tujuan Pembelajaran --}}
             <x-modal name="form-create-tujuan" title="Tambah Tujuan Pembelajaran" maxWidth="2xl">
-                <form method="POST" action="{{ route('tujuan-pembelajaran.store') }}" class="space-y-6 sm:p-6">
+                <form method="POST" action="{{ role_route('tujuan-pembelajaran.store') }}" class="space-y-6 sm:p-6">
                     @csrf
                     <input type="hidden" name="lingkup_materi_id" value="{{ $lingkupMateri->id }}">
                     <input type="hidden" name="redirect_to" value="{{ url()->current() }}">
 
-                    <x-form.input name="subbab" label="Subbab" required />
-                    <x-form.textarea name="tujuan" label="Tujuan Pembelajaran" required />
+                    <x-form.input
+                        name="subbab"
+                        label="Subbab"
+                        required />
+
+                    <x-form.textarea
+                        name="tujuan"
+                        label="Tujuan Pembelajaran"
+                        required />
 
                     <div class="flex justify-end">
                         <button type="submit"
@@ -90,14 +99,23 @@
             {{-- Modal Edit Tujuan Pembelajaran --}}
             @foreach ($tujuan_pembelajaran as $item)
                 <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Tujuan Pembelajaran" maxWidth="2xl">
-                    <form method="POST" action="{{ route('tujuan-pembelajaran.update', ['tujuan_pembelajaran' => $item['id']]) }}" class="space-y-6 sm:p-6">
+                    <form method="POST" action="{{ role_route('tujuan-pembelajaran.update', ['tujuan_pembelajaran' => $item['id']]) }}" class="space-y-6 sm:p-6">
                         @csrf
                         @method('PUT')
-                        <input type="hidden" name="redirect_to" value="{{ url()->current() }}">
                         <input type="hidden" name="lingkup_materi_id" value="{{ $lingkupMateri->id }}">
+                        <input type="hidden" name="redirect_to" value="{{ url()->current() }}">
 
-                        <x-form.input name="subbab" label="Subbab" value="{{ $item['subbab'] }}" required />
-                        <x-form.textarea name="tujuan" label="Tujuan Pembelajaran" value="{{ $item['tujuan_pembelajaran'] }}" ></x-form.textarea>
+                        <x-form.input
+                            name="subbab"
+                            label="Subbab"
+                            value="{{ $item['subbab'] }}"
+                            required />
+
+                        <x-form.textarea
+                            name="tujuan"
+                            label="Tujuan Pembelajaran"
+                            value="{{ $item['tujuan_pembelajaran'] }}"
+                            required />
 
                         <div class="flex justify-end">
                             <button type="submit"

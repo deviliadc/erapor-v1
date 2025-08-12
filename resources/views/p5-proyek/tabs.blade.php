@@ -15,7 +15,7 @@
         :enable-search="true"
         searchName="search_proyek"
         tabName="proyek"
-        :route="route('p5.index')">
+        :route="role_route('p5.index')">
         <x-slot name="addButton">
             <button type="button"
                 onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-p5-proyek' }))"
@@ -32,24 +32,26 @@
     {{-- Table Proyek --}}
     <x-table :columns="[
         'no' => ['label' => 'No', 'sortable' => false],
-        'kelas' => ['label' => 'Kelas', 'sortable' => true],
+        // 'kelas' => ['label' => 'Kelas', 'sortable' => true],
         'nama_proyek' => ['label' => 'Nama Proyek', 'sortable' => true],
         'deskripsi_proyek' => ['label' => 'Deskripsi', 'sortable' => true],
-        'guru' => ['label' => 'Guru', 'sortable' => true],
-        'tema' => ['label' => 'Tema', 'sortable' => true],
-        'dimensi' => ['label' => 'Dimensi', 'sortable' => true],
-        'elemen' => ['label' => 'Elemen', 'sortable' => true],
-        'sub_elemen' => ['label' => 'Sub Elemen', 'sortable' => true],
+        // 'guru' => ['label' => 'Guru', 'sortable' => true],
+        // 'tema' => ['label' => 'Tema', 'sortable' => true],
+        // 'dimensi' => ['label' => 'Dimensi', 'sortable' => true],
+        // 'elemen' => ['label' => 'Elemen', 'sortable' => true],
+        // 'sub_elemen' => ['label' => 'Sub Elemen', 'sortable' => true],
         'tahun_semester' => ['label' => 'Tahun', 'sortable' => true],
     ]"
         :data="$proyek"
         :total-count="$proyekTotal"
         row-view="p5-proyek.partials.row"
         :actions="[
+            'detail' => true,
             'edit' => true,
             'delete' => true,
             'routes' => [
-                'delete' => fn($item) => route('p5-proyek.destroy', $item['id']),
+                'detail' => fn($item) => role_route('p5-proyek.show', ['p5_proyek' => $item['id']]),
+                'delete' => fn($item) => role_route('p5-proyek.destroy', ['p5_proyek' => $item['id']]),
             ],
         ]"
         :use-modal-edit="true"

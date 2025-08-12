@@ -9,30 +9,30 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('pengumuman', function (Blueprint $table) {
-            $table->id();
-            $table->string('judul');
-            $table->text('isi');
-            $table->string('gambar')->nullable();
-            $table->string('lampiran')->nullable(); // opsional: file seperti PDF, gambar
-            $table->date('tanggal_mulai'); // pengumuman mulai ditampilkan
-            $table->date('tanggal_berakhir')->nullable(); // setelah ini dianggap diarsip
-            $table->foreignId('dibuat_oleh')->constrained('users')->onDelete('cascade');
+    // public function up(): void
+    // {
+    //     Schema::create('pengumuman', function (Blueprint $table) {
+    //         $table->id();
+    //         $table->string('judul');
+    //         $table->text('isi');
+    //         $table->string('gambar')->nullable();
+    //         $table->string('lampiran')->nullable(); // opsional: file seperti PDF, gambar
+    //         $table->date('tanggal_mulai'); // pengumuman mulai ditampilkan
+    //         $table->date('tanggal_berakhir')->nullable(); // setelah ini dianggap diarsip
+    //         $table->foreignId('dibuat_oleh')->constrained('users')->onDelete('cascade');
 
-            // opsional: ditujukan untuk role tertentu (admin, guru, wali, siswa)
-            $table->enum('ditujukan_ke', ['Semua', 'Admin', 'Guru', 'Kepala Sekolah', 'Siswa'])->nullable();
+    //         // opsional: ditujukan untuk role tertentu (admin, guru, wali, siswa)
+    //         $table->enum('ditujukan_ke', ['Semua', 'Admin', 'Guru', 'Kepala Sekolah', 'Siswa'])->nullable();
 
-            $table->timestamps();
-        });
-    }
+    //         $table->timestamps();
+    //     });
+    // }
 
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        Schema::dropIfExists('pengumuman');
-    }
+    // public function down(): void
+    // {
+    //     Schema::dropIfExists('pengumuman');
+    // }
 };

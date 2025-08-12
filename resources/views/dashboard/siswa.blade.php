@@ -24,41 +24,29 @@
                     {{-- Ayah --}}
                     <div>
                         <h3 class="font-semibold text-brand-400 mb-2">Ayah</h3>
-                        @if ($waliMurid)
                             <div class="space-y-1 text-sm">
-                                <div><span class="font-medium">Nama:</span> {{ $waliMurid->nama_ayah }}</div>
-                                <div><span class="font-medium">Pekerjaan:</span> {{ $waliMurid->pekerjaan_ayah }}</div>
-                                <div><span class="font-medium">Alamat:</span> {{ $waliMurid->alamat }}</div>
+                                <div><span class="font-medium">Nama:</span> {{ $siswa->nama_ayah }}</div>
+                                <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_ayah }}</div>
+                                <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
                             </div>
-                        @else
-                            <div class="text-gray-400 text-sm">Data ayah belum tersedia.</div>
-                        @endif
                     </div>
                     {{-- Ibu --}}
                     <div>
                         <h3 class="font-semibold text-brand-400 mb-2">Ibu</h3>
-                        @if ($waliMurid)
                             <div class="space-y-1 text-sm">
-                                <div><span class="font-medium">Nama:</span> {{ $waliMurid->nama_ibu }}</div>
-                                <div><span class="font-medium">Pekerjaan:</span> {{ $waliMurid->pekerjaan_ibu }}</div>
-                                <div><span class="font-medium">Alamat:</span> {{ $waliMurid->alamat }}</div>
+                                <div><span class="font-medium">Nama:</span> {{ $siswa->nama_ibu }}</div>
+                                <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_ibu }}</div>
+                                <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
                             </div>
-                        @else
-                            <div class="text-gray-400 text-sm">Data ibu belum tersedia.</div>
-                        @endif
                     </div>
                     {{-- Wali --}}
                     <div>
                         <h3 class="font-semibold text-brand-400 mb-2">Wali</h3>
-                        @if ($waliMurid && $waliMurid->nama_wali)
                             <div class="space-y-1 text-sm">
-                                <div><span class="font-medium">Nama:</span> {{ $waliMurid->nama_wali }}</div>
-                                <div><span class="font-medium">Pekerjaan:</span> {{ $waliMurid->pekerjaan_wali }}</div>
-                                <div><span class="font-medium">Alamat:</span> {{ $waliMurid->alamat }}</div>
+                                <div><span class="font-medium">Nama:</span> {{ $siswa->nama_wali }}</div>
+                                <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_wali }}</div>
+                                <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
                             </div>
-                        @else
-                            <div class="text-gray-400 text-sm">Data wali belum tersedia.</div>
-                        @endif
                     </div>
                 </div>
             </div>

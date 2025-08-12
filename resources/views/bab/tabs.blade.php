@@ -1,5 +1,7 @@
 @php
-    $activeTab = request('tab', 'bab');
+    // $activeTab = request('tab', 'bab');
+    // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
+    $isGuru = auth()->user()->hasRole('guru');
 @endphp
 
 {{-- Form Tambah Dimensi --}}
@@ -9,12 +11,12 @@
 
 {{-- Toolbar Table --}}
 <x-table.toolbar
-    :enable-add-button="true"
+    :enable-add-button="!$isGuru"
     :enable-import="false"
     :enable-export="false"
     :enable-search="false"
     tabName="bab"
-    :route="route('mapel.index')">
+    :route="role_route('mapel.index')">
     <x-slot name="addButton">
         <button type="button"
             onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-bab' }))"
@@ -36,11 +38,16 @@
     :total-count="$babTotal"
     row-view="bab.partials.row"
     :actions="[
-        'edit' => true,
-        'delete' => true,
+        'edit' => !$isGuru,
+        'delete' => !$isGuru,
+        // 'routes' => [
+        //     'delete' => fn($item) => route('bab.destroy', $item['id']),
+        // ],
         'routes' => [
-            'delete' => fn($item) => route('bab.destroy', $item['id']),
-        ],
+            // 'edit' => fn($item) => role_route('bab.edit', ['bab' => $item['id']]),
+            // 'detail' => fn($item) => role_route('siswa.show', ['siswa' => $item['id']]),
+            'delete' => fn($item) => role_route('bab.destroy', ['bab' => $item['id']]),
+        ]
     ]"
     :use-modal-edit="true"
 />

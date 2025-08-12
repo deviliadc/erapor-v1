@@ -6,6 +6,7 @@ use App\Models\Bab;
 use App\Models\GuruKelas;
 use App\Models\Kelas;
 use App\Models\LingkupMateri;
+use App\Models\Mapel;
 use App\Models\TujuanPembelajaran;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -17,49 +18,7 @@ class LingkupMateriController extends Controller
      */
     public function index(Request $request)
     {
-    //     $perPage = $request->input('per_page', 10);
-
-    //     $query = LingkupMateri::with([
-    //         'guruKelas.kelas',
-    //         'guruKelas.mapel',
-    //         'guruKelas.tahunSemester',
-    //         'bab'
-    //     ])->withCount('tujuanPembelajaran');
-
-    //     if ($search = $request->input('search')) {
-    //         $query->where('nama', 'like', "%$search%")
-    //             ->orWhereHas('guruKelas.kelas', fn($q) => $q->where('nama', 'like', "%$search%"))
-    //             ->orWhereHas('guruKelas.mapel', fn($q) => $q->where('nama', 'like', "%$search%"))
-    //             ->orWhereHas('bab', fn($q) => $q->where('nama', 'like', "%$search%"));
-    //     }
-
-    //     $paginator = $query->paginate($perPage)->withQueryString();
-    //     $totalCount = $paginator->total();
-
-    //     // Modal
-    //     $kelas = Kelas::pluck('nama', 'id');
-    //     $bab = Bab::pluck('nama', 'id');
-    //     $guruKelasAll = GuruKelas::with('mapel')
-    //         ->where('peran', 'pengajar')
-    //         ->get()
-    //         ->mapWithKeys(function ($gk) {
-    //             return [
-    //                 $gk->id => [
-    //                     'kelas_id' => $gk->kelas_id,
-    //                     'mapel' => $gk->mapel->nama ?? '-',
-    //                 ]
-    //             ];
-    //         })
-    //         ->toArray();
-
-    //     $lingkup_materi = $paginator;
-
-    //     $breadcrumbs = [
-    //         ['label' => 'Manage Lingkup Materi', 'url' => route('lingkup-materi.index')]
-    //     ];
-    //     $title = 'Manage Lingkup Materi';
-
-    //     return view('lingkup-materi.index', compact('guruKelasAll', 'lingkup_materi', 'totalCount', 'breadcrumbs', 'title', 'kelas', 'bab'));
+        //
     }
 
     /**
@@ -67,17 +26,22 @@ class LingkupMateriController extends Controller
      */
     public function create()
     {
-        $kelas = Kelas::pluck('nama', 'id')->toArray();
-        $bab = Bab::pluck('nama', 'id')->toArray();
-        $guruKelas = GuruKelas::with(['kelas', 'mapel', 'guru'])
-            ->where('peran', 'pengajar')
-            ->get()
-            ->map(fn($gk) => [
-                'id' => $gk->id,
-                'mapel' => $gk->mapel->nama,
-            ]);
+        // $kelas = Kelas::pluck('nama', 'id')->toArray();
+        // $bab = Bab::pluck('nama', 'id')->toArray();
+        // $mapel = Mapel::pluck('nama', 'id')->toArray();
+        // $guruKelas = GuruKelas::with(['kelas', 'mapel', 'guru'])
+        //     ->where('peran', 'pengajar')
+        //     ->get()
+        //     ->map(fn($gk) => [
+        //         'id' => $gk->id,
+        //         'mapel' => $gk->mapel->nama,
+        //     ]);
 
-        return view('lingkup-materi.create', compact('kelas', 'bab', 'guruKelas'));
+        // return view('lingkup-materi.create', compact(
+        //     'kelas',
+        //     'bab',
+        //     'mapel'
+        // ));
     }
 
     /**
@@ -86,23 +50,33 @@ class LingkupMateriController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'guru_kelas_id' => 'required|exists:guru_kelas,id',
+            // 'guru_kelas_id' => 'required|exists:guru_kelas,id',
+            'kelas_id' => 'required|exists:kelas,id',
+            'mapel_id' => 'required|exists:mapel,id',
             'bab_id' => 'required|exists:bab,id',
             'nama' => [
                 'required',
                 'string',
                 'max:255',
                 Rule::unique('lingkup_materi')->where(function ($query) use ($request) {
-                    return $query->where('guru_kelas_id', $request->guru_kelas_id)
+                    // return $query->where('guru_kelas_id', $request->guru_kelas_id)
+                    //     ->where('bab_id', $request->bab_id);
+                    return $query->where('kelas_id', $request->kelas_id)
+                        ->where('mapel_id', $request->mapel_id)
                         ->where('bab_id', $request->bab_id);
                 }),
             ],
             'periode' => 'required|in:tengah,akhir',
         ]);
 
-        $exists = LingkupMateri::where('guru_kelas_id', $request->guru_kelas_id)
-            ->where('bab_id', $request->bab_id)
-            ->exists();
+        // $exists = LingkupMateri::where('guru_kelas_id', $request->guru_kelas_id)
+        //     ->where('bab_id', $request->bab_id)
+        //     ->exists();
+         // Cek duplikat
+    $exists = LingkupMateri::where('kelas_id', $request->kelas_id)
+        ->where('mapel_id', $request->mapel_id)
+        ->where('bab_id', $request->bab_id)
+        ->exists();
 
         if ($exists) {
             return redirect()->back()->withErrors([
@@ -111,13 +85,15 @@ class LingkupMateriController extends Controller
         }
 
         LingkupMateri::create([
-            'guru_kelas_id' => $request->guru_kelas_id,
+            // 'guru_kelas_id' => $request->guru_kelas_id,
+            'kelas_id' => $request->kelas_id,
+            'mapel_id' => $request->mapel_id,
             'bab_id' => $request->bab_id,
             'nama' => $request->nama,
             'periode' => $request->periode,
         ]);
 
-        return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi'])->with('success', 'Lingkup Materi berhasil ditambahkan.');
+        return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi']))->with('success', 'Lingkup Materi berhasil ditambahkan.');
     }
 
     /**
@@ -128,7 +104,10 @@ class LingkupMateriController extends Controller
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
 
-        $lingkupMateri = LingkupMateri::with(['guruKelas.kelas', 'guruKelas.mapel', 'bab'])->findOrFail($id);
+        // $lingkupMateri = LingkupMateri::with(['guruKelas.kelas', 'guruKelas.mapel', 'bab'])->findOrFail($id);
+        $lingkupMateri = LingkupMateri::with(['kelas', 'mapel', 'bab'])
+            ->where('id', $id)
+            ->firstOrFail();
 
         $query = TujuanPembelajaran::where('lingkup_materi_id', $id);
 
@@ -147,7 +126,7 @@ class LingkupMateriController extends Controller
         ]);
 
         $breadcrumbs = [
-            ['label' => 'Manage Lingkup Materi', 'url' => route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi'])],
+            ['label' => 'Manage Lingkup Materi', 'url' => role_route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi'])],
             ['label' => 'Detail Lingkup Materi']
         ];
         $title = 'Detail Lingkup Materi';
@@ -166,30 +145,39 @@ class LingkupMateriController extends Controller
      */
     public function edit(string $id)
     {
-        $lingkupMateri = LingkupMateri::with('guruKelas.kelas')->findOrFail($id);
-        $kelas = Kelas::pluck('nama', 'id'); // hanya ambil id dan nama
-        $bab = Bab::pluck('nama', 'id');     // hanya ambil id dan nama
-        $guruKelasAll = GuruKelas::with('mapel')
-            ->where('peran', 'pengajar')
-            ->get()
-            ->mapWithKeys(function ($gk) {
-                return [
-                    $gk->id => [
-                        'kelas_id' => $gk->kelas_id,
-                        'mapel' => $gk->mapel->nama ?? '-',
-                        'periode' => $gk->periode ?? 'tengah', // tambahkan periode jika ada
-                    ]
-                ];
-            })
-            ->toArray();
+        // $lingkupMateri = LingkupMateri::with('guruKelas.kelas')->findOrFail($id);
+        // $kelas = Kelas::pluck('nama', 'id'); // hanya ambil id dan nama
+        // $bab = Bab::pluck('nama', 'id');     // hanya ambil id dan nama
+        // $mapel = Mapel::pluck('nama', 'id'); // hanya ambil id dan nama
+        // $guruKelasAll = GuruKelas::with('mapel')
+        //     ->where('peran', 'pengajar')
+        //     ->get()
+        //     ->mapWithKeys(function ($gk) {
+        //         return [
+        //             $gk->id => [
+        //                 'kelas_id' => $gk->kelas_id,
+        //                 'mapel' => $gk->mapel->nama ?? '-',
+        //                 'periode' => $gk->periode ?? 'tengah', // tambahkan periode jika ada
+        //             ]
+        //         ];
+        //     })
+        //     ->toArray();
 
-        $breadcrumbs = [
-            ['label' => 'Manage Lingkup Materi', 'url' => route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi'])],
-            ['label' => 'Edit Lingkup Materi']
-        ];
-        $title = 'Edit Lingkup Materi';
+        // $breadcrumbs = [
+        //     ['label' => 'Manage Lingkup Materi', 'url' => role_route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi'])],
+        //     ['label' => 'Edit Lingkup Materi']
+        // ];
+        // $title = 'Edit Lingkup Materi';
 
-        return view('lingkup-materi.edit', compact('lingkupMateri', 'kelas', 'bab', 'guruKelasAll', 'breadcrumbs', 'title'));
+        // return view('lingkup-materi.edit', compact(
+        //     'lingkupMateri',
+        //     'kelas',
+        //     'bab',
+        //     'mapel',
+        //     // 'guruKelasAll',
+        //     'breadcrumbs',
+        //     'title'
+        // ));
     }
 
     /**
@@ -198,14 +186,19 @@ class LingkupMateriController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'guru_kelas_id' => 'required|exists:guru_kelas,id',
+            // 'guru_kelas_id' => 'required|exists:guru_kelas,id',
+            'kelas_id' => 'required|exists:kelas,id',
+            'mapel_id' => 'required|exists:mapel,id',
             'bab_id' => 'required|exists:bab,id',
             'nama' => [
                 'required',
                 'string',
                 'max:255',
                 Rule::unique('lingkup_materi')->where(function ($query) use ($request) {
-                    return $query->where('guru_kelas_id', $request->guru_kelas_id)
+                    // return $query->where('guru_kelas_id', $request->guru_kelas_id)
+                    //     ->where('bab_id', $request->bab_id);
+                    return $query->where('kelas_id', $request->kelas_id)
+                        ->where('mapel_id', $request->mapel_id)
                         ->where('bab_id', $request->bab_id);
                 })->ignore($id),
             ],
@@ -215,7 +208,9 @@ class LingkupMateriController extends Controller
         $lingkup_materi = LingkupMateri::findOrFail($id);
 
         $duplicate = LingkupMateri::where('id', '!=', $id)
-            ->where('guru_kelas_id', $request->guru_kelas_id)
+            // ->where('guru_kelas_id', $request->guru_kelas_id)
+            ->where('kelas_id', $request->kelas_id)
+            ->where('mapel_id', $request->mapel_id)
             ->where('bab_id', $request->bab_id)
             ->exists();
 
@@ -224,87 +219,89 @@ class LingkupMateriController extends Controller
         }
 
         $lingkup_materi->update([
-            'guru_kelas_id' => $request->guru_kelas_id,
+            // 'guru_kelas_id' => $request->guru_kelas_id,
+            'kelas_id' => $request->kelas_id,
+            'mapel_id' => $request->mapel_id,
             'bab_id' => $request->bab_id,
             'nama' => $request->nama,
             'periode' => $request->periode,
         ]);
 
-        return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi'])->with('success', 'Lingkup Materi berhasil diperbarui.');
+        return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi']))->with('success', 'Lingkup Materi berhasil diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         try {
             $lingkupMateri = LingkupMateri::findOrFail($id);
             $lingkupMateri->delete();
 
-            return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi'])->with('success', 'Lingkup Materi berhasil dihapus.');
+            return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi']))->with('success', 'Lingkup Materi berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi'])->with('error', 'Gagal menghapus data. Pastikan tidak sedang digunakan.');
+            return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'lingkup-materi']))->with('error', 'Gagal menghapus data. Pastikan tidak sedang digunakan.');
         }
     }
 
-    public function getByKelasMapelBab(Request $request)
-    {
-        $kelasId = $request->input('k');
-        $mapelId = $request->input('m');
-        $babId   = $request->input('b');
+    // public function getByKelasMapelBab(Request $request)
+    // {
+    //     $kelasId = $request->input('k');
+    //     $mapelId = $request->input('m');
+    //     $babId   = $request->input('b');
 
-        $data = LingkupMateri::where('kelas_id', $kelasId)
-            ->where('mapel_id', $mapelId)
-            ->where('bab_id', $babId)
-            ->get(['id', 'lingkup_materi']);
+    //     $data = LingkupMateri::where('kelas_id', $kelasId)
+    //         ->where('mapel_id', $mapelId)
+    //         ->where('bab_id', $babId)
+    //         ->get(['id', 'lingkup_materi']);
 
-        return response()->json($data);
-    }
+    //     return response()->json($data);
+    // }
 
-    public function getByKelas(Request $request, $kelasId)
-    {
-        $data = GuruKelas::with('mapel')
-            ->where('kelas_id', $kelasId)
-            ->where('peran', 'pengajar')
-            ->get()
-            ->map(fn($gk) => [
-                'id' => $gk->id,
-                'mapel' => $gk->mapel->nama,
-            ]);
+    // public function getByKelas(Request $request, $kelasId)
+    // {
+    //     $data = GuruKelas::with('mapel')
+    //         ->where('kelas_id', $kelasId)
+    //         ->where('peran', 'pengajar')
+    //         ->get()
+    //         ->map(fn($gk) => [
+    //             'id' => $gk->id,
+    //             'mapel' => $gk->mapel->nama,
+    //         ]);
 
-        return response()->json($data);
-    }
+    //     return response()->json($data);
+    // }
 
-    public function duplikatLingkupMateri(Request $request)
-    {
-        $request->validate([
-            'source_guru_kelas_id' => 'required|exists:guru_kelas,id',
-            'target_guru_kelas_id' => 'required|exists:guru_kelas,id|different:source_guru_kelas_id',
-        ]);
+    // public function duplikatLingkupMateri(Request $request)
+    // {
+    //     $request->validate([
+    //         'source_guru_kelas_id' => 'required|exists:guru_kelas,id',
+    //         'target_guru_kelas_id' => 'required|exists:guru_kelas,id|different:source_guru_kelas_id',
+    //     ]);
 
-        $sourceId = $request->source_guru_kelas_id;
-        $targetId = $request->target_guru_kelas_id;
+    //     $sourceId = $request->source_guru_kelas_id;
+    //     $targetId = $request->target_guru_kelas_id;
 
-        $sourceLingkupList = LingkupMateri::where('guru_kelas_id', $sourceId)->get();
+    //     $sourceLingkupList = LingkupMateri::where('guru_kelas_id', $sourceId)->get();
 
-        foreach ($sourceLingkupList as $sourceLingkup) {
-            $newLingkup = LingkupMateri::create([
-                'guru_kelas_id' => $targetId,
-                'bab_id' => $sourceLingkup->bab_id,
-                'nama' => $sourceLingkup->nama,
-            ]);
+    //     foreach ($sourceLingkupList as $sourceLingkup) {
+    //         $newLingkup = LingkupMateri::create([
+    //             'guru_kelas_id' => $targetId,
+    //             'bab_id' => $sourceLingkup->bab_id,
+    //             'nama' => $sourceLingkup->nama,
+    //         ]);
 
-            foreach ($sourceLingkup->tujuanPembelajaran as $tp) {
-                TujuanPembelajaran::create([
-                    'lingkup_materi_id' => $newLingkup->id,
-                    'nama' => $tp->nama,
-                    'kode_tujuan_pembelajaran' => $tp->kode_tujuan_pembelajaran,
-                    'deskripsi' => $tp->deskripsi,
-                ]);
-            }
-        }
+    //         foreach ($sourceLingkup->tujuanPembelajaran as $tp) {
+    //             TujuanPembelajaran::create([
+    //                 'lingkup_materi_id' => $newLingkup->id,
+    //                 'nama' => $tp->nama,
+    //                 'kode_tujuan_pembelajaran' => $tp->kode_tujuan_pembelajaran,
+    //                 'deskripsi' => $tp->deskripsi,
+    //             ]);
+    //         }
+    //     }
 
-        return back()->with('success', 'Data lingkup materi & tujuan pembelajaran berhasil diduplikat.');
-    }
+    //     return back()->with('success', 'Data lingkup materi & tujuan pembelajaran berhasil diduplikat.');
+    // }
 }

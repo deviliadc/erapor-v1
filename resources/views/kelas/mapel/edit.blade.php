@@ -1,19 +1,18 @@
 @foreach ($mapelList as $item)
-    <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Mapel" maxWidth="2xl">
+    <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Mata Pelajaran" maxWidth="2xl">
         {{-- <form action="{{ route('kelas-mapel.update', ['kelas' => $kelas->id, 'mapel' => $item['id']]) }}" method="POST" class="space-y-6 sm:p-6"> --}}
-            <form action="{{ route('kelas-mapel.update', ['kelas_mapel' => $item['id']]) }}" method="POST" class="space-y-6 sm:p-6">
+            <form action="{{ role_route('kelas.mapel.update', ['kelas' => $kelas->id, 'mapel' => $item['id']]) }}" method="POST" class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')
 
             {{-- Mapel --}}
             <x-form.select
-                name="mapel_id[]"
+                name="mapel_id"
                 label="Mapel"
-                :options="$mapelSelect"
+                :options="$item['mapelSelect']"
                 placeholder="Pilih Mapel"
                 :selected="$item['mapel_id']"
                 :searchable="true"
-                multiple
                 required
             />
 

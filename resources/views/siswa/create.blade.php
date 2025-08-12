@@ -14,8 +14,8 @@
                 {{-- Nama --}}
                 <x-form.input label="Nama" name="nama" :value="old('nama')" required />
 
-                {{-- NIS --}}
-                <x-form.input label="NIS" name="nis" :value="old('nis')" required />
+                {{-- NIPD --}}
+                <x-form.input label="NIPD" name="nipd" :value="old('nipd')" required />
 
                 {{-- NISN --}}
                 <x-form.input label="NISN" name="nisn" :value="old('nisn')" required />
@@ -68,7 +68,7 @@
                 </div>
 
                 {{-- Pilih Wali --}}
-                @php
+                {{-- @php
                     $waliOptions = $wali_list->mapWithKeys(function ($wali) {
                         $labelParts = [];
 
@@ -96,12 +96,12 @@
                     placeholder="-- Pilih Wali --" selected="{{ old('wali_murid_id') }}"
                     onchange="toggleWaliForm(this.value)" />
 
-                <div id="wali_baru_inputs" style="display: none;" class="space-y-6 mt-4">
+                <div id="wali_baru_inputs" style="display: none;" class="space-y-6 mt-4"> --}}
                     {{-- Nama Ayah --}}
-                    <x-form.input label="Nama Ayah" name="nama_ayah" :value="old('nama_ayah')" />
+                    <x-form.input label="Nama Ayah" name="nama_ayah" :value="old('nama_ayah')" required/>
 
                     {{-- Nama Ibu --}}
-                    <x-form.input label="Nama Ibu" name="nama_ibu" :value="old('nama_ibu')" />
+                    <x-form.input label="Nama Ibu" name="nama_ibu" :value="old('nama_ibu')" required/>
 
                     {{-- Nama Wali --}}
                     <x-form.input label="Nama Wali" name="nama_wali" :value="old('nama_wali')" />
@@ -110,10 +110,10 @@
                     <x-form.input label="No HP" name="no_hp_wali" :value="old('no_hp_wali')" placeholder="628xxxxxxxxxx" />
 
                     {{-- Pekerjaan Ayah --}}
-                    <x-form.input label="Pekerjaan Ayah" name="pekerjaan_ayah" :value="old('pekerjaan_ayah')" />
+                    <x-form.input label="Pekerjaan Ayah" name="pekerjaan_ayah" :value="old('pekerjaan_ayah')" required/>
 
                     {{-- Pekerjaan Ibu --}}
-                    <x-form.input label="Pekerjaan Ibu" name="pekerjaan_ibu" :value="old('pekerjaan_ibu')" />
+                    <x-form.input label="Pekerjaan Ibu" name="pekerjaan_ibu" :value="old('pekerjaan_ibu')" required/>
 
                     {{-- Pekerjaan Wali --}}
                     <x-form.input label="Pekerjaan Wali" name="pekerjaan_wali" :value="old('pekerjaan_wali')" />
@@ -122,7 +122,7 @@
                     <x-form.textarea label="Alamat" name="alamat_wali" placeholder="Masukkan alamat" rows="4">
                         {{ old('alamat_wali') }}
                     </x-form.textarea>
-                </div>
+                {{-- </div> --}}
 
                 {{-- Submit --}}
                 <div class="flex justify-end">

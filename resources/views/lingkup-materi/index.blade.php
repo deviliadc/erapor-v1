@@ -48,8 +48,16 @@
         :actions="[
             'detail' => true,
             'edit' => true,
-            'delete' => true,
+            // 'delete' => true,
             // 'editRoute' => role_route('lingkup-materi.edit'),
+            'delete' => $canDelete,
+            'routes' => [
+                // 'edit' => fn($item) => role_route('siswa.edit', ['siswa' => $item['id']]),
+                'detail' => fn($item) => role_route('lingkup-materi.show', ['lingkup-materi' => $item['id']]),
+                'delete' => $canDelete
+                    ? fn($item) => role_route('lingkup-materi.destroy', ['lingkup-materi' => $item['id']])
+                    : null,
+            ]
         ]"
         :use-modal-edit="true"/>
     </div>

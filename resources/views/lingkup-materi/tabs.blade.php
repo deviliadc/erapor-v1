@@ -11,7 +11,7 @@
     :enable-import="false"
     :enable-export="false"
     :enable-search="true"
-    :route-create="route('mapel.index')">
+    :route-create="role_route('mapel.index')">
     <x-slot name="addButton">
         <button type="button"
             onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-lingkup-materi' }))"
@@ -44,8 +44,13 @@ row-view="lingkup-materi.partials.row"
     // 'detail' => true,
     'edit' => true,
     'delete' => true,
+    // 'routes' => [
+    //     'delete' => fn($item) => route('lingkup-materi.destroy', $item['id']),
+    // ],
     'routes' => [
-        'delete' => fn($item) => route('lingkup-materi.destroy', $item['id']),
-    ],
+        'detail' => fn($item) => role_route('lingkup-materi.show', ['lingkup_materi' => $item['id']]),
+        // 'edit' => fn($item) => role_route('lingkup-materi.edit', ['lingkup_materi' => $item['id']]),
+        'delete' => fn($item) => role_route('lingkup-materi.destroy', ['lingkup_materi' => $item['id']]),
+    ]
 ]"
 :use-modal-edit="true"/>

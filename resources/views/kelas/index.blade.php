@@ -56,6 +56,7 @@ $filters = [
             // 'no' => ['label' => 'No', 'sortable' => false],
             // 'id' => ['label' => 'ID', 'sortable' => true],
             'nama' => ['label' => 'Nama Kelas', 'sortable' => false],
+            'fase' => ['label' => 'Fase', 'sortable' => false],
             'wali' => ['label' => 'Wali Kelas', 'sortable' => false],
             'mapel' => ['label' => 'Mapel', 'sortable' => false],
             'siswa' => ['label' => 'Siswa', 'sortable' => false],

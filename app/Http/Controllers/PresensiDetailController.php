@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PresensiDetail;
 use App\Models\PresensiHarian;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -66,9 +67,9 @@ class PresensiDetailController extends Controller
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
-        $title = 'Detail Presensi ' . $presensi->tanggal;
+        $title = 'Detail Presensi';
         $breadcrumbs = [
-            ['label' => 'Presensi Harian', 'url' => route('presensi-harian.index')],
+            ['label' => 'Presensi Harian', 'url' => role_route('presensi-harian.index')],
             ['label' => 'Detail Presensi']
         ];
 
@@ -93,7 +94,21 @@ class PresensiDetailController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'status' => 'required|string',
+            'keterangan' => 'nullable|string|max:255',
+        ]);
+
+        $presensi_detail = PresensiDetail::findOrFail($id);
+        $presensi_harian_id = $presensi_detail->presensi_harian_id;
+
+        $presensi_detail->update([
+            'status' => $request->status,
+            'keterangan' => $request->keterangan,
+        ]);
+
+        return redirect()->to(role_route('presensi-harian.show', ['presensi_harian' => $presensi_harian_id]))
+            ->with('success', 'Presensi berhasil diperbarui.');
     }
 
     /**

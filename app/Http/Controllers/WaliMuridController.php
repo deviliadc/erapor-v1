@@ -15,42 +15,41 @@ class WaliMuridController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-
-        // Awali query
         $query = WaliMurid::with('siswa');
-
-        // Filter pencarian
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('nama_ayah', 'like', "%{$search}%")
                     ->orWhere('nama_ibu', 'like', "%{$search}%")
-                    ->orWhere('nama_wali', 'like', "%{$search}%");
+                    ->orWhere('nama_wali', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhere('pekerjaan_ayah', 'like', "%{$search}%")
+                    ->orWhere('pekerjaan_ibu', 'like', "%{$search}%")
+                    ->orWhere('pekerjaan_wali', 'like', "%{$search}%");
             });
         }
-
-        // Ambil jumlah total setelah filter
         $totalCount = $query->count();
-
-        $wali_murid = $query->paginate($perPage)->withQueryString()->through(function ($item) {
-            return [
-                'id'                => $item->id,
-                'nama_ayah'         => $item->nama_ayah,
-                'nama_ibu'          => $item->nama_ibu,
-                'nama_wali'         => $item->nama_wali ?? '-',
-                'no_hp'             => $item->no_hp ?? '-',
-                'pekerjaan_ayah'    => $item->pekerjaan_ayah,
-                'pekerjaan_ibu'     => $item->pekerjaan_ibu,
-                'pekerjaan_wali'    => $item->pekerjaan_wali ?? '-',
-                'alamat'            => $item->alamat ?? '-',
-                // 'anak'              => $item->siswa->map(fn($s) => $s->nama),
-                'jumlah_anak'       => $item->siswa->count(),
-            ];
-        });
-
-        // Breadcrumb dan title
+        $paginator = $query->paginate($perPage);
+        if ($paginator && is_object($paginator) && method_exists($paginator, 'through')) {
+            $wali_murid = $paginator->through(function ($item) {
+                return [
+                    'id'                => $item->id,
+                    'nama_ayah'         => $item->nama_ayah,
+                    'nama_ibu'          => $item->nama_ibu,
+                    'nama_wali'         => $item->nama_wali ?? '-',
+                    'no_hp'             => $item->no_hp ?? '-',
+                    'pekerjaan_ayah'    => $item->pekerjaan_ayah,
+                    'pekerjaan_ibu'     => $item->pekerjaan_ibu,
+                    'pekerjaan_wali'    => $item->pekerjaan_wali ?? '-',
+                    'alamat'            => $item->alamat ?? '-',
+                    'jumlah_anak'       => $item->siswa->count(),
+                ];
+            });
+        } else {
+            $wali_murid = collect([]);
+        }
         $breadcrumbs = [
-            ['label' => 'Manage Wali Murid', 'url' => route('wali-murid.index')]
+            ['label' => 'Manage Wali Murid']
         ];
         $title = 'Manage Wali Murid';
 
@@ -66,7 +65,7 @@ class WaliMuridController extends Controller
         $siswa = Siswa::whereNull('wali_murid_id')->get();
 
         $breadcrumbs = [
-            ['label' => 'Manage Wali Murid', 'url' => route('wali-murid.index')],
+            ['label' => 'Manage Wali Murid', 'url' => role_route('wali-murid.index')],
             ['label' => 'Create Wali Murid'],
         ];
 
@@ -92,7 +91,6 @@ class WaliMuridController extends Controller
             'pekerjaan_ibu' => 'nullable|string',
             'pekerjaan_wali' => 'nullable|string',
         ]);
-
         // Simpan data wali murid
         $wali = WaliMurid::create([
             'nama_ayah' => $validated['nama_ayah'] ?? null,
@@ -104,21 +102,37 @@ class WaliMuridController extends Controller
             'pekerjaan_ibu' => $validated['pekerjaan_ibu'] ?? null,
             'pekerjaan_wali' => $validated['pekerjaan_wali'] ?? null,
         ]);
-
         // Update semua siswa yang dipilih
         Siswa::whereIn('id', $validated['siswa_id'])->update([
             'wali_murid_id' => $wali->id
         ]);
-
-        return redirect()->route('wali-murid.index')->with('success', 'Wali murid berhasil ditambahkan.');
+        return redirect()->to(role_route('wali-murid.index'))->with('success', 'Wali murid berhasil ditambahkan.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        //
+        $wali_murid = WaliMurid::with('siswa')->findOrFail($id);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search');
+        $siswaQuery = Siswa::where('wali_murid_id', $wali_murid->id);
+        $totalCount = $siswaQuery->count();
+        if (!empty($search)) {
+            $siswaQuery->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('nipd', 'like', "%{$search}%")
+                    ->orWhere('nisn', 'like', "%{$search}%");
+            });
+        }
+        $siswa = $siswaQuery->paginate($perPage);
+                $breadcrumbs = [
+            ['label' => 'Manage Wali Murid', 'url' => role_route('wali-murid.index')],
+            ['label' => 'Detail Wali Murid'],
+        ];
+        $title = 'Detail Wali Murid';
+        return view('wali-murid.show', compact( 'wali_murid', 'siswa', 'breadcrumbs', 'title', 'totalCount'));
     }
 
     /**
@@ -130,7 +144,7 @@ class WaliMuridController extends Controller
         $siswa = Siswa::all();
 
         $breadcrumbs = [
-            ['label' => 'Manage Wali Murid', 'url' => route('wali-murid.index')],
+            ['label' => 'Manage Wali Murid', 'url' => role_route('wali-murid.index')],
             ['label' => 'Edit Wali Murid'],
         ];
 
@@ -145,7 +159,6 @@ class WaliMuridController extends Controller
     public function update(Request $request, string $id)
     {
         $wali_murid = WaliMurid::findOrFail($id);
-
         $validated = $request->validate([
             'siswa_id' => 'required|exists:siswa,id',
             'nama_ayah' => 'nullable|string|max:255',
@@ -162,7 +175,6 @@ class WaliMuridController extends Controller
             'pekerjaan_ibu'   => 'nullable|string',
             'pekerjaan_wali'  => 'nullable|string',
         ]);
-
         // Format nomor HP wali
         if (!empty($validated['no_hp'])) {
             $noHp = preg_replace('/[^0-9]/', '', $validated['no_hp']);
@@ -171,9 +183,7 @@ class WaliMuridController extends Controller
             }
             $validated['no_hp'] = $noHp; // disimpan ke kolom `no_hp` di DB
         }
-
         $wali_murid->update($validated);
-
         return redirect()->route('wali-murid.index')->with('success', 'Data wali murid berhasil diperbarui.');
     }
 
@@ -186,9 +196,9 @@ class WaliMuridController extends Controller
             $wali_murid = WaliMurid::findOrFail($id);
             $wali_murid->delete();
 
-            return redirect()->route('wali-murid.index')->with('success', 'Data wali murid berhasil dihapus.');
+            return redirect()->to(role_route('wali-murid.index'))->with('success', 'Data wali murid berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('wali-murid.index')->with('error', 'Gagal menghapus data.');
+            return redirect()->to(role_route('wali-murid.index'))->with('error', 'Gagal menghapus data.');
         }
     }
 }

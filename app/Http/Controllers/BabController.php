@@ -15,35 +15,7 @@ class BabController extends Controller
      */
     public function index(Request $request)
     {
-        // $perPage = $request->input('per_page', 10);
-        // $sortBy = $request->input('sortBy', 'id'); // default sorting
-        // $sortDirection = $request->input('sortDirection', 'asc'); // default direction
-
-        // $query = Bab::query();
-
-        // if ($search = $request->input('search')) {
-        //     $query->where('nama', 'like', "%$search%");
-        // }
-
-        // // Validasi nama kolom yang boleh di-sort (whitelist)
-        // $allowedSorts = ['id', 'nama', 'created_at'];
-        // if (in_array($sortBy, $allowedSorts)) {
-        //     $query->orderBy($sortBy, $sortDirection);
-        // }
-
-        // $totalCount = $query->count();
-        // $paginator = $query->paginate($perPage)->withQueryString();
-
-        // // data untuk tampilan
-        // $bab = $paginator;
-
-        // $breadcrumbs = [
-        //     ['label' => 'Manage Bab', 'url' => route('bab.index')]
-        // ];
-
-        // $title = 'Manage Bab';
-
-        // return view('bab.index',  compact('bab', 'totalCount', 'breadcrumbs', 'title'));
+        // 
     }
 
     /**
@@ -72,7 +44,7 @@ class BabController extends Controller
                 'nama' => $request->nama,
             ]);
 
-            return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'bab'])->with('success', 'Bab berhasil ditambahkan.');
+            return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'bab']))->with('success', 'Bab berhasil ditambahkan.');
         } catch (QueryException $e) {
             if ($e->errorInfo[1] == 1062) {
                 // Duplikat entry
@@ -98,7 +70,7 @@ class BabController extends Controller
     public function edit(string $id)
     {
         $bab = Bab::findOrFail($id);
-        
+
         $item = [
             'id' => $bab->id,
             'nama' => $bab->nama,
@@ -115,12 +87,12 @@ class BabController extends Controller
         $bab = Bab::findOrFail($id);
 
         $validated = $request->validate([
-            'nama'       => 'required|string|max:100',
+            'nama' => 'required|string|max:100|unique:bab,nama,' . $bab->id,
         ]);
 
         $bab->update($validated);
 
-        return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'bab'])->with('success', 'Bab berhasil diperbarui.');
+        return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'bab']))->with('success', 'Bab berhasil diperbarui.');
     }
 
     /**
@@ -130,10 +102,24 @@ class BabController extends Controller
     {
         try {
             $bab = Bab::findOrFail($id);
+
+            // Cek relasi ke LingkupMateri, TujuanPembelajaran, dll
+            $related = (
+                $bab->lingkupMateri()->exists() ||
+                $bab->tujuanPembelajaran()->exists()
+            );
+
+            if ($related) {
+                return redirect()->to(role_route('mapel.index', ['tab' => request('tab', 'bab')]))
+                    ->with('error', 'Bab tidak bisa dihapus karena masih digunakan pada data lain.');
+            }
+
             $bab->delete();
-            return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'bab'])->with('success', 'Bab berhasil dihapus.');
+            return redirect()->to(role_route('mapel.index', ['tab' => request('tab', 'bab')]))
+                ->with('success', 'Bab berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'bab'])->with('error', 'Gagal menghapus bab. Pastikan tidak sedang digunakan.');
+            return redirect()->to(role_route('mapel.index', ['tab' => request('tab', 'bab')]))
+                ->with('error', 'Gagal menghapus bab. Pastikan tidak sedang digunakan.');
         }
     }
 }

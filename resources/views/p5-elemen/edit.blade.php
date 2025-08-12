@@ -1,6 +1,6 @@
 @foreach ($elemen as $item)
     <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit P5 Elemen" maxWidth="2xl">
-        <form action="{{ route('p5-elemen.update', ['p5_eleman' => $item['id']], ['tab' => request('tab', 'elemen')]) }}" method="POST"
+        <form action="{{ role_route('p5-elemen.update', ['p5_eleman' => $item['id']], ['tab' => request('tab', 'elemen')]) }}" method="POST"
             class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')
@@ -19,13 +19,20 @@
             />
 
             {{-- Nama Elemen --}}
-            <x-form.input label="Nama Elemen" name="nama_elemen" required
+            <x-form.input
+                label="Nama Elemen"
+                name="nama_elemen"
                 placeholder="Masukkan nama elemen"
-                :value="old('nama_elemen', $item['nama_elemen'])" />
+                :value="old('nama_elemen', $item['nama_elemen'])"
+                required/>
 
             {{-- Deskripsi Elemen --}}
-            <x-form.textarea label="Deskripsi Elemen" name="deskripsi_elemen"
-                placeholder="Masukkan deskripsi" rows="4" :value="old('deskripsi_elemen', $item['deskripsi_elemen'])" />
+            {{-- <x-form.textarea
+                label="Deskripsi Elemen"
+                name="deskripsi_elemen"
+                placeholder="Masukkan deskripsi"
+                rows="4"
+                :value="old('deskripsi_elemen', $item['deskripsi_elemen'])" /> --}}
 
             <div class="flex justify-end">
                 <button type="submit"

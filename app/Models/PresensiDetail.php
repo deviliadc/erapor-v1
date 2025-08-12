@@ -16,6 +16,7 @@ class PresensiDetail extends Model
         'kelas_siswa_id',
         'status',
         'keterangan',
+        // 'periode',
     ];
 
     public function presensiHarian()

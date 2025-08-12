@@ -1,6 +1,7 @@
+{{-- filepath: d:\DEVI\DRAFT\erapor-v1\resources\views\mapel\edit.blade.php --}}
 @foreach ($mapel as $item)
     <x-modal name="edit-modal-{{ $item['id'] }}" title="Edit Mata Pelajaran" maxWidth="2xl">
-        <form action="{{ route('mapel.update', ['mapel' => $item['id'], 'tab' => request('tab', 'mapel')]) }}" method="POST"
+        <form action="{{ role_route('mapel.update', ['mapel' => $item['id'], 'tab' => request('tab', 'mapel')]) }}" method="POST"
             class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')
@@ -10,7 +11,7 @@
             <x-form.input
                 name="kode_mapel"
                 label="Kode Mapel"
-                value="{{ old('kode_mapel', $item['kode_mapel']) }}"
+                value="{{ old('kode_mapel', $item['kode_mapel'] ?? '') }}"
                 required
             />
 
@@ -18,7 +19,7 @@
             <x-form.input
                 name="nama"
                 label="Nama Mapel"
-                value="{{ old('nama', $item['nama']) }}"
+                value="{{ old('nama', $item['nama'] ?? '') }}"
                 required
             />
 
@@ -27,7 +28,7 @@
                 name="kategori"
                 label="Kategori"
                 :options="['Wajib' => 'Wajib', 'Muatan Lokal' => 'Muatan Lokal']"
-                :selected="old('kategori', $item['kategori'])"
+                :selected="old('kategori', $item['kategori'] ?? '')"
                 required
             />
 

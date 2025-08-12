@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Kelas;
 use App\Models\KelasSiswa;
+use App\Models\GuruKelas;
 use App\Models\PresensiDetail;
 use App\Models\PresensiHarian;
 use App\Models\TahunSemester;
@@ -17,21 +18,10 @@ class PresensiHarianController extends Controller
      */
     public function index(Request $request)
     {
-        // $paginator = PresensiHarian::with('kelas')
-        //     ->orderByDesc('tanggal')
-        //     ->paginate(10)
-        //     ->withQueryString();
-
-        // $data = $paginator->getCollection()->map(function ($item) {
-        //     return [
-        //         'id' => $item->id,
-        //         'tanggal' => $item->tanggal,
-        //         'kelas' => $item->kelas->nama ?? '-',
-        //         'catatan' => $item->catatan ?? '-',
-        //     ];
-        // });
-        // $paginator->setCollection($data);
-        $selectedTahun = $request->input('tahun_semester_id');
+        // Ambil tahun ajaran aktif
+        $tahunAktif = TahunSemester::where('is_active', true)->first();
+        // Jika user memilih tahun, pakai itu, jika tidak pakai tahun aktif
+        $selectedTahun = $request->input('tahun_semester_id', $tahunAktif?->id);
 
         $paginator = PresensiHarian::with('kelas')
             ->when($selectedTahun, function ($query) use ($selectedTahun) {
@@ -53,13 +43,12 @@ class PresensiHarianController extends Controller
         });
         $paginator->setCollection($data);
 
-        $breadcrumbs = [
-            ['label' => 'Presensi Harian', 'url' => route('presensi-harian.index')],
-        ];
-
-        $title = 'Presensi Harian';
-
         $tahun_semester = TahunSemester::orderByDesc('tahun')->get();
+
+        $breadcrumbs = [
+            ['label' => 'Presensi Harian'],
+        ];
+        $title = 'Presensi Harian';
 
         return view('presensi-harian.index', [
             'data' => $paginator,
@@ -76,28 +65,57 @@ class PresensiHarianController extends Controller
      */
     public function create(Request $request)
     {
-        // $kelas = Kelas::all();
-        // $siswa = collect();
-        // if ($request->kelas_id) {
-        //     $siswa = Siswa::whereHas('kelas', function($q) use ($request) {
-        //         $q->where('kelas.id', $request->kelas_id);
-        //     })->get();
-        // }
-        // return view('presensi-harian.create', compact('kelas', 'siswa'));
-        $kelas = Kelas::all();
+        $user = Auth::user();
+        $kelasId = $request->kelas_id;
+        $tahun = TahunSemester::where('is_active', true)->first();
+
+        $kelas = collect(); // Default: kosong
         $siswa = collect();
 
-        if ($request->kelas_id) {
-            $tahun = TahunSemester::where('is_active', true)->first();
+        $canFill = false;
 
+        if ($user->hasRole('admin')) {
+            $kelas = Kelas::all();
+            $canFill = true;
+        } elseif ($user->hasRole('guru')) {
+            $guru = $user->guru;
+            // Ambil kelas yang diampu sebagai wali atau pengajar di tahun aktif
+            $kelasIds = GuruKelas::where('guru_id', $guru->id)
+                ->where('tahun_semester_id', $tahun->id ?? null)
+                ->whereIn('peran', ['wali', 'pengajar'])
+                ->pluck('kelas_id');
+            $kelas = Kelas::whereIn('id', $kelasIds)->get();
+            $canFill = $kelasIds->isNotEmpty();
+        }
+
+        if ($kelasId && $canFill) {
             $siswa = KelasSiswa::with('siswa')
-                ->where('kelas_id', $request->kelas_id)
+                ->where('kelas_id', $kelasId)
                 ->where('tahun_semester_id', $tahun->id ?? null)
                 ->orderBy('no_absen')
                 ->get();
         }
 
-        return view('presensi-harian.create', compact('kelas', 'siswa'));
+        if ($kelasId) {
+            $siswa = KelasSiswa::with('siswa')
+                ->where('kelas_id', $kelasId)
+                ->where('tahun_semester_id', $tahun->id ?? null)
+                ->orderBy('no_absen')
+                ->get();
+        }
+
+        $breadcrumbs = [
+            ['label' => 'Presensi Harian', 'url' => role_route('presensi-harian.index')],
+            ['label' => 'Buat Presensi'],
+        ];
+        $title = 'Buat Presensi Harian';
+
+        return view('presensi-harian.create', compact(
+            'kelas',
+            'siswa',
+            'breadcrumbs',
+            'title'
+        ));
     }
 
     /**
@@ -105,6 +123,10 @@ class PresensiHarianController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+        $kelas_id = $request->kelas_id;
+        $tahun = TahunSemester::where('is_active', true)->first();
+
         $tanggal = $request->tanggal;
         $kelas_id = $request->kelas_id;
 
@@ -123,8 +145,17 @@ class PresensiHarianController extends Controller
                 }
             ],
             'catatan' => 'nullable|string|max:255',
+            // 'periode' => 'required|in:tengah,akhir',
         ]);
 
+        $tahun = TahunSemester::where('is_active', true)->first();
+        $jumlahSiswa = KelasSiswa::where('kelas_id', $kelas_id)
+            ->where('tahun_semester_id', $tahun->id ?? null)
+            ->count();
+
+        if ($jumlahSiswa < 1) {
+            return redirect()->back()->with('error', 'Tidak ada siswa di kelas ini. Presensi tidak bisa disimpan.');
+        }
 
         // Cek atau buat presensi_harian
         $presensi = PresensiHarian::updateOrCreate(
@@ -135,6 +166,7 @@ class PresensiHarianController extends Controller
             [
                 // 'input_by' => Auth::id(),
                 'catatan' => $request->catatan,
+                'periode' => 'akhir',
             ]
         );
 
@@ -146,13 +178,14 @@ class PresensiHarianController extends Controller
                     'kelas_siswa_id' => $kelas_siswa_id,
                 ],
                 [
+                    'periode' => 'akhir',
                     'status' => $status,
                     'keterangan' => $request->keterangan[$kelas_siswa_id] ?? null,
                 ]
             );
         }
 
-        return redirect()->route('presensi-harian.index')->with('success', 'Presensi berhasil disimpan');
+        return redirect()->to(role_route('presensi-harian.index'))->with('success', 'Presensi berhasil disimpan');
     }
 
     /**
@@ -160,7 +193,7 @@ class PresensiHarianController extends Controller
      */
     public function show(string $id)
     {
-        return redirect()->route('presensi-detail.show', $id);
+        return redirect()->to(role_route('presensi-detail.show', ['presensi_detail' => $id]));
     }
 
     /**
@@ -193,7 +226,7 @@ class PresensiHarianController extends Controller
             'catatan' => $request->catatan,
         ]);
 
-        return redirect()->route('presensi-harian.index')->with('success', 'Catatan presensi berhasil diperbarui.');
+        return redirect()->to(role_route('presensi-harian.index'))->with('success', 'Catatan presensi berhasil diperbarui.');
     }
 
     /**
@@ -201,6 +234,13 @@ class PresensiHarianController extends Controller
      */
     public function destroy(string $id)
     {
+        try {
+            $presensi = PresensiHarian::findOrFail($id);
+            $presensi->delete();
 
+            return redirect()->to(role_route('presensi-harian.index'))->with('success', 'Presensi berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->to(role_route('presensi-harian.index'))->with('error', 'Gagal menghapus presensi. Pastikan tidak sedang digunakan.');
+        }
     }
 }

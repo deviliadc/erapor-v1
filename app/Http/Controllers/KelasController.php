@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Fase;
 use App\Models\Guru;
 use App\Models\GuruKelas;
 use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\TahunSemester;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 class KelasController extends Controller
 {
@@ -23,8 +22,9 @@ class KelasController extends Controller
         // Ambil tahun semester dari filter, default ke tahun aktif
         $tahunAktif = TahunSemester::where('is_active', true)->first();
         $tahunSemesterId = $request->input('tahun_semester_filter', $tahunAktif ? $tahunAktif->id : null);
-
-        $query = Kelas::query();
+        $query = Kelas::query()
+            ->orderBy('nama', 'asc')
+            ->orderBy('fase_id', 'asc');
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
 
@@ -33,36 +33,37 @@ class KelasController extends Controller
 
         // Data untuk tampilan
         $kelas = $paginator->through(function ($item) use ($tahunSemesterId) {
-            $waliKelas = $item->guruKelas()
-                ->where('peran', 'wali')
-                ->where('tahun_semester_id', $tahunSemesterId)
-                ->with('guru')
-                ->first();
+            $waliKelas = $item->waliKelas($tahunSemesterId); // Sudah method custom, return Guru atau null
+
+            $fase = $item->fase ? $item->fase->nama : ($item->fase ?? '-');
+
+            $mapelList = $item->getMapel($tahunSemesterId); // Method custom, return collection Mapel
 
             return [
                 'id' => $item->id,
                 'nama' => $item->nama,
-                'wali' => $waliKelas && $waliKelas->guru ? $waliKelas->guru->nama : '-',
-                'wali_kelas_id' => $waliKelas ? $waliKelas->guru_id : null,
-                'mapel' => $item->mapel ? $item->mapel->map(function ($m) {
-                    return ['nama' => $m->nama];
-                })->toArray() : [],
+                'fase_id' => $item->fase_id,
+                'fase' => $fase,
+                'wali' => $waliKelas ? $waliKelas->nama : '-',
+                'wali_kelas_id' => $waliKelas ? $waliKelas->id : null,
+                'mapel' => $mapelList ? $mapelList->map(fn($m) => ['nama' => $m->nama])->toArray() : [],
                 'mapel_count' => $item->guruKelas()
                     ->where('peran', 'pengajar')
                     ->where('tahun_semester_id', $tahunSemesterId)
                     ->count(),
-                'siswa_count' => \App\Models\KelasSiswa::where('kelas_id', $item->id)
+                'siswa_count' => KelasSiswa::where('kelas_id', $item->id)
                     ->where('tahun_semester_id', $tahunSemesterId)
                     ->count(),
             ];
         });
 
         $breadcrumbs = [
-            ['label' => 'Manage Kelas', 'url' => route('kelas.index')],
+            ['label' => 'Manage Kelas'],
         ];
 
         $title = 'Manage Kelas';
         $guru = Guru::pluck('nama', 'id');
+        $faseList = Fase::pluck('nama', 'id');
 
         // Untuk filter select
         $tahunSemesterSelect = $tahunSemesterList->map(function ($ts) {
@@ -79,6 +80,7 @@ class KelasController extends Controller
             'title',
             'tahunAktif',
             'guru',
+            'faseList',
             'tahunSemesterList',
             'tahunSemesterSelect'
         ));
@@ -89,14 +91,14 @@ class KelasController extends Controller
      */
     public function create()
     {
-        $breadcrumbs = [
-            ['label' => 'Manage Kelas', 'url' => route('kelas.index')],
-            ['label' => 'Create Kelas'],
-        ];
+        // $breadcrumbs = [
+        //     ['label' => 'Manage Kelas', 'url' => route('kelas.index')],
+        //     ['label' => 'Create Kelas'],
+        // ];
 
-        $title = 'Create Kelas';
+        // $title = 'Create Kelas';
 
-        return view('kelas.create', compact('breadcrumbs', 'title'));
+        // return view('kelas.create', compact('breadcrumbs', 'title'));
     }
 
     /**
@@ -106,26 +108,28 @@ class KelasController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:50|unique:kelas,nama',
-            'wali_kelas_id' => 'required|exists:guru,id',
+            'fase_id' => 'required|exists:fase,id',
+            // 'wali_kelas_id' => 'required|exists:guru,id',
         ]);
 
-        $kelas = Kelas::create([
+        Kelas::create([
             'nama' => $request->nama,
+            'fase_id' => $request->fase_id,
         ]);
 
         // Ambil tahun semester aktif
-        $tahunAktif = TahunSemester::where('is_active', true)->first();
+        // $tahunAktif = TahunSemester::where('is_active', true)->first();
 
         // Simpan wali kelas ke tabel guru_kelas
-        GuruKelas::create([
-            'guru_id' => $request->wali_kelas_id,
-            'kelas_id' => $kelas->id,
-            'tahun_semester_id' => $tahunAktif ? $tahunAktif->id : null,
-            'peran' => 'wali',
-            'mapel_id' => null,
-        ]);
+        // GuruKelas::create([
+        //     'guru_id' => $request->wali_kelas_id,
+        //     'kelas_id' => $kelas->id,
+        //     'tahun_semester_id' => $tahunAktif ? $tahunAktif->id : null,
+        //     'peran' => 'wali',
+        //     'mapel_id' => null,
+        // ]);
 
-        return redirect()->route('kelas.index')->with('success', 'Data kelas berhasil ditambahkan.');
+        return redirect()->to(role_route('kelas.index'))->with('success', 'Data kelas berhasil ditambahkan.');
     }
 
     /**
@@ -141,14 +145,14 @@ class KelasController extends Controller
      */
     public function edit(string $id)
     {
-        $kelas = Kelas::findOrFail($id);
+        // $kelas = Kelas::findOrFail($id);
 
-        $title = 'Edit Kelas';
-        $breadcrumbs = [
-            ['label' => 'Manage Kelas', 'url' => route('kelas.index')],
-            ['label' => 'Edit Kelas'],
-        ];
-        return view('kelas.edit', compact('kelas', 'title', 'breadcrumbs'));
+        // $title = 'Edit Kelas';
+        // $breadcrumbs = [
+        //     ['label' => 'Manage Kelas', 'url' => role_route('kelas.index')],
+        //     ['label' => 'Edit Kelas'],
+        // ];
+        // return view('kelas.edit', compact('kelas', 'title', 'breadcrumbs'));
     }
 
     /**
@@ -159,6 +163,7 @@ class KelasController extends Controller
         $request->validate([
             'nama' => 'required|string|max:50|unique:kelas,nama,' . $id,
             'wali_kelas_id' => 'required|exists:guru,id',
+            'fase_id' => 'required|exists:fase,id',
         ]);
 
         $kelas = Kelas::findOrFail($id);
@@ -166,16 +171,17 @@ class KelasController extends Controller
         $kelas->update([
             'nama' => $request->nama,
             'guru_id' => $request->wali_kelas_id,
+            'fase_id' => $request->fase_id,
         ]);
 
-        // Ambil tahun ajaran aktif
+        // Ambil tahun semester dari filter, default ke tahun aktif
         $tahunAktif = TahunSemester::where('is_active', true)->first();
+        $tahunSemesterId = $request->input('tahun_semester_filter', $tahunAktif ? $tahunAktif->id : null);
 
-        // Update atau insert wali kelas di guru_kelas
         GuruKelas::updateOrCreate(
             [
                 'kelas_id' => $kelas->id,
-                'tahun_semester_id' => $tahunAktif ? $tahunAktif->id : null,
+                'tahun_semester_id' => $tahunSemesterId,
                 'peran' => 'wali',
             ],
             [
@@ -184,7 +190,8 @@ class KelasController extends Controller
             ]
         );
 
-        return redirect()->route('kelas.index')->with('success', 'Data kelas berhasil diperbarui.');
+        return redirect()->to(role_route('kelas.index', ['tahun_semester_filter' => $tahunSemesterId]))
+            ->with('success', 'Data kelas berhasil diperbarui.');
     }
 
     /**
@@ -195,6 +202,6 @@ class KelasController extends Controller
         $kelas = Kelas::findOrFail($id);
         $kelas->delete();
 
-        return redirect()->route('kelas.index')->with('success', 'Data kelas berhasil dihapus.');
+        return redirect()->to(role_route('kelas.index'))->with('success', 'Data kelas berhasil dihapus.');
     }
 }

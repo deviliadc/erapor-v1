@@ -14,7 +14,6 @@ $filters = [
 <x-app-layout>
     {{-- Breadcrumb --}}
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
-
     {{-- Form Tambah User --}}
     @include('user.create')
     {{-- Form Edit User --}}
@@ -28,11 +27,10 @@ $filters = [
         <x-table.toolbar
             :filters="$filters"
             :enable-add-button="true"
-            :enable-import="true"
+            :enable-import="false"
             :enable-export="true"
             :enable-search="true"
-            {{-- :route-create="role_route('user.create')" --}}
-            :route="route('user.index')">
+            :route="'user'">
             <x-slot name="addButton">
                 <button type="button"
                     onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-user' }))"
@@ -50,12 +48,10 @@ $filters = [
         <x-table
         :columns="[
             'no' => ['label' => 'No', 'sortable' => false],
-            // 'id' => ['label' => 'ID', 'sortable' => true],
             'name' => ['label' => 'Name', 'sortable' => true],
             'username' => ['label' => 'Username', 'sortable' => true],
             'email' => ['label' => 'Email', 'sortable' => true],
             'roles' => ['label' => 'Roles', 'sortable' => true],
-            // 'action' => ['label' => 'Action', 'sortable' => false],
         ]"
         :data="$users"
         :total-count="$totalCount"
@@ -63,7 +59,6 @@ $filters = [
         :actions="[
             'edit' => true,
             'delete' => true,
-            // 'editRoute' => role_route('user.edit'),
         ]"
         :use-modal-edit="true"
         />

@@ -10,6 +10,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Exports\GenericExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -82,14 +86,7 @@ class UserController extends Controller
             return $role;
         });
 
-        $breadcrumbs = [
-            ['label' => 'Manage User', 'url' => route('user.index')],
-            ['label' => 'Create User'],
-        ];
-
-        $title = 'Create User';
-
-        return view('user.create', compact('roles', 'breadcrumbs', 'title'));
+        return view('user.create', compact('roles'));
     }
 
     /**
@@ -133,7 +130,8 @@ class UserController extends Controller
 
             $user->roles()->sync($request->roles);
 
-            return redirect()->route('user.index')->with('success', 'Data berhasil disimpan.');
+            // return redirect()->route('user.index')->with('success', 'Data berhasil disimpan.');
+            return redirect()->to(role_route('user.index'))->with('success', 'Data berhasil disimpan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data.');
         }
@@ -158,14 +156,7 @@ class UserController extends Controller
             return $role;
         });
 
-        $breadcrumbs = [
-            ['label' => 'Manage User', 'url' => route('user.index')],
-            ['label' => 'Edit User'],
-        ];
-
-        $title = 'Edit User';
-
-        return view('user.edit', compact('user', 'roles', 'breadcrumbs', 'title'));
+        return view('user.edit', compact('user', 'roles',));
     }
 
     /**
@@ -177,7 +168,7 @@ class UserController extends Controller
 
         $request->validate([
             'username' => 'required|unique:users,username,' . $user->id,
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'nullable|email|unique:users,email,' . $user->id,
             'roles' => 'array|required'
         ]);
 
@@ -209,7 +200,8 @@ class UserController extends Controller
 
             $user->roles()->sync($request->roles);
 
-            return redirect()->route('user.index')->with('success', 'Data berhasil disimpan.');
+            return redirect()->to(role_route('user.index'))->with('success', 'Data berhasil disimpan.');
+            // return redirect()->route('user.index')->with('success', 'Data berhasil disimpan.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data.');
         }
@@ -224,7 +216,7 @@ class UserController extends Controller
 
         // Cegah hapus diri sendiri
         if (Auth::check() && Auth::user()->id == $user->id) {
-            return redirect()->route('user.index')
+            return redirect()->to(role_route('user.index'))
                 ->with('error', 'Anda tidak bisa menghapus akun Anda sendiri.');
         }
 
@@ -240,7 +232,7 @@ class UserController extends Controller
             })->count();
 
             if ($adminCount <= 1) {
-                return redirect()->route('user.index')
+                return redirect()->to(role_route('user.index'))
                     ->with('error', 'Tidak bisa menghapus satu-satunya ');
             }
         }
@@ -256,8 +248,8 @@ class UserController extends Controller
 
         $user->delete();
 
-        return redirect()->route('user.index')
-            ->with('success', 'User berhasil dihapus.');
+        return redirect()->to(role_route('user.index'))->with('success', 'Data berhasil dihapus.');
+        // return redirect()->route('user.index')->with('success', 'User berhasil dihapus.');
     }
 
     public function template(string $id)
@@ -265,15 +257,53 @@ class UserController extends Controller
         return response()->download(public_path('templates/user_template.xlsx'));
     }
 
-    public function export(string $id)
+    public function export(Request $request)
     {
-        // $format = $request->query('format', 'excel');
+        $type = $request->input('type', 'excel');
+        $filename = $request->input('filename', 'user-data');
 
-        // if ($format === 'pdf') {
-        //     return (new UsersExport)->download('users.pdf', \Maatwebsite\Excel\Excel::DOMPDF);
-        // }
+        $query = User::with(['siswa', 'guru', 'roles']);
 
-        // return Excel::download(new UsersExport, 'users.xlsx');
+        // Filter pencarian
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('username', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('guru', fn($q2) => $q2->where('nama', 'like', "%{$search}%"))
+                    ->orWhereHas('siswa', fn($q3) => $q3->where('nama', 'like', "%{$search}%"));
+            });
+        }
+
+        // Filter role
+        if ($request->filled('role_filter')) {
+            $query->whereHas('roles', fn($q) => $q->where('roles.id', $request->role_filter));
+        }
+
+        // \Log::info('Export users:', $users->toArray());
+        $users = $query->get()->map(function ($user) {
+            return [
+                'Nama' => $user->guru?->nama ?? $user->siswa?->nama ?? '-',
+                'Username' => $user->username,
+                'Email' => $user->email,
+                'Roles' => $user->roles->pluck('name')->join(', '),
+            ];
+        });
+
+        $headings = ['Nama', 'Username', 'Email', 'Roles'];
+
+        // Jika data kosong, beri minimal 1 baris kosong agar file tetap terbuat
+        if ($users->isEmpty()) {
+            $users->push([
+                'Nama' => '',
+                'Username' => '',
+                'Email' => '',
+                'Roles' => '',
+            ]);
+        }
+
+        // Export Excel
+        return Excel::download(new GenericExport($users, $headings), $filename . '.xlsx');
     }
 
     public function import(string $id)

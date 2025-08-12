@@ -20,8 +20,6 @@ $filters = [
     {{-- Edit Catatan --}}
     @include('presensi-harian.edit')
 
-    {{-- Delete Confirmation --}}
-
     <!-- Wrapper -->
     <div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
 
@@ -31,8 +29,8 @@ $filters = [
             :enable-import="false"
             :enable-export="false"
             :enable-search="true"
-            :route="route('presensi-harian.index')"
-            :route-create="route('presensi-harian.create')"
+            :route="role_route('presensi-harian.index')"
+            :route-create="role_route('presensi-harian.create')"
         />
 
         <x-table
@@ -47,9 +45,10 @@ $filters = [
             :actions="[
                 'detail' => true,
                 'edit' => true,
-                'delete' => false,
+                'delete' => true,
                 'routes' => [
-                    'detail' => fn($item) => route('presensi-detail.show', $item['id']),
+                    'detail' => fn($item) => role_route('presensi-detail.show', ['presensi_detail' => $item['id']]),
+                    'delete' => fn($item) => role_route('presensi-harian.destroy', ['presensi_harian' => $item['id']]),
                 ]
             ]"
             :use-modal-edit="true"

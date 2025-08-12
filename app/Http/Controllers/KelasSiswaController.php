@@ -104,8 +104,8 @@ class KelasSiswaController extends Controller
 
         $title = 'Siswa Kelas ' . $kelas->nama;
         $breadcrumbs = [
-            ['label' => 'Kelas', 'url' => route('kelas.index')],
-            ['label' => 'Siswa', 'url' => route('kelas.siswa.index', $kelas->id)],
+            ['label' => 'Manage Kelas', 'url' => role_route('kelas.index')],
+            ['label' => 'Siswa'],
         ];
 
         return view('kelas.siswa.index', compact(
@@ -152,8 +152,8 @@ class KelasSiswaController extends Controller
 
         $title = 'Tambah Siswa ke Kelas ' . $kelas->nama;
         $breadcrumbs = [
-            ['label' => 'Kelas', 'url' => route('kelas.index')],
-            ['label' => 'Siswa', 'url' => route('kelas.siswa.index', $kelas->id)],
+            ['label' => 'Kelas', 'url' => role_route('kelas.index')],
+            ['label' => 'Siswa', 'url' => role_route('kelas.siswa.index', $kelas->id)],
             ['label' => 'Tambah Siswa'],
         ];
 
@@ -194,11 +194,11 @@ class KelasSiswaController extends Controller
 
         if (count($siswaTersimpan) > 0) {
             $namaSiswa = Siswa::whereIn('id', $siswaTersimpan)->pluck('nama')->toArray();
-            return redirect()->route('kelas.siswa.index', ['kelas' => $kelas, 'tahun_semester_filter' => $tahunSemesterId])
+            return redirect()->to(role_route('kelas.siswa.index', ['kelas' => $kelas, 'tahun_semester_filter' => $tahunSemesterId]))
                 ->with('warning', 'Beberapa siswa tidak ditambahkan karena sudah terdaftar di kelas lain: ' . implode(', ', $namaSiswa));
         }
 
-        return redirect()->route('kelas.siswa.index', ['kelas' => $kelas, 'tahun_semester_filter' => $tahunSemesterId])
+        return redirect()->to(role_route('kelas.siswa.index', ['kelas' => $kelas, 'tahun_semester_filter' => $tahunSemesterId]))
             ->with('success', 'Siswa berhasil ditambahkan ke kelas.');
     }
 
@@ -241,7 +241,7 @@ class KelasSiswaController extends Controller
 
         $tahunSemesterId = $request->input('tahun_semester_id');
 
-        return redirect()->route('kelas.siswa.index', ['kelas' => $kelas, 'tahun_semester_filter' => $tahunSemesterId])
+        return redirect()->to(role_route('kelas.siswa.index', ['kelas' => $kelas, 'tahun_semester_filter' => $tahunSemesterId]))
             ->with('success', 'Nomor absen berhasil diperbarui.');
     }
 
@@ -253,7 +253,7 @@ class KelasSiswaController extends Controller
         $kelasSiswa = KelasSiswa::findOrFail($id);
         $kelasSiswa->delete();
 
-        return redirect()->route('kelas.siswa.index', $kelas)->with('success', 'Siswa berhasil dihapus dari kelas.');
+        return redirect()->to(role_route('kelas.siswa.index', ['kelas' => $kelas]))->with('success', 'Siswa berhasil dihapus dari kelas.');
     }
 
     public function generateAbsen(Request $request, $kelas_id)
@@ -278,10 +278,10 @@ class KelasSiswaController extends Controller
             $ksBaru->save();
         }
 
-        return redirect()->route('kelas.siswa.index', [
+        return redirect()->to(role_route('kelas.siswa.index', [
             'kelas' => $kelas_id,
             'tahun_semester_filter' => $tahunSemesterId,
-        ])->with('success', 'Nomor absen berhasil diurutkan berdasarkan nama.');
+        ]))->with('success', 'Nomor absen berhasil diurutkan berdasarkan nama.');
     }
 
     public function promote(Request $request)
@@ -314,9 +314,9 @@ class KelasSiswaController extends Controller
             }
         }
 
-        return redirect()->route('kelas.siswa.index', [
+        return redirect()->to(role_route('kelas.siswa.index', [
             'kelas' => $request->kelas_baru_id,
             'tahun_semester_filter' => $request->tahun_baru_id,
-        ])->with('success', 'Siswa berhasil dipindahkan ke kelas baru.');
+        ]))->with('success', 'Siswa berhasil dipindahkan ke kelas baru.');
     }
 }

@@ -5,7 +5,6 @@
     <form method="POST" action="{{ route('password.update') }}" class="space-y-5 pt-4 border-t border-gray-200 dark:border-gray-700">
         @csrf
         @method('PUT')
-
         @php
             $passwordFields = [
                 ['name' => 'current_password', 'label' => 'Password Lama'],
@@ -13,11 +12,9 @@
                 ['name' => 'password_confirmation', 'label' => 'Konfirmasi Password'],
             ];
         @endphp
-
         @foreach ($passwordFields as $field)
             <x-form.password :name="$field['name']" :label="$field['label']" required/>
         @endforeach
-
         <!-- Save Button -->
         <div class="flex justify-end items-center gap-4">
             @if (session('status') === 'password-updated')
@@ -28,7 +25,7 @@
             @endif
             <button type="submit"
                 class="inline-flex items-center gap-2 px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600">
-                Save Changes
+                Save
             </button>
         </div>
     </form>

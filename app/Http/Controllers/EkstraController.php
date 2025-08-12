@@ -28,7 +28,12 @@ class EkstraController extends Controller
         $title = 'Master Data Ekstrakurikuler';
 
         return view('ekstrakurikuler.index', array_merge(
-            compact('title', 'breadcrumbs', 'tahunSemesterId', 'tahunSemesterList'),
+            compact(
+                'title',
+                'breadcrumbs',
+                'tahunSemesterId',
+                'tahunSemesterList'
+            ),
             $this->getEkstraData($request, $perPage, $tahunSemesterId),
             $this->getParameterData($request, $perPage),
         ));
@@ -48,9 +53,6 @@ class EkstraController extends Controller
             'id' => $item->id,
             'nama' => $item->nama,
             'jumlah_parameter' => $item->paramEkstra()->count(),
-            'jumlah_siswa' => SiswaEkstra::where('ekstra_id', $item->id)
-                ->where('tahun_semester_id', $tahunSemesterId)
-                ->count(),
         ]);
 
         return [
@@ -109,13 +111,13 @@ class EkstraController extends Controller
      */
     public function create()
     {
-        $breadcrumbs = [
-            ['label' => 'Manage Ekstrakurikuler', 'url' => route('ekstra.index')],
-            ['label' => 'Tambah Ekstrakurikuler']
-        ];
-        $title = 'Tambah Ekstrakurikuler';
+        // $breadcrumbs = [
+        //     ['label' => 'Manage Ekstrakurikuler', 'url' => role_route('ekstra.index')],
+        //     ['label' => 'Tambah Ekstrakurikuler']
+        // ];
+        // $title = 'Tambah Ekstrakurikuler';
 
-        return view('ekstrakurikuler.create', compact('breadcrumbs', 'title'));
+        // return view('ekstrakurikuler.create', compact('breadcrumbs', 'title'));
     }
 
     /**
@@ -129,7 +131,7 @@ class EkstraController extends Controller
 
         Ekstra::create($validated);
 
-        return redirect()->route('ekstra.index')->with('success', 'Ekstrakurikuler berhasil ditambahkan.');
+        return redirect()->to(role_route('ekstra.index'))->with('success', 'Ekstrakurikuler berhasil ditambahkan.');
     }
 
     /**
@@ -162,7 +164,7 @@ class EkstraController extends Controller
         ]);
 
         $breadcrumbs = [
-            ['label' => 'Manage Ekstrakurikuler', 'url' => route('ekstra.index')],
+            ['label' => 'Manage Ekstrakurikuler', 'url' => role_route('ekstra.index')],
             ['label' => 'Detail Ekstrakurikuler']
         ];
         $title = 'Detail Ekstrakurikuler';
@@ -185,12 +187,16 @@ class EkstraController extends Controller
         $ekstra = Ekstra::findOrFail($id);
 
         $breadcrumbs = [
-            ['label' => 'Manage Ekstrakurikuler', 'url' => route('ekstra.index')],
+            ['label' => 'Manage Ekstrakurikuler', 'url' => role_route('ekstra.index')],
             ['label' => 'Edit Ekstrakurikuler']
         ];
         $title = 'Edit Ekstrakurikuler';
 
-        return view('ekstrakurikuler.edit', compact('ekstra', 'breadcrumbs', 'title'));
+        return view('ekstrakurikuler.edit', compact(
+            'ekstra',
+            'breadcrumbs',
+            'title'
+        ));
     }
 
     /**
@@ -206,7 +212,7 @@ class EkstraController extends Controller
 
         $ekstra->update($validated);
 
-        return redirect()->route('ekstra.index')->with('success', 'Ekstrakurikuler berhasil diperbarui.');
+        return redirect()->to(role_route('ekstra.index'))->with('success', 'Ekstrakurikuler berhasil diperbarui.');
     }
 
     /**
@@ -217,9 +223,9 @@ class EkstraController extends Controller
         try {
             $ekstra = Ekstra::findOrFail($id);
             $ekstra->delete();
-            return redirect()->route('ekstra.index')->with('success', 'Ekstrakurikuler berhasil dihapus.');
+            return redirect()->to(role_route('ekstra.index'))->with('success', 'Ekstrakurikuler berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('ekstra.index')->with('error', 'Gagal menghapus ekstrakurikuler. Pastikan tidak sedang digunakan.');
+            return redirect()->to(role_route('ekstra.index'))->with('error', 'Gagal menghapus ekstrakurikuler. Pastikan tidak sedang digunakan.');
         }
     }
 }

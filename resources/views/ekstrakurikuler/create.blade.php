@@ -1,5 +1,5 @@
 <x-modal name="form-create-ekstra" title="Tambah Ekstrakurikuler" maxWidth="2xl">
-    <form action="{{ route('ekstra.store') }}" method="POST" enctype="multipart/form-data"
+    <form action="{{ role_route('ekstra.store') }}" method="POST" enctype="multipart/form-data"
         class="space-y-6 sm:p-6">
         @csrf
 

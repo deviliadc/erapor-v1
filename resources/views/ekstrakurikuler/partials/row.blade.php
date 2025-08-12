@@ -15,31 +15,3 @@
         {{ $item['jumlah_parameter'] }} Parameter
     </a>
 </td>
-{{-- <td class="px-4 py-3 text-brand-700 dark:text-brand-400 whitespace-nowrap min-w-[150px]">
-    <a href="{{ route('ekstra.kelas', ['ekstra' => $item['id']]) }}"
-        class="text-brand-600 hover:underline">
-        Lihat Kelas
-    </a>
-</td> --}}
-<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">
-    <a href="{{ route('ekstra.kelas', $item['id']) }}"
-    class="text-brand-500 hover:underline">
-        Lihat Kelas
-    </a>
-</td>
-{{-- <td class="px-4 py-3 text-brand-700 dark:text-brand-400 whitespace-nowrap min-w-[150px]">
-    <a href="#" class="text-brand-600 hover:underline"
-        @click.prevent="window.dispatchEvent(new CustomEvent('open-siswa-modal', { detail: { id: {{ $item['id'] }} } }))">
-        {{ $item['jumlah_siswa'] }}
-    </a>
-</td> --}}
-{{-- <td class="px-4 py-3 text-brand-700 dark:text-brand-400 whitespace-nowrap min-w-[150px]">
-    <a href="#" class="text-brand-600 hover:underline"
-        @click.prevent="window.dispatchEvent(new CustomEvent('open-siswa-modal', { detail: { id: {{ $item['id'] }} } }))">
-        {{ $item['kelas'] }} Kelas
-    </a>
-</td> --}}
-
-{{-- <x-modal name="edit-modal-{{ $item['id'] }}" :title="'Edit Ekstrakurikuler: ' . $item['nama']" :show="false">
-    @include('ekstrakurikuler.edit', ['item' => $item])
-</x-modal> --}}

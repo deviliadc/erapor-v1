@@ -1,5 +1,5 @@
 <x-modal name="form-create-lingkup-materi" title="Tambah Lingkup Materi" maxWidth="2xl">
-    <form action="{{ route('lingkup-materi.store', ['tab' => request('tab', 'lingkup-materi')]) }}" method="POST" enctype="multipart/form-data"
+    <form action="{{ role_route('lingkup-materi.store', ['tab' => request('tab', 'lingkup-materi')]) }}" method="POST" enctype="multipart/form-data"
         class="space-y-6 sm:p-6">
         @csrf
         <input type="hidden" name="tab" value="lingkup-materi">
@@ -16,7 +16,7 @@
         />
 
         {{-- Mapel --}}
-        <x-form.select
+        {{-- <x-form.select
             name="guru_kelas_id"
             label="Mapel"
             id="guru_kelas_id"
@@ -24,6 +24,15 @@
             placeholder="Pilih Mapel"
             :selected="old('guru_kelas_id', '')"
             required
+            /> --}}
+            <x-form.select
+                name="mapel_id"
+                label="Mapel"
+                id="mapel_id"
+                :options="$mapelSelect"
+                placeholder="Pilih Mapel"
+                :selected="old('mapel_id', '')"
+                required
             />
 
         {{-- Bab --}}
@@ -64,7 +73,7 @@
     </form>
 </x-modal>
 
-<script>
+{{-- <script>
     window.addEventListener('open-modal', (e) => {
         if (e.detail === 'form-create-lingkup-materi') {
             setTimeout(() => {
@@ -96,4 +105,4 @@
             }, 100); // delay agar modal render sempurna dulu
         }
     });
-</script>
+</script> --}}

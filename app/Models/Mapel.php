@@ -17,10 +17,10 @@ class Mapel extends Model
         'kategori',
     ];
 
-    public function bab()
-    {
-        return $this->hasMany(Bab::class);
-    }
+    // public function bab()
+    // {
+    //     return $this->hasMany(Bab::class);
+    // }
 
     public function tujuanPembelajaran()
     {

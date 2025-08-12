@@ -1,6 +1,8 @@
 @foreach ($users as $user)
     <x-modal name="edit-modal-{{ $user['id'] }}" title="Edit User" maxWidth="2xl">
-        <form action="{{ route('user.update', $user['id']) }}" method="POST" class="space-y-6 sm:p-6">
+        {{-- <form action="{{ role_route('user.update', $user['id']) }}" method="POST" --}}
+        <form action="{{ role_route('user.update', ['user' => $user['id']]) }}" method="POST"
+        class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')
 
@@ -8,7 +10,7 @@
             <x-form.input label="Username" name="username" :value="old('username', $user['username'])" required />
 
             {{-- Email --}}
-            <x-form.input label="Email" name="email" :value="old('email', $user['email'])" type="email" required />
+            <x-form.input label="Email" name="email" :value="old('email', $user['email'])" type="email" />
 
             {{-- Password Fields --}}
             @php

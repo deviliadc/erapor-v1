@@ -14,16 +14,22 @@ class HandleSessionExpired
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    // public function handle(Request $request, Closure $next): Response
-    // {
-    //     try {
-    //         return $next($request);
-    //     } catch (AuthenticationException $e) {
-    //         if ($request->expectsJson()) {
-    //             return response()->json(['message' => 'Unauthenticated'], 401);
-    //         }
+    public function handle(Request $request, Closure $next): Response
+    {
+        try {
+            return $next($request);
+        } catch (AuthenticationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated'], 401);
+            }
 
-    //         return redirect()->route('login')->with('session_expired', 'Sesi Anda telah habis. Silakan login kembali.');
-    //     }
-    // }
+            // Hanya set session_expired jika sebelumnya sudah login
+            if ($request->session()->has('was_logged_in')) {
+                return redirect()->route('login')->with('session_expired', 'Sesi Anda telah berakhir. Silakan login kembali.');
+            }
+
+            // Jika belum pernah login, redirect biasa tanpa session_expired
+            return redirect()->route('login');
+        }
+    }
 }

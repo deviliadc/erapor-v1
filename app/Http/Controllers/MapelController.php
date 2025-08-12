@@ -11,39 +11,12 @@ use App\Models\Mapel;
 use App\Models\TahunSemester;
 use App\Models\TujuanPembelajaran;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 class MapelController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    // public function index(Request $request)
-    // {
-    //     $perPage = $request->input('per_page', 10);
-
-    //     $query = Mapel::query();
-
-    //     if ($search = $request->input('search')) {
-    //         $query->where('nama', 'like', "%$search%")
-    //             ->orWhere('kode_mapel', 'like', "%$search%");
-    //     }
-
-    //     $totalCount = $query->count();
-    //     $paginator = $query->paginate($perPage)->withQueryString();
-
-    //     // data untuk tampilan
-    //     $mapel = $paginator;
-
-    //     $breadcrumbs = [
-    //         ['label' => 'Manage Mata Pelajaran', 'url' => route('mapel.index')]
-    //     ];
-
-    //     $title = 'Manage Mata Pelajaran';
-
-    //     return view('mapel.index',  compact('mapel', 'totalCount', 'breadcrumbs', 'title'));
-    // }
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
@@ -56,8 +29,8 @@ class MapelController extends Controller
         $guru = $this->getGuruData($request, $perPage);
         $kelasMapel = $this->getKelasMapelData($request, $perPage);
 
-        $breadcrumbs = [['label' => 'Master Data Mata Pelajaran']];
-        $title = 'Master Data Mata Pelajaran';
+        $breadcrumbs = [['label' => 'Data Mata Pelajaran']];
+        $title = 'Data Mata Pelajaran';
 
         return view('mapel.index', array_merge(
             compact('title', 'breadcrumbs'),
@@ -83,10 +56,12 @@ class MapelController extends Controller
 
         $paginator = $query->paginate($perPage)->withQueryString();
         $data = $paginator->through(fn($item) => [
+            // $data = $paginator->getCollection()->map(fn($item) => [
             'id' => $item->id,
             'kode_mapel' => $item->kode_mapel,
             'nama' => $item->nama,
             'kategori' => $item->kategori,
+            'agama' => $item->agama ?? '-', // tambahkan kolom agama jika ada
         ]);
 
         return [
@@ -118,6 +93,10 @@ class MapelController extends Controller
 
     private function getLingkupMateriData(Request $request, $perPage)
     {
+        $kelasSelect = \App\Models\Kelas::pluck('nama', 'id')->toArray();
+        $mapelSelect = \App\Models\Mapel::pluck('nama', 'id')->toArray();
+        $babSelect = \App\Models\Bab::pluck('nama', 'id')->toArray();
+
         $query = LingkupMateri::query();
         if ($search = $request->input('search_lingkup_materi')) {
             $query->where('nama', 'like', "%$search%")
@@ -127,11 +106,15 @@ class MapelController extends Controller
         $paginator = $query->paginate($perPage)->withQueryString();
         $data = $paginator->through(fn($item) => [
             'id' => $item->id,
-            'guru_kelas_id' => $item->guruKelas?->id,
-            'kelas_id' => $item->guruKelas?->kelas_id,
-            'kelas' => $item->guruKelas?->kelas?->nama ?? '-',
-            'mapel_id' => $item->guruKelas?->mapel_id,
-            'mapel' => $item->guruKelas?->mapel?->nama ?? '-',
+            // 'guru_kelas_id' => $item->guruKelas?->id,
+            // 'kelas_id' => $item->guruKelas?->kelas_id,
+            // 'kelas' => $item->guruKelas?->kelas?->nama ?? '-',
+            // 'mapel_id' => $item->guruKelas?->mapel_id,
+            // 'mapel' => $item->guruKelas?->mapel?->nama ?? '-',
+            'mapel_id' => $item->mapel_id,
+            'mapel' => $item->mapel?->nama ?? '-',
+            'kelas_id' => $item->kelas_id,
+            'kelas' => $item->kelas?->nama ?? '-',
             'bab_id' => $item->bab_id,
             'bab' => $item->bab?->nama ?? '-',
             'nama' => $item->nama,
@@ -139,38 +122,59 @@ class MapelController extends Controller
             'periode' => $item->periode ?? 'tengah', // tambahkan periode jika ada
         ]);
 
-        $options = $data->mapWithKeys(fn($l) => [
-            $l['id'] => $l['nama'] . ' (Kelas ' . ($l['kelas'] ?? '-') . ' - ' . ($l['mapel'] ?? '-') . ' - ' . ($l['bab'] ?? '-') . ')'
-        ])->prepend('+ Tambah Lingkup Materi', 'tambah');
+        // $options = $data->mapWithKeys(fn($l) => [
+        //     $l['id'] => $l['nama'] . ' (Kelas ' . ($l['kelas'] ?? '-') . ' - ' . ($l['mapel'] ?? '-') . ' - ' . ($l['bab'] ?? '-') . ')'
+        // ])->prepend('+ Tambah Lingkup Materi', 'tambah');
 
         return [
+            'kelasSelect' => $kelasSelect,
+            'mapelSelect' => $mapelSelect,
+            'babSelect' => $babSelect,
             'lingkupMateri' => $data,
             'lingkupMateriTotal' => $query->count(),
-            'lingkupMateriOptions' => $options,
+            // 'lingkupMateriOptions' => $options,
         ];
     }
 
     private function getTujuanPembelajaranData(Request $request, $perPage)
     {
-        $query = TujuanPembelajaran::with('lingkupMateri.guruKelas.kelas', 'lingkupMateri.guruKelas.mapel', 'lingkupMateri.bab');
+        // $query = TujuanPembelajaran::with('lingkupMateri.guruKelas.kelas', 'lingkupMateri.guruKelas.mapel', 'lingkupMateri.bab');
+        $query = TujuanPembelajaran::with('lingkupMateri.mapel', 'lingkupMateri.kelas', 'lingkupMateri.bab');
         if ($search = $request->input('search_tujuan_pembelajaran')) {
             $query->where('nama', 'like', "%$search%")
                 ->orWhere('kode_tujuan_pembelajaran', 'like', "%$search%");
         }
 
         $paginator = $query->paginate($perPage)->withQueryString();
+        $data = $paginator->through(fn($item) => [
+            'id' => $item->id,
+            'subbab' => $item->subbab,
+            'tujuan' => $item->tujuan,
+            'lingkup_materi_id' => $item->lingkup_materi_id,
+            'lingkup_materi' => $item->lingkupMateri?->nama ?? '-',
+            // 'mapel' => $item->lingkupMateri?->guruKelas?->mapel?->nama ?? '-',
+            // 'kelas' => $item->lingkupMateri?->guruKelas?->kelas?->nama ?? '-',
+            'mapel_id' => $item->lingkupMateri?->mapel_id,
+            'mapel' => $item->lingkupMateri?->mapel?->nama ?? '-',
+            'kelas_id' => $item->lingkupMateri?->kelas_id,
+            'kelas' => $item->lingkupMateri?->kelas?->nama ?? '-',
+            'bab_id' => $item->lingkupMateri?->bab_id,
+            'bab' => $item->lingkupMateri?->bab?->nama ?? '-',
+        ]);
+
+        $lingkupMateriAll = LingkupMateri::with('kelas', 'mapel', 'bab')->get();
+        $lingkupMateriOptions = $lingkupMateriAll->mapWithKeys(function ($l) {
+            return [
+                $l->id => 'Kelas ' . ($l->kelas->nama ?? '-')
+                    . ' - ' . ($l->mapel->nama ?? '-')
+                    . ' - ' . ($l->bab->nama ?? '-')
+                    . ' - ' . $l->nama
+            ];
+        });
         return [
-            'tujuanPembelajaran' => $paginator->through(fn($item) => [
-                'id' => $item->id,
-                'subbab' => $item->subbab,
-                'tujuan' => $item->tujuan,
-                'lingkup_materi_id' => $item->lingkup_materi_id,
-                'lingkup_materi' => $item->lingkupMateri?->nama ?? '-',
-                'mapel' => $item->lingkupMateri?->guruKelas?->mapel?->nama ?? '-',
-                'kelas' => $item->lingkupMateri?->guruKelas?->kelas?->nama ?? '-',
-                'bab' => $item->lingkupMateri?->bab?->nama ?? '-',
-            ]),
+            'tujuanPembelajaran' => $data,
             'tujuanPembelajaranTotal' => $query->count(),
+            'lingkupMateriOptions' => $lingkupMateriOptions,
         ];
     }
 
@@ -303,7 +307,7 @@ class MapelController extends Controller
             'kategori'   => $validated['kategori']
         ]);
 
-        return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'mapel'])->with('success', 'Mata pelajaran berhasil ditambahkan.');
+        return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'mapel']))->with('success', 'Mata pelajaran berhasil ditambahkan.');
     }
 
     /**
@@ -350,7 +354,7 @@ class MapelController extends Controller
             'kategori'   => $validated['kategori']
         ]);
 
-        return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'mapel'])->with('success', 'Mata pelajaran berhasil diperbarui.');
+        return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'mapel']))->with('success', 'Mata pelajaran berhasil diperbarui.');
     }
 
     /**
@@ -360,10 +364,26 @@ class MapelController extends Controller
     {
         try {
             $mapel = Mapel::findOrFail($id);
+
+            // Cek relasi ke GuruKelas, LingkupMateri, Bab, TujuanPembelajaran, dll
+            $related = (
+                $mapel->guruKelas()->exists() ||
+                $mapel->lingkupMateri()->exists() ||
+                // $mapel->bab()->exists() ||
+                $mapel->tujuanPembelajaran()->exists()
+            );
+
+            if ($related) {
+                return redirect()->to(role_route('mapel.index', ['tab' => request('tab', 'mapel')]))
+                    ->with('error', 'Mata pelajaran tidak bisa dihapus karena masih digunakan pada data lain.');
+            }
+
             $mapel->delete();
-            return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'mapel'])->with('success', 'Mata pelajaran berhasil dihapus.');
+            return redirect()->to(role_route('mapel.index', ['tab' => request('tab', 'mapel')]))
+                ->with('success', 'Mata pelajaran berhasil dihapus.');
         } catch (\Exception $e) {
-            return redirect()->route('mapel.index', ['tab' => $request->tab ?? 'ampel'])->with('error', 'Gagal menghapus mata pelajaran. Pastikan tidak sedang digunakan.');
+            return redirect()->to(role_route('mapel.index', ['tab' => request('tab', 'mapel')]))
+                ->with('error', 'Gagal menghapus mata pelajaran. Pastikan tidak sedang digunakan.');
         }
     }
 }

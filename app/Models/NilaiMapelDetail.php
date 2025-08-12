@@ -17,23 +17,8 @@ class NilaiMapelDetail extends Model
         'jenis_nilai',
         'nilai',
         'periode',
-        'is_validate'
+        'is_validated'
     ];
-
-    // public function siswa()
-    // {
-    //     return $this->belongsTo(Siswa::class);
-    // }
-
-    // public function mapel()
-    // {
-    //     return $this->belongsTo(Mapel::class);
-    // }
-
-    // public function tahunSemester()
-    // {
-    //     return $this->belongsTo(TahunSemester::class);
-    // }
 
     public function nilaiMapel()
     {
