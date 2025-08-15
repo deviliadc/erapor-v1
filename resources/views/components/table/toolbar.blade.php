@@ -3,20 +3,18 @@
     'enableAddButton' => true,
     'enableImport' => true,
     'enableExport' => true,
-    // 'enableExportHeader' => false,
-    // 'enableExportExcel' => true,
-    // 'enableExportPdf' => true,
     'enableSearch' => true,
     'searchName' => 'search',
     'tabName' => null,
     'enablePerPage' => true,
     'routeCreate' => null,
-    'route' => '#',
+    'routeExport' => '#',
     'routeImportForm' => null,
     'importModalName' => null, // default modal siswa
     // 'routeTemplate' => null,
     // 'routeExportHeader' => null,
-    'filename' => 'export',
+    'exportFormats' => ['excel', 'pdf'],
+    'filename' => '',
 ])
 
 @php
@@ -36,59 +34,10 @@
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            {{-- @if ($enableAddButton && $routeCreate)
-            <a href="{{ $routeCreate }}"
-                class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
-                Tambah
-                <!-- plus icon -->
-                <svg class="fill-current" width="20" height="20" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" clip-rule="evenodd"
-                        d="M9.25 5a.75.75 0 011.5 0v4.25H15a.75.75 0 010 1.5h-4.25V15a.75.75 0 01-1.5 0v-4.25H5a.75.75 0 010-1.5h4.25V5z" />
-                </svg>
-            </a>
-        @endif --}}
-
-
-            {{-- @if ($enableAddButton)
-            @hasSection('addButton')
-                @yield('addButton')
-            @elseif ($routeCreate)
-                <a href="{{ $routeCreate }}"
-                    class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
-                    Tambah
-                    <svg class="fill-current" width="20" height="20" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" clip-rule="evenodd"
-                            d="M9.25 5a.75.75 0 011.5 0v4.25H15a.75.75 0 010 1.5h-4.25V15a.75.75 0 01-1.5 0v-4.25H5a.75.75 0 010-1.5h4.25V5z" />
-                    </svg>
-                </a>
-            @endif
-        @endif --}}
 
             @if ($enableAddButton)
                 {{ $addButton ?? view('components.table.default-add-button', ['routeCreate' => $routeCreate]) }}
             @endif
-
-            {{-- @if ($enableImport)
-                <!-- Import dropdown -->
-                <x-table.dropdown label="Import">
-                    <a href="{{ $routeTemplate ?? '#' }}" class="dropdown-item flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                        </svg>
-                        Download Template
-                    </a>
-                    <a href="{{ $routeImportForm ?? '#' }}" class="dropdown-item flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 16v-8m0 8l-3-3m3 3l3-3m-9 5.25V5.625c0-.621.504-1.125 1.125-1.125h12.75c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125H5.625c-.621 0-1.125-.504-1.125-1.125Z" />
-                        </svg>
-                        Import File
-                    </a>
-                </x-table.dropdown>
-            @endif --}}
 
             @if ($enableImport)
                 <button type="button" @click="$dispatch('open-modal', '{{ $importModalName }}')"
@@ -105,25 +54,28 @@
             @if ($enableExport)
                 <!-- Export dropdown -->
                 <x-table.dropdown label="Export">
-                    {{-- <a href="{{ $route }}/export?type=excel&filename={{ $filename }}" --}}
-                    <a href="{{ role_route($route . '.export', ['type' => 'excel', 'filename' => $filename]) }}"
-                        class="dropdown-item flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                        </svg>
-                        Export Excel
-                    </a>
-                    <a href="{{ $route }}?type=pdf&filename={{ $filename }}"
-                        class="dropdown-item flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                        </svg>
-                        Export PDF
-                    </a>
+                    @if (in_array('excel', $exportFormats))
+                        <a href="{{ $routeExport }}?type=excel&filename={{ $filename }}"
+                            class="dropdown-item flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            Export Excel
+                        </a>
+                    @endif
+                    @if (in_array('pdf', $exportFormats))
+                        <a href="{{ $routeExport }}?type=pdf&filename={{ $filename }}"
+                            class="dropdown-item flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            Export PDF
+                        </a>
+                    @endif
                 </x-table.dropdown>
             @endif
         </div>

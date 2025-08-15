@@ -16,13 +16,12 @@
             :enable-add-button="auth()->user()->hasRole('admin') || auth()->user()->hasRole('guru')"
             :enable-import="auth()->user()->hasRole('admin') || auth()->user()->hasRole('guru')"
             importModalName="import-siswa"
-            {{-- :enable-import="false" --}}
             :enable-export="true"
             :enable-search="true"
-            :route="role_route('siswa.index')"
-            {{-- :route="route($routePrefix . 'siswa.index')" --}}
-            :route-create="role_route('siswa.create')"
-            {{-- :routeTemplate="route('export.excel', ['type' => 'template_siswa'])" --}}
+            :routeCreate="role_route('siswa.create')"
+            :routeExport="role_route('siswa.export')"
+            :exportFormats="['excel']"
+            filename="data_siswa_{{ now()->format('Ymd_His') }}"
         />
 
         {{-- Table --}}

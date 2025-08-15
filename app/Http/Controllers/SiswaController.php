@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Exports\ReusableExport;
+use App\Exports\ReusableExportPdf;
 use App\Imports\ReusableImport;
 use App\Exports\ReusableTemplateExport;
 use App\Models\KelasSiswa;
@@ -60,12 +61,20 @@ class SiswaController extends Controller
         //         'users.email'
         //     );
         $tahunAktif = TahunSemester::where('is_active', 1)->first();
-
-        $query = Siswa::with('user')
+        $query = Siswa::whereHas('kelasSiswa', function ($q) use ($tahunAktif) {
+            $q->where('tahun_semester_id', $tahunAktif->id)
+                ->where('status', 'Aktif');
+        })
+            ->with('user')
             ->with(['kelasSiswa' => function ($q) use ($tahunAktif) {
                 $q->where('tahun_semester_id', $tahunAktif->id);
             }])
             ->select('siswa.*');
+        // $query = Siswa::with('user')
+        //     ->with(['kelasSiswa' => function ($q) use ($tahunAktif) {
+        //         $q->where('tahun_semester_id', $tahunAktif->id);
+        //     }])
+        //     ->select('siswa.*');
 
         // Batasan akses data
         if ($user->hasRole('guru')) {
@@ -656,13 +665,26 @@ class SiswaController extends Controller
             ];
         })->toArray();
 
-        if ($type === 'pdf') {
-            $pdf = Pdf::loadView('siswa.export-pdf', [
-                'headings' => $headings,
-                'rows' => $formatted,
-            ]);
-            return $pdf->download("{$filename}.pdf");
-        }
+        // if ($type === 'pdf') {
+        //     $pdf = Pdf::loadView('siswa.export-pdf', [
+        //         'headings' => $headings,
+        //         'rows' => $formatted,
+        //     ]);
+        //     return $pdf->download("{$filename}.pdf");
+        // }
+        // if ($type === 'pdf') {
+        //     $pdf = Pdf::loadView('exports.reusable-pdf', [
+        //         'headings' => $headings,
+        //         'rows' => $formatted,
+        //         'title' => 'Data Siswa',
+        //     ]);
+
+        //     // Pilih orientasi: 'landscape' atau 'portrait'
+        //     $orientation = $request->input('orientation', 'landscape'); // default landscape
+        //     $pdf->setPaper('a4', $orientation);
+
+        //     return $pdf->download("{$filename}.pdf");
+        // }
 
         // Default: Excel
         return Excel::download(
@@ -953,14 +975,14 @@ class SiswaController extends Controller
                 };
 
                 // Buat user siswa
-                $password = \Carbon\Carbon::parse($data['tanggal_lahir'])->format('dmY');
-                $user = \App\Models\User::create([
+                $password = Carbon::parse($data['tanggal_lahir'])->format('dmY');
+                $user = User::create([
                     'name' => $data['nama'],
                     'email' => $data['email'] ?? null,
                     'username' => $data['nisn'],
-                    'password' => \Illuminate\Support\Facades\Hash::make($password),
+                    'password' => Hash::make($password),
                 ]);
-                $role = \App\Models\Role::where('name', 'siswa')->first();
+                $role = Role::where('name', 'siswa')->first();
                 $user->roles()->attach($role);
 
                 // Bersihkan data sebelum simpan
