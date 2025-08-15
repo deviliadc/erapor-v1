@@ -27,5 +27,6 @@
         <x-dashboard.card title="Rapor Final" :value="$raporSelesai" icon="file-alt" color="teal" /> --}}
             </div>
         </div>
+
     @endif
 </x-app-layout>

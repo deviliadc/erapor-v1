@@ -30,9 +30,11 @@
         })
     }
 }" x-show="show" x-cloak x-transition.opacity
-    class="fixed inset-0 z-[999999] flex items-start justify-center overflow-y-auto px-4 py-6 sm:px-0 bg-gray-400/50 backdrop-blur-md">
+    class="fixed inset-0 z-[999999] flex items-start justify-center overflow-y-auto px-4 py-6 sm:px-0">
 
-    <div {{ $attributes->merge(['class' => "relative w-full {$maxWidthClass} max-w-md rounded-3xl bg-white dark:bg-gray-900 shadow-xl overflow-hidden"]) }}>
+    <div 
+    {{-- @click.outside="show = false" --}}
+        {{ $attributes->merge(['class' => "relative w-full {$maxWidthClass} max-w-md rounded-3xl bg-white dark:bg-gray-900 shadow-xl overflow-hidden"]) }}>
 
         <!-- Modal Wrapper (sticky header + scrollable content) -->
         <div class="flex flex-col h-full max-h-[80vh] overflow-y-auto">
