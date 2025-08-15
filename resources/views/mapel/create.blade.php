@@ -1,8 +1,5 @@
-<x-modal name="form-create-mapel"  title="Tambah Mata Pelajaran" maxWidth="2xl">
-    <form action="{{ role_route('mapel.store') }}" method="POST"
-        enctype="multipart/form-data"
-        class="space-y-6 sm:p-6"
-    >
+<x-modal name="form-create-mapel" title="Tambah Mata Pelajaran" maxWidth="2xl">
+    <form action="{{ role_route('mapel.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6 sm:p-6">
         @csrf
 
         {{-- Kode Mapel --}}
@@ -13,6 +10,17 @@
 
         {{-- Kategori --}}
         <x-form.select name="kategori" label="Kategori" :options="['Wajib' => 'Wajib', 'Muatan Lokal' => 'Muatan Lokal']" placeholder="Pilih kategori" required />
+
+        {{-- Agama --}}
+        <x-form.select name="agama" label="Agama" :options="[
+            '' => 'Pilih agama',
+            'Islam' => 'Islam',
+            'Kristen' => 'Kristen',
+            'Katolik' => 'Katolik',
+            'Hindu' => 'Hindu',
+            'Buddha' => 'Buddha',
+            'Konghucu' => 'Konghucu',
+        ]" placeholder="Pilih agama" />
 
         {{-- Tombol Submit --}}
         <div class="flex justify-end">

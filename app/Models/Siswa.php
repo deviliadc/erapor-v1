@@ -23,7 +23,7 @@ class Siswa extends Model
         'alamat',
         'pendidikan_sebelumnya',
         'no_hp',
-        'status',
+        // 'status',
         'nama_ayah',
         'nama_ibu',
         'nama_wali',
@@ -39,10 +39,10 @@ class Siswa extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function waliMurid()
-    {
-        return $this->belongsTo(WaliMurid::class, 'wali_murid_id');
-    }
+    // public function waliMurid()
+    // {
+    //     return $this->belongsTo(WaliMurid::class, 'wali_murid_id');
+    // }
 
     public function kelas()
     {
@@ -93,5 +93,10 @@ class Siswa extends Model
     public function nilaiP5()
     {
         return $this->hasMany(NilaiP5::class);
+    }
+
+    public function riwayat()
+    {
+        return $this->hasMany(RiwayatSiswa::class);
     }
 }

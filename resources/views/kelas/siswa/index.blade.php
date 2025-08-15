@@ -95,7 +95,8 @@
             // 'no' => ['label' => 'No', 'sortable' => false],
             'no_absen' => ['label' => 'No. Absen', 'sortable' => true],
             'nama' => ['label' => 'Nama Siswa', 'sortable' => true],
-            'nis' => ['label' => 'NIS', 'sortable' => true],
+            // 'nis' => ['label' => 'NIS', 'sortable' => true],
+            'nipd' => ['label' => 'NIPD', 'sortable' => true],
             'nisn' => ['label' => 'NISN', 'sortable' => true],
         ]" :data="$paginator" {{-- :data="$siswaList" --}}
             :total-count="$totalCount"

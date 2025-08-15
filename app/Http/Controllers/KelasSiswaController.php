@@ -56,7 +56,7 @@ class KelasSiswaController extends Controller
                 'id' => $item->id,
                 'siswa_id' => $item->siswa->id ?? null,
                 'nama' => $item->siswa->nama ?? '-',
-                'nis' => $item->siswa->nis ?? '-',
+                'nipd' => $item->siswa->nipd ?? '-',
                 'nisn' => $item->siswa->nisn ?? '-',
                 'no_absen' => $item->no_absen ?? '-',
             ];
@@ -65,12 +65,12 @@ class KelasSiswaController extends Controller
 
         $totalCount = $paginator->total();
 
+        // Ambil siswa yang belum terdaftar di kelas_siswa tahun semester ini
         $siswaTerpakai = KelasSiswa::where('tahun_semester_id', $tahunSemesterId)
             ->pluck('siswa_id')
             ->toArray();
 
-        $siswaOptions = Siswa::where('status', 'Aktif')
-            ->whereNotIn('id', $siswaTerpakai)
+        $siswaOptions = Siswa::whereNotIn('id', $siswaTerpakai)
             ->pluck('nama', 'id')
             ->toArray();
 
@@ -130,34 +130,34 @@ class KelasSiswaController extends Controller
      */
     public function create(Request $request, string $kelas)
     {
-        $kelas = Kelas::findOrFail($kelas);
-        $tahunSemesterId = $request->input('tahun_semester_filter');
-        $tahunAktif = TahunSemester::where('is_active', true)->first();
-        if (!$tahunSemesterId) {
-            $tahunSemesterId = $tahunAktif?->id;
-        }
+        // $kelas = Kelas::findOrFail($kelas);
+        // $tahunSemesterId = $request->input('tahun_semester_filter');
+        // $tahunAktif = TahunSemester::where('is_active', true)->first();
+        // if (!$tahunSemesterId) {
+        //     $tahunSemesterId = $tahunAktif?->id;
+        // }
 
-        $siswaTerpakai = KelasSiswa::where('tahun_semester_id', $tahunSemesterId)
-            ->pluck('siswa_id')
-            ->toArray();
+        // $siswaTerpakai = KelasSiswa::where('tahun_semester_id', $tahunSemesterId)
+        //     ->pluck('siswa_id')
+        //     ->toArray();
 
-        $siswaOptions = Siswa::where('status', 'Aktif')
-            ->whereNotIn('id', $siswaTerpakai)
-            ->pluck('nama', 'id')
-            ->toArray();
+        // $siswaOptions = Siswa::where('status', 'Aktif')
+        //     ->whereNotIn('id', $siswaTerpakai)
+        //     ->pluck('nama', 'id')
+        //     ->toArray();
 
-        if (empty($siswaOptions)) {
-            return redirect('/siswa')->with('warning', 'Tidak ada siswa yang tersedia untuk ditambahkan. Silakan tambah data siswa terlebih dahulu.');
-        }
+        // if (empty($siswaOptions)) {
+        //     return redirect('/siswa')->with('warning', 'Tidak ada siswa yang tersedia untuk ditambahkan. Silakan tambah data siswa terlebih dahulu.');
+        // }
 
-        $title = 'Tambah Siswa ke Kelas ' . $kelas->nama;
-        $breadcrumbs = [
-            ['label' => 'Kelas', 'url' => role_route('kelas.index')],
-            ['label' => 'Siswa', 'url' => role_route('kelas.siswa.index', $kelas->id)],
-            ['label' => 'Tambah Siswa'],
-        ];
+        // $title = 'Tambah Siswa ke Kelas ' . $kelas->nama;
+        // $breadcrumbs = [
+        //     ['label' => 'Kelas', 'url' => role_route('kelas.index')],
+        //     ['label' => 'Siswa', 'url' => role_route('kelas.siswa.index', $kelas->id)],
+        //     ['label' => 'Tambah Siswa'],
+        // ];
 
-        return view('kelas.siswa.create', compact('kelas', 'title', 'breadcrumbs', 'siswaOptions', 'tahunSemesterId'));
+        // return view('kelas.siswa.create', compact('kelas', 'title', 'breadcrumbs', 'siswaOptions', 'tahunSemesterId'));
     }
 
     /**
@@ -189,6 +189,7 @@ class KelasSiswaController extends Controller
                 'siswa_id' => $siswaId,
                 'tahun_semester_id' => $tahunSemesterId,
                 'no_absen' => null,
+                'status' => 'Aktif'
             ]);
         }
 

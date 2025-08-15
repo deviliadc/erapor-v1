@@ -41,6 +41,9 @@
                 {{-- Pendidikan Sebelumnya --}}
                 <x-form.input label="Pendidikan Sebelumnya" name="pendidikan_sebelumnya" :value="old('pendidikan_sebelumnya')" />
 
+                {{-- Agama --}}
+                <x-form.select name="agama" label="Agama" :options="['Islam' => 'Islam', 'Kristen' => 'Kristen', 'Katolik' => 'Katolik', 'Hindu' => 'Hindu', 'Buddha' => 'Buddha', 'Konghucu' => 'Konghucu']" placeholder="Pilih agama" required />
+
                 {{-- Alamat --}}
                 <x-form.textarea label="Alamat" name="alamat" placeholder="Masukkan alamat" rows="4" required>
                     {{ old('alamat') }} required
@@ -51,6 +54,17 @@
 
                 {{-- Email --}}
                 <x-form.input label="Email" name="email" :value="old('email')" type="email" />
+
+                {{-- Kelas --}}
+                <x-form.select
+                    label="Kelas"
+                    name="kelas_id"
+                    :options="$kelasOptions"
+                    placeholder="Pilih kelas"
+                    :selected="old('kelas_id')"
+                    :searchable="true"
+                    required
+                />
 
                 {{-- Status --}}
                 <x-form.select

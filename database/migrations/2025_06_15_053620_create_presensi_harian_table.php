@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('catatan')->nullable(); // Misalnya "Upacara bendera", opsional
             $table->enum('periode', ['tengah', 'akhir']);
             // $table->float('nilai_akhir')->nullable();
+            $table->boolean('is_validated')->default(false); // Untuk menandakan apakah presensi sudah diverifikasi
             $table->timestamps();
 
             $table->unique(['kelas_id', 'tanggal']); // Biar 1 kelas hanya 1 entri per hari

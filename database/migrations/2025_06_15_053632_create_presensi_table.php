@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('keterangan')->nullable(); // opsional
             $table->enum('periode', ['tengah', 'akhir']);
             // $table->float('nilai_akhir')->nullable();
+            $table->boolean('is_validated')->default(false);
             $table->timestamps();
 
             $table->unique(['presensi_harian_id', 'kelas_siswa_id']); // Satu siswa sekali saja per hari

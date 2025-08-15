@@ -2,9 +2,10 @@
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
 
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"">
-        <x-dashboard.card title="Total Siswa Laki-laki" :value="$l_count" icon="users" color="blue" />
-        <x-dashboard.card title="Total Siswa Perempuan" :value="$p_count" icon="users" color="blue" />
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <x-dashboard.card title="Total Siswa Laki-laki" :value="$l_count" icon="users" color="blue-light" />
+        <x-dashboard.card title="Total Siswa Perempuan" :value="$p_count" icon="users" color="blue-light" />
+        <x-dashboard.card title="Total Siswa" :value="$siswa_count" icon="users" color="blue-light" />
     </div>
 
     <!-- Chart Perbandingan Laki-laki/Perempuan per Kelas -->
@@ -68,7 +69,7 @@
             :columns="[
                 'no' => ['label' => 'No', 'sortable' => false],
                 'siswa' => ['label' => 'Nama', 'sortable' => true],
-                'nis' => ['label' => 'NIS', 'sortable' => false],
+                'nipd' => ['label' => 'NIPD', 'sortable' => false],
                 'nisn' => ['label' => 'NISN', 'sortable' => false],
                 'kelas' => ['label' => 'Kelas', 'sortable' => false],
                 'jenis_kelamin' => ['label' => 'L/P', 'sortable' => false],

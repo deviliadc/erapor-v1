@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('no_hp')->nullable();
             $table->enum('agama', ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'])->default('Islam');
-            $table->enum('status', ['Aktif', 'Lulus', 'Keluar', 'Mutasi'])->default('Aktif');
+            // $table->enum('status', ['Aktif', 'Lulus', 'Keluar', 'Mutasi'])->default('Aktif');
             $table->string('nama_ayah')->nullable();
             $table->string('nama_ibu')->nullable();
             $table->string('nama_wali')->nullable();

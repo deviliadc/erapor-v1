@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('total_izin')->default(0);
             $table->integer('total_alfa')->default(0);
             $table->enum('periode', ['tengah', 'akhir']);
+            $table->boolean('is_validated')->default(false);
             $table->timestamps();
 
             $table->unique([

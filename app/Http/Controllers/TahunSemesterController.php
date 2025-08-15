@@ -6,8 +6,6 @@ use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\TahunSemester;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 class TahunSemesterController extends Controller
 {
@@ -92,38 +90,38 @@ class TahunSemesterController extends Controller
         $p_count = $kelasSiswaPaginator->getCollection()->where('siswa.jenis_kelamin', 'Perempuan')->count();
 
         // Data chart per kelas
-    $kelasGenderChart = [
-        'labels' => [],
-        'laki' => [],
-        'perempuan' => [],
-    ];
-    foreach ($kelasList as $kelas) {
-        $laki = KelasSiswa::where('kelas_id', $kelas->id)
-            ->where('tahun_semester_id', $tahunSemester->id)
-            ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Laki-laki'))->count();
-        $perempuan = KelasSiswa::where('kelas_id', $kelas->id)
-            ->where('tahun_semester_id', $tahunSemester->id)
-            ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Perempuan'))->count();
-        $kelasGenderChart['labels'][] = $kelas->nama;
-        $kelasGenderChart['laki'][] = $laki;
-        $kelasGenderChart['perempuan'][] = $perempuan;
-    }
+        $kelasGenderChart = [
+            'labels' => [],
+            'laki' => [],
+            'perempuan' => [],
+        ];
+        foreach ($kelasList as $kelas) {
+            $laki = KelasSiswa::where('kelas_id', $kelas->id)
+                ->where('tahun_semester_id', $tahunSemester->id)
+                ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Laki-laki'))->count();
+            $perempuan = KelasSiswa::where('kelas_id', $kelas->id)
+                ->where('tahun_semester_id', $tahunSemester->id)
+                ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Perempuan'))->count();
+            $kelasGenderChart['labels'][] = $kelas->nama;
+            $kelasGenderChart['laki'][] = $laki;
+            $kelasGenderChart['perempuan'][] = $perempuan;
+        }
 
         $tahun_semester_detail = $kelasSiswaPaginator->through(function ($item) use ($tahunSemester, $siswa_count, $l_count, $p_count) {
             return [
-            'id' => $item->id,
+                'id' => $item->id,
                 'nama' => $item->siswa->nama ?? '-',
-            'kelas' => $item->kelas->nama ?? '-',
-            'nis' => $item->siswa->nis ?? '-',
-            'nisn' => $item->siswa->nisn ?? '-',
-            'jenis_kelamin' => $item->siswa->jenis_kelamin ?? '-',
+                'kelas' => $item->kelas->nama ?? '-',
+                'nipd' => $item->siswa->nipd ?? '-',
+                'nisn' => $item->siswa->nisn ?? '-',
+                'jenis_kelamin' => $item->siswa->jenis_kelamin ?? '-',
                 // 'tahun_semester' => $tahunSemester->tahun . ' - ' . $tahunSemester->semester,
                 // 'nama_siswa' => $item->siswa->nama ?? '-',
                 // 'jenis_kelamin' => $item->siswa->jenis_kelamin ?? '-',
                 // 'no_absen' => $item->no_absen ?? '-',
                 // 'siswa_count' => $siswa_count,
-        // 'l_count' => $l_count,
-        // 'p_count' => $p_count,
+                // 'l_count' => $l_count,
+                // 'p_count' => $p_count,
             ];
         });
 

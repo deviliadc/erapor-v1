@@ -36,7 +36,9 @@ use App\Http\Controllers\{
     RekapAbsensiController,
     SiswaMenuController,
     KepalaSekolahMenuController,
-    PengaturanRaporController
+    PengaturanRaporController,
+    ArsipSiswaController,
+    ArsipGuruController
 };
 
 // Halaman Awal
@@ -75,6 +77,7 @@ Route::middleware(['auth', 'checkrole:admin'])->prefix('admin')->name('admin.')-
     Route::resource('fase', FaseController::class);
     Route::resource('kelas', KelasController::class);
     Route::resource('kelas-mapel', KelasMapelController::class);
+    Route::resource('kelas-siswa', KelasSiswaController::class);
     Route::prefix('kelas/{kelas}')->name('kelas.')->group(function () {
         Route::resource('mapel', KelasMapelController::class)->names('mapel');
     });
@@ -126,6 +129,8 @@ Route::middleware(['auth', 'checkrole:admin'])->prefix('admin')->name('admin.')-
     Route::post('nilai-p5/update-batch', [NilaiP5Controller::class, 'updateBatch'])->name('nilai-p5.update-batch');
     Route::resource('rapor',  RaporController::class);
     Route::resource('pengaturan-rapor',  PengaturanRaporController::class);
+    Route::get('arsip-siswa', [ArsipSiswaController::class, 'index'])->name('arsip-siswa.index');
+    Route::get('arsip-guru', [ArsipGuruController::class, 'index'])->name('arsip-guru.index');
 });
 
 Route::middleware(['auth', 'checkrole:guru'])->prefix('guru')->name('guru.')->group(function () {

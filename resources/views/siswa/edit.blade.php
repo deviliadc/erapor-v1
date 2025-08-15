@@ -36,14 +36,18 @@
                     placeholder="Pilih tanggal"
                     class="datepicker"
                     required /> --}}
-                <x-form.datepicker label="Tanggal Lahir" name="tanggal_lahir" :value="old(
-                    'tanggal_lahir',
-                    $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->format('Y-m-d') : '',
-                )"
-                    placeholder="Pilih tanggal" required />
+                <x-form.datepicker
+                    label="Tanggal Lahir"
+                    name="tanggal_lahir"
+                    :value="old('tanggal_lahir', $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->format('Y-m-d') : '', )"
+                    placeholder="Pilih tanggal"
+                    required />
 
                 {{-- Pendidikan Sebelumnya --}}
                 <x-form.input label="Pendidikan Sebelumnya" name="pendidikan_sebelumnya" :value="old('pendidikan_sebelumnya', $siswa->pendidikan_sebelumnya)" />
+
+                {{-- Agama --}}
+                <x-form.select name="agama" label="Agama" :options="['Islam' => 'Islam', 'Kristen' => 'Kristen', 'Katolik' => 'Katolik', 'Hindu' => 'Hindu', 'Buddha' => 'Buddha', 'Konghucu' => 'Konghucu']" placeholder="Pilih agama" :selected="old('agama', $siswa->agama ?? null)" required />
 
                 {{-- Alamat --}}
                 <x-form.textarea label="Alamat" name="alamat" placeholder="Masukkan alamat" rows="4"
@@ -55,10 +59,24 @@
                 {{-- Email --}}
                 <x-form.input label="Email" name="email" :value="old('email', $siswa->user?->email)" type="email" />
 
+                {{-- Kelas --}}
+                <x-form.select
+    label="Kelas"
+    name="kelas_id"
+    :options="$kelasOptions"
+    :selected="old('kelas_id', $selectedKelasId)"
+    required
+/>
                 {{-- Status --}}
-                <x-form.select label="Status" name="status" :options="['Aktif' => 'Aktif', 'Lulus' => 'Lulus', 'Keluar' => 'Keluar', 'Mutasi' => 'Mutasi']" placeholder="Pilih status"
-                    :selected="old('status', $siswa->status ?? null)" :searchable="true" required />
-
+                <x-form.select
+    label="Status"
+    name="status"
+    :options="['Aktif' => 'Aktif', 'Lulus' => 'Lulus', 'Keluar' => 'Keluar', 'Mutasi' => 'Mutasi']"
+    placeholder="Pilih status"
+    :selected="old('status', $selectedStatus)"
+    :searchable="true"
+    required
+/>
                 <div class="px-5 py-4 sm:px-6 sm:py-5 border-b border-gray-100 dark:border-gray-800">
                     <h3 class="text-base font-medium text-gray-800 dark:text-white/90">Data Wali Murid</h3>
                 </div>

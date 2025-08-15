@@ -19,7 +19,7 @@ return new class extends Migration
             $table->enum('periode', ['tengah', 'akhir']);
             $table->float('nilai_akhir')->nullable(); // rerata dari param_ekstra
             $table->string('deskripsi')->nullable(); // konversi dari nilai_akhir (opsional)
-            // $table->boolean('is_validated')->default(false);
+            $table->boolean('is_validated')->default(false);
             $table->timestamps();
 
             $table->unique([

@@ -40,12 +40,27 @@
         {{-- Card: Data Riwayat Siswa --}}
         <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700  dark:bg-gray-800">
             <h2 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Data Riwayat Siswa</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-white/90">
+            {{-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 dark:text-white/90">
                 <div><strong>Tahun Masuk:</strong> {{ $siswa->tahun_masuk }}</div>
                 <div><strong>Kelas:</strong> {{ $siswa->kelas }}</div>
                 <div><strong>Status:</strong> {{ $siswa->status }}</div>
                 <div><strong>Catatan:</strong> {{ $siswa->catatan }}</div>
-            </div>
+            </div> --}}
+            <x-table :columns="[
+                'no' => ['label' => 'No', 'sortable' => false],
+                'tahun' => ['label' => 'Tahun', 'sortable' => true],
+                'semester' => ['label' => 'Semester', 'sortable' => true],
+                'kelas' => ['label' => 'Kelas', 'sortable' => true],
+                'status' => ['label' => 'Status', 'sortable' => true],
+                // 'catatan' => ['label' => 'Catatan', 'sortable' => true],
+            ]" :data="$kelasSiswa"
+                :total-count="$totalCount"
+                row-view="siswa.partials.row-detail"
+                :actions="[
+                    'detail' => false,
+                    'edit' => false,
+                    'delete' => false,
+                ]" />
         </div>
 
         {{-- Tombol Aksi --}}

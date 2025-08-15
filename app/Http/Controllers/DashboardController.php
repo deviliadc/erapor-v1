@@ -6,7 +6,9 @@ use App\Models\Guru;
 use App\Models\Siswa;
 use App\Models\Mapel;
 use App\Models\GuruKelas;
+use App\Models\TahunSemester;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -33,10 +35,59 @@ class DashboardController extends Controller
         $totalSiswa = Siswa::count();
         $totalGuru = Guru::count();
         $totalMapel = Mapel::count();
+        $totalLulusan = Siswa::whereHas('kelasSiswa', function ($query) {
+            $query->where('status', 'Lulus');
+        })->count();
+
+        // Tahun ajaran aktif
+        $tahunAjaranAktif = TahunSemester::where('is_active', 1)->first();
+        $totalSiswaAktif = 0;
+        if ($tahunAjaranAktif) {
+            $totalSiswaAktif = Siswa::whereHas('kelasSiswa', function ($q) use ($tahunAjaranAktif) {
+                $q->where('tahun_semester_id', $tahunAjaranAktif->id)
+                    ->where('status', 'Aktif');
+            })->count();
+        }
+
+        // Ambil N tahun terakhir (misal: 5)
+        $jumlahTahun = 5;
+        $tahunTerbaru = TahunSemester::orderByDesc('tahun')
+            ->select('tahun')
+            ->distinct()
+            ->limit($jumlahTahun)
+            ->pluck('tahun')
+            ->toArray();
+
+        // Chart total siswa per tahun-semester (hanya tahun terbaru)
+        $chartSiswa = TahunSemester::whereIn('tahun', $tahunTerbaru)
+            ->orderBy('tahun')
+            ->orderBy('semester')
+            ->get()
+            ->map(function ($ts) {
+                $total = Siswa::whereHas('kelasSiswa', function ($q) use ($ts) {
+                    $q->where('tahun_semester_id', $ts->id)
+                        ->where('status', 'Aktif');
+                })->count();
+                return [
+                    'label' => $ts->tahun . ' - ' . $ts->semester,
+                    'total' => $total
+                ];
+            });
+
         $breadcrumbs = [['label' => 'Dashboard']];
         $title = 'Dashboard Admin';
 
-        return view('dashboard.admin', compact('totalSiswa', 'totalGuru', 'totalMapel', 'breadcrumbs', 'title'));
+        return view('dashboard.admin', compact(
+            'totalSiswa',
+            'totalGuru',
+            'totalMapel',
+            'totalLulusan',
+            'breadcrumbs',
+            'title',
+            'totalSiswaAktif',
+            'tahunAjaranAktif',
+            'chartSiswa'
+        ));
     }
 
     protected function guruDashboard()

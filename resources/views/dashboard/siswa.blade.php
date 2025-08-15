@@ -27,7 +27,7 @@
                             <div class="space-y-1 text-sm">
                                 <div><span class="font-medium">Nama:</span> {{ $siswa->nama_ayah }}</div>
                                 <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_ayah }}</div>
-                                <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
+                                {{-- <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div> --}}
                             </div>
                     </div>
                     {{-- Ibu --}}
@@ -36,7 +36,7 @@
                             <div class="space-y-1 text-sm">
                                 <div><span class="font-medium">Nama:</span> {{ $siswa->nama_ibu }}</div>
                                 <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_ibu }}</div>
-                                <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
+                                {{-- <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div> --}}
                             </div>
                     </div>
                     {{-- Wali --}}
@@ -45,9 +45,11 @@
                             <div class="space-y-1 text-sm">
                                 <div><span class="font-medium">Nama:</span> {{ $siswa->nama_wali }}</div>
                                 <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_wali }}</div>
-                                <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
+
                             </div>
                     </div>
+
+                    <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
                 </div>
             </div>
         </div>

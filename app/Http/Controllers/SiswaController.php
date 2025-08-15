@@ -14,6 +14,8 @@ use Illuminate\Validation\Rule;
 use App\Exports\ReusableExport;
 use App\Imports\ReusableImport;
 use App\Exports\ReusableTemplateExport;
+use App\Models\KelasSiswa;
+use App\Models\TahunSemester;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
@@ -48,20 +50,22 @@ class SiswaController extends Controller
             'no_hp' => 'siswa.no_hp',
             'no_hp_wali' => 'siswa.no_hp',
             'email' => 'users.email',
-            'status' => 'siswa.status',
+            // 'status' => 'kelasSiswa.status',
         ];
 
-        $query = Siswa::query()
-            // ->leftJoin('wali_murid as wali', 'wali.id', '=', 'siswa.wali_murid_id')
-            ->leftJoin('users', 'users.id', '=', 'siswa.user_id')
-            ->select(
-                'siswa.*',
-                // 'wali.nama_ayah',
-                // 'wali.nama_ibu',
-                // 'wali.nama_wali',
-                // 'wali.no_hp as no_hp_wali',
-                'users.email'
-            );
+        // $query = Siswa::query()
+        //     ->leftJoin('users', 'users.id', '=', 'siswa.user_id')
+        //     ->select(
+        //         'siswa.*',
+        //         'users.email'
+        //     );
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+
+        $query = Siswa::with('user')
+            ->with(['kelasSiswa' => function ($q) use ($tahunAktif) {
+                $q->where('tahun_semester_id', $tahunAktif->id);
+            }])
+            ->select('siswa.*');
 
         // Batasan akses data
         if ($user->hasRole('guru')) {
@@ -106,29 +110,63 @@ class SiswaController extends Controller
 
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
-        $siswa = $paginator->through(fn($item) => [
-            'id' => $item->id,
-            'name' => $item->nama,
-            'nipd' => $item->nipd,
-            'nisn' => $item->nisn,
-            'jenis_kelamin' => $item->jenis_kelamin,
-            'tempat_lahir' => $item->tempat_lahir,
-            'tanggal_lahir' => $item->tanggal_lahir,
-            'pendidikan_sebelumnya' => $item->pendidikan_sebelumnya ?: '-',
-            'alamat' => $item->alamat ?: '-',
-            'no_hp' => $item->no_hp ?: '-',
-            'email' => $item->user?->email ?: '-',
-            'status' => $item->status ?: '-',
-            // Data wali murid langsung dari tabel siswa
-            'nama_ayah' => $item->nama_ayah ?: '-',
-            'pekerjaan_ayah' => $item->pekerjaan_ayah ?: '-',
-            'nama_ibu' => $item->nama_ibu ?: '-',
-            'pekerjaan_ibu' => $item->pekerjaan_ibu ?: '-',
-            'nama_wali' => $item->nama_wali ?: '-',
-            'pekerjaan_wali' => $item->pekerjaan_wali ?: '-',
-            'no_hp_wali' => $item->no_hp_wali ?: '-',
-            'alamat_wali' => $item->alamat_wali ?: '-',
-        ]);
+        // $siswa = $paginator->through(fn($item) => [
+        //     'id' => $item->id,
+        //     'name' => $item->nama,
+        //     'nipd' => $item->nipd,
+        //     'nisn' => $item->nisn,
+        //     'jenis_kelamin' => $item->jenis_kelamin,
+        //     'tempat_lahir' => $item->tempat_lahir,
+        //     'tanggal_lahir' => $item->tanggal_lahir,
+        //     'pendidikan_sebelumnya' => $item->pendidikan_sebelumnya ?: '-',
+        //     'alamat' => $item->alamat ?: '-',
+        //     'no_hp' => $item->no_hp ?: '-',
+        //     'email' => $item->user?->email ?: '-',
+        //     'status' => $item->status ?: '-',
+        //     // Data wali murid langsung dari tabel siswa
+        //     'nama_ayah' => $item->nama_ayah ?: '-',
+        //     'pekerjaan_ayah' => $item->pekerjaan_ayah ?: '-',
+        //     'nama_ibu' => $item->nama_ibu ?: '-',
+        //     'pekerjaan_ibu' => $item->pekerjaan_ibu ?: '-',
+        //     'nama_wali' => $item->nama_wali ?: '-',
+        //     'pekerjaan_wali' => $item->pekerjaan_wali ?: '-',
+        //     'no_hp_wali' => $item->no_hp_wali ?: '-',
+        //     'alamat_wali' => $item->alamat_wali ?: '-',
+        // ]);
+        $siswa = $paginator->through(function ($item) {
+            $kelasSiswaAktif = $item->kelasSiswa->first();
+            $kelasNama = '-';
+            $statusKelas = '-';
+            if ($kelasSiswaAktif) {
+                $kelasNama = $kelasSiswaAktif->kelas ? $kelasSiswaAktif->kelas->nama : '-';
+                $statusKelas = $kelasSiswaAktif->status ?? '-';
+            }
+
+            return [
+                'id' => $item->id,
+                'name' => $item->nama,
+                'nipd' => $item->nipd,
+                'nisn' => $item->nisn,
+                'jenis_kelamin' => $item->jenis_kelamin,
+                'tempat_lahir' => $item->tempat_lahir,
+                'tanggal_lahir' => $item->tanggal_lahir,
+                'pendidikan_sebelumnya' => $item->pendidikan_sebelumnya ?: '-',
+                'alamat' => $item->alamat ?: '-',
+                'no_hp' => $item->no_hp ?: '-',
+                'email' => $item->user?->email ?: '-',
+                'status' => $statusKelas,
+                'kelas' => $kelasNama,
+                // Data wali murid langsung dari tabel siswa
+                'nama_ayah' => $item->nama_ayah ?: '-',
+                'pekerjaan_ayah' => $item->pekerjaan_ayah ?: '-',
+                'nama_ibu' => $item->nama_ibu ?: '-',
+                'pekerjaan_ibu' => $item->pekerjaan_ibu ?: '-',
+                'nama_wali' => $item->nama_wali ?: '-',
+                'pekerjaan_wali' => $item->pekerjaan_wali ?: '-',
+                'no_hp_wali' => $item->no_hp_wali ?: '-',
+                'alamat_wali' => $item->alamat_wali ?: '-',
+            ];
+        });
 
         $breadcrumbs = [
             ['label' => 'Manage Siswa']
@@ -149,17 +187,16 @@ class SiswaController extends Controller
      */
     public function create()
     {
-        // $wali_list = WaliMurid::all();
+        $kelasOptions = Kelas::pluck('nama', 'id');
 
         $breadcrumbs = [
             ['label' => 'Manage Siswa', 'url' => role_route('siswa.index')],
             ['label' => 'Create Siswa'],
         ];
-
         $title = 'Create Siswa';
 
         return view('siswa.create', compact(
-            // 'wali_list',
+            'kelasOptions',
             'breadcrumbs',
             'title'
         ));
@@ -178,7 +215,7 @@ class SiswaController extends Controller
             'tempat_lahir' => 'nullable|string|max:255',
             'tanggal_lahir' => 'required|date',
             'pendidikan_sebelumnya' => 'nullable|string|max:255',
-            'alamat' => 'nullable|string|max:500',
+            'alamat' => 'nullable|string|max:255',
             'no_hp' => [
                 'nullable',
                 'string',
@@ -186,6 +223,7 @@ class SiswaController extends Controller
                 'regex:/^(0|62)[0-9]{9,}$/'
             ],
             'email' => 'nullable|email|unique:users,email',
+            'kelas_id' => 'required|exists:kelas,id',
             'status' => ['required', Rule::in(['Aktif', 'Lulus', 'Keluar', 'Mutasi'])],
             // Data wali murid langsung
             'nama_ayah' => 'nullable|string|max:255',
@@ -200,7 +238,7 @@ class SiswaController extends Controller
                 'max:20',
                 'regex:/^(0|62)[0-9]{9,}$/'
             ],
-            'alamat_wali' => 'nullable|string|max:500',
+            'alamat_wali' => 'nullable|string|max:255',
         ]);
 
         // Format nomor HP siswa dan wali
@@ -227,7 +265,7 @@ class SiswaController extends Controller
         $user->roles()->attach($roleSiswa);
 
         // Simpan data siswa (termasuk wali murid)
-        Siswa::create([
+        $siswa = Siswa::create([
             'user_id' => $user->id,
             'nama' => $validated['nama'],
             'nipd' => $validated['nipd'],
@@ -238,7 +276,7 @@ class SiswaController extends Controller
             'pendidikan_sebelumnya' => $validated['pendidikan_sebelumnya'] ?? null,
             'alamat' => $validated['alamat'] ?? null,
             'no_hp' => $noHpSiswa,
-            'status' => $validated['status'],
+            // 'status' => $validated['status'],
             'nama_ayah' => $validated['nama_ayah'],
             'pekerjaan_ayah' => $validated['pekerjaan_ayah'] ?? null,
             'nama_ibu' => $validated['nama_ibu'],
@@ -249,6 +287,33 @@ class SiswaController extends Controller
             'alamat_wali' => $validated['alamat_wali'] ?? null,
         ]);
 
+        // Simpan kelas siswa di tahun ajaran aktif
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+        if ($tahunAktif && !empty($validated['kelas_id'])) {
+            // Cek apakah sudah ada data kelas siswa di tahun semester aktif
+            $sudahAda = KelasSiswa::where('siswa_id', $siswa->id)
+                ->where('tahun_semester_id', $tahunAktif->id)
+                ->where('kelas_id', $validated['kelas_id'])
+                ->exists();
+
+            if (!$sudahAda) {
+                KelasSiswa::create([
+                    'siswa_id' => $siswa->id,
+                    'tahun_semester_id' => $tahunAktif->id,
+                    'kelas_id' => $validated['kelas_id'],
+                    'status' => $validated['status'],
+                ]);
+            } else {
+                // Jika sudah ada, update status saja
+                KelasSiswa::where('siswa_id', $siswa->id)
+                    ->where('tahun_semester_id', $tahunAktif->id)
+                    ->where('kelas_id', $validated['kelas_id'])
+                    ->update([
+                        'status' => $validated['status'],
+                    ]);
+            }
+        }
+
         return redirect()->to(role_route('siswa.index'))
             ->with('success', "Siswa berhasil ditambahkan. Username: <b>{$username}</b>, password: <b>{$passwordPlain}</b>");
     }
@@ -256,10 +321,24 @@ class SiswaController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         // $siswa = Siswa::with('waliMurid')->findOrFail($id);
         $siswa = Siswa::findOrFail($id);
+        $perPage = $request->input('per_page', 10);
+        $query = KelasSiswa::query();
+        $totalCount = $query->count();
+        $paginator = $query->paginate($perPage)->withQueryString();
+        $data = $paginator->through(function ($item) {
+            // $siswa_count = KelasSiswa::where('tahun_semester_id', $item->id)->count();
+            return [
+                'id' => $item->id,
+                'tahun' => $item->tahun,
+                'semester' => $item->semester,
+                'kelas' => $item->kelas,
+                'status' => $item->is_active,
+            ];
+        });
         $breadcrumbs = [
             ['label' => 'Siswa', 'url' => role_route('siswa.index')],
             ['label' => $siswa->nama],
@@ -280,8 +359,14 @@ class SiswaController extends Controller
             abort(403, 'Kepala sekolah tidak boleh mengedit data siswa.');
         }
 
-        // $siswa = Siswa::with(['user', 'waliMurid'])->findOrFail($id);
-        $siswa = Siswa::with('user.roles')->findOrFail($id);
+        $siswa = Siswa::with('user', 'kelasSiswa')->findOrFail($id);
+        $kelasOptions = Kelas::pluck('nama', 'id');
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+
+        // Ambil kelas dan status dari kelas_siswa tahun aktif
+        $kelasSiswaAktif = $siswa->kelasSiswa->where('tahun_semester_id', $tahunAktif?->id)->first();
+        $selectedKelasId = $kelasSiswaAktif ? $kelasSiswaAktif->kelas_id : null;
+        $selectedStatus = $kelasSiswaAktif ? $kelasSiswaAktif->status : null;
 
         $breadcrumbs = [
             ['label' => 'Manage Siswa', 'url' => role_route('siswa.index')],
@@ -292,6 +377,9 @@ class SiswaController extends Controller
 
         return view('siswa.edit', compact(
             'siswa',
+            'kelasOptions',
+            'selectedKelasId',
+            'selectedStatus',
             'breadcrumbs',
             'title'
         ));
@@ -302,7 +390,7 @@ class SiswaController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $siswa = Siswa::with('user.roles')->findOrFail($id);
+        $siswa = Siswa::with('user')->findOrFail($id);
         $user = $siswa->user;
 
         if ($user->roles()->whereIn('name', ['guru', 'wali_kelas'])->exists()) {
@@ -317,7 +405,7 @@ class SiswaController extends Controller
             'tempat_lahir' => 'nullable|string|max:255',
             'tanggal_lahir' => 'nullable|date',
             'pendidikan_sebelumnya' => 'nullable|string|max:255',
-            'alamat' => 'nullable|string|max:500',
+            'alamat' => 'nullable|string|max:255',
             'no_hp' => [
                 'nullable',
                 'string',
@@ -325,6 +413,7 @@ class SiswaController extends Controller
                 'regex:/^(0|62)[0-9]{9,}$/',
             ],
             'email' => ['nullable', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+            'kelas_id' => ['required', Rule::exists('kelas', 'id')],
             'status' => ['required', Rule::in(['Aktif', 'Lulus', 'Keluar', 'Mutasi'])],
             // Data wali murid langsung
             'nama_ayah' => 'nullable|string|max:255',
@@ -339,7 +428,7 @@ class SiswaController extends Controller
                 'max:20',
                 'regex:/^(0|62)[0-9]{9,}$/',
             ],
-            'alamat_wali' => 'nullable|string|max:500'
+            'alamat_wali' => 'nullable|string|max:255'
         ]);
 
         // Format nomor HP siswa
@@ -378,7 +467,7 @@ class SiswaController extends Controller
             'pendidikan_sebelumnya' => $validated['pendidikan_sebelumnya'] ?? null,
             'alamat' => $validated['alamat'] ?? null,
             'no_hp' => $validated['no_hp'] ?? null,
-            'status' => $validated['status'],
+            // 'status' => $validated['status'],
             // Data wali murid langsung
             'nama_ayah' => $validated['nama_ayah'],
             'pekerjaan_ayah' => $validated['pekerjaan_ayah'] ?? null,
@@ -390,6 +479,30 @@ class SiswaController extends Controller
             'alamat_wali' => $validated['alamat_wali'] ?? null,
         ]);
 
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+        if ($tahunAktif && !empty($validated['kelas_id'])) {
+            $sudahAda = KelasSiswa::where('siswa_id', $siswa->id)
+                ->where('tahun_semester_id', $tahunAktif->id)
+                ->where('kelas_id', $validated['kelas_id'])
+                ->exists();
+
+            if (!$sudahAda) {
+                KelasSiswa::create([
+                    'siswa_id' => $siswa->id,
+                    'tahun_semester_id' => $tahunAktif->id,
+                    'kelas_id' => $validated['kelas_id'],
+                    'status' => $validated['status'],
+                ]);
+            } else {
+                KelasSiswa::where('siswa_id', $siswa->id)
+                    ->where('tahun_semester_id', $tahunAktif->id)
+                    ->where('kelas_id', $validated['kelas_id'])
+                    ->update([
+                        'status' => $validated['status'],
+                    ]);
+            }
+        }
+
         return redirect()->to(role_route('siswa.index'))
             ->with('success', 'Data siswa berhasil diperbarui.');
     }
@@ -399,7 +512,7 @@ class SiswaController extends Controller
      */
     public function destroy(string $id)
     {
-        $siswa = Siswa::with(['user', 'wali', 'kelasSiswa'])->findOrFail($id);
+        $siswa = Siswa::with(['user', 'kelasSiswa'])->findOrFail($id);
 
         // Cek apakah siswa masih terhubung di kelas_siswa
         if ($siswa->kelasSiswa()->exists()) {
@@ -417,6 +530,14 @@ class SiswaController extends Controller
 
         return redirect()->to(role_route('siswa.index'))
             ->with('success', 'Siswa berhasil dihapus.');
+    }
+
+    public function kelasAktif()
+    {
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+        if (!$tahunAktif) return null;
+        $kelasSiswa = $this->kelasSiswa()->where('tahun_semester_id', $tahunAktif->id)->first();
+        return $kelasSiswa ? $kelasSiswa->kelas : null;
     }
 
     public function editKelas()
@@ -441,16 +562,17 @@ class SiswaController extends Controller
         $type = $request->input('type', 'excel');
         $tanggal = now()->format('Ymd_His');
         $filename = $request->input('filename', "data_siswa_{$tanggal}");
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
 
         // $data = Siswa::with(['kelas', 'waliMurid'])->get();
-        // $data = Siswa::all();
+        $data = Siswa::all();
         // data siswa Aktif pada tahun ajaran ini dengan status aktif
         // $data = Siswa::where('status', 'Aktif')->get();
-        Siswa::whereHas('kelasSiswa', function ($q) use ($tahunSemesterId) {
-            $q->where('tahun_semester_id', $tahunSemesterId);
-        })
-            ->where('status', 'aktif')
-            ->get();
+        // Siswa::whereHas('kelasSiswa', function ($q) use ($tahunAktif) {
+        //     $q->where('tahun_semester_id', $tahunSemesterId);
+        // })
+        //     ->where('status', 'aktif')
+        //     ->get();
 
         $headings = [
             'Nama',
@@ -461,6 +583,7 @@ class SiswaController extends Controller
             'Tanggal Lahir',
             'Pendidikan Sebelumnya',
             'Agama',
+            'Kelas',
             'Status',
             'Alamat',
             'No HP',
@@ -483,6 +606,7 @@ class SiswaController extends Controller
             'yyyy-mm-dd',
             '',
             'Islam/Kristen/Katolik/Hindu/Buddha/Konghucu',
+            '',
             'Aktif/Lulus/Keluar/Mutasi',
             '',
             '',
@@ -497,7 +621,16 @@ class SiswaController extends Controller
             '',
             ''
         ];
-        $formatted = $data->map(function ($siswa) {
+        $formatted = $data->map(function ($siswa) use ($tahunAktif) {
+            // Ambil kelas siswa pada tahun ajaran aktif
+            $kelasNama = '-';
+            if ($tahunAktif) {
+                $kelasSiswa = $siswa->kelasSiswa()->where('tahun_semester_id', $tahunAktif->id)->first();
+                if ($kelasSiswa && $kelasSiswa->kelas) {
+                    $kelasNama = $kelasSiswa->kelas->nama;
+                }
+            }
+
             return [
                 $siswa->nama,
                 $siswa->nipd,
@@ -505,20 +638,21 @@ class SiswaController extends Controller
                 $siswa->jenis_kelamin,
                 $siswa->tempat_lahir,
                 $siswa->tanggal_lahir,
-                $siswa->pendidikan_sebelumnya,
+                $siswa->pendidikan_sebelumnya ?? '-',
                 $siswa->agama,
-                $siswa->status,
+                $kelasNama,
+                $siswa->status ? $siswa->status : '-',
                 $siswa->alamat,
-                $siswa->no_hp,
-                $siswa->email,
-                $siswa->nama_ayah,
-                $siswa->pekerjaan_ayah,
-                $siswa->nama_ibu,
-                $siswa->pekerjaan_ibu,
+                $siswa->no_hp ?? '-',
+                $siswa->email ?? '-',
+                $siswa->nama_ayah ?? '-',
+                $siswa->pekerjaan_ayah ?? '-',
+                $siswa->nama_ibu ?? '-',
+                $siswa->pekerjaan_ibu ?? '-',
                 $siswa->nama_wali ?? '-',
                 $siswa->pekerjaan_wali ?? '-',
-                $siswa->no_hp_wali,
-                $siswa->alamat_wali,
+                $siswa->no_hp_wali ?? '-',
+                $siswa->alamat_wali ?? '-',
             ];
         })->toArray();
 
@@ -531,8 +665,8 @@ class SiswaController extends Controller
         }
 
         // Default: Excel
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\ReusableExport($headings, $enumInfo, $formatted),
+        return Excel::download(
+            new ReusableExport($headings, $enumInfo, $formatted),
             "{$filename}.xlsx"
         );
     }
@@ -549,6 +683,7 @@ class SiswaController extends Controller
             'Tanggal Lahir',
             'Pendidikan Sebelumnya',
             'Agama',
+            'Kelas',
             'Status',
             'Alamat',
             'No HP',
@@ -572,6 +707,7 @@ class SiswaController extends Controller
             'yyyy-mm-dd',
             '',
             'Islam/Kristen/Katolik/Hindu/Buddha/Konghucu',
+            '1/2/3/4/5/6',
             'Aktif/Lulus/Keluar/Mutasi',
             '',
             '',
@@ -626,6 +762,7 @@ class SiswaController extends Controller
             'Tanggal Lahir',
             'Pendidikan Sebelumnya',
             'Agama',
+            'Kelas',
             'Status',
             'Alamat',
             'No HP',
@@ -645,9 +782,9 @@ class SiswaController extends Controller
                 $data = $row->toArray();
 
                 // Debug: log data yang diproses
-                if ($index > 1) {
-                    \Log::info('Import Siswa Data', ['index' => $index, 'data' => $data]);
-                }
+                // if ($index > 1) {
+                //     \Log::info('Import Siswa Data', ['index' => $index, 'data' => $data]);
+                // }
 
                 if ($index === 0) {
                     // baris 1 = header, cek apakah sesuai $requiredHeaders (harus urut sama)
@@ -678,6 +815,7 @@ class SiswaController extends Controller
                     'tanggal_lahir' => $data['Tanggal Lahir'] ?? null,
                     'pendidikan_sebelumnya' => $data['Pendidikan Sebelumnya'] ?? null,
                     'agama' => $data['Agama'] ?? null,
+                    'kelas' => $data['Kelas'] ?? null, // Kelas tidak digunakan di sini, hanya untuk validasi
                     'status' => $data['Status'] ?? null,
                     'alamat' => $data['Alamat'] ?? null,
                     'no_hp' => $data['No HP'] ?? null,
@@ -778,9 +916,10 @@ class SiswaController extends Controller
                     'tanggal_lahir' => 'required|date',
                     'pendidikan_sebelumnya' => 'nullable|string|max:255',
                     'agama' => 'required|in:Islam,Kristen,Katolik,Hindu,Buddha,Konghucu',
-                    'alamat' => 'nullable|string|max:500',
+                    'alamat' => 'nullable|string|max:255',
                     'no_hp' => 'nullable|string|max:20',
                     'email' => 'nullable|email',
+                    'kelas' => 'nullable',
                     'status' => 'required|in:Aktif,Lulus,Keluar,Mutasi',
                     'nama_ayah' => 'nullable|string|max:255',
                     'pekerjaan_ayah' => 'nullable|string|max:255',
@@ -789,7 +928,7 @@ class SiswaController extends Controller
                     'nama_wali' => 'nullable|string|max:255',
                     'pekerjaan_wali' => 'nullable|string|max:255',
                     'no_hp_wali' => 'nullable|string|max:20',
-                    'alamat_wali' => 'nullable|string|max:500',
+                    'alamat_wali' => 'nullable|string|max:255',
                 ]);
 
                 if ($validator->fails()) {
@@ -847,7 +986,7 @@ class SiswaController extends Controller
                 }
 
                 // Simpan siswa
-                \App\Models\Siswa::create([
+                Siswa::create([
                     'user_id' => $user->id,
                     'nama' => $data['nama'],
                     'nipd' => $data['nipd'],
@@ -857,6 +996,7 @@ class SiswaController extends Controller
                     'tanggal_lahir' => $data['tanggal_lahir'],
                     'pendidikan_sebelumnya' => $data['pendidikan_sebelumnya'],
                     'agama' => $data['agama'],
+                    'kelas' => $data['kelas'] ?? null,
                     'status' => $data['status'] ?? 'Aktif',
                     'alamat' => $data['alamat'],
                     'no_hp' => $formatHp($data['no_hp']),
@@ -870,6 +1010,32 @@ class SiswaController extends Controller
                     'alamat_wali' => $data['alamat_wali'],
                 ]);
                 $success++;
+
+                $siswaBaru = Siswa::where('nisn', $data['nisn'])->first();
+                $tahunAktif = TahunSemester::where('is_active', 1)->first();
+                if ($siswaBaru && $tahunAktif && !empty($data['kelas'])) {
+                    $kelasObj = Kelas::where('nama', $data['kelas'])->first();
+                    if ($kelasObj) {
+                        // Cek apakah sudah ada data kelas siswa di tahun semester aktif
+                        $sudahAda = KelasSiswa::where('siswa_id', $siswaBaru->id)
+                            ->where('tahun_semester_id', $tahunAktif->id)
+                            ->where('kelas_id', $kelasObj->id)
+                            ->exists();
+
+                        if ($sudahAda) {
+                            $failed++;
+                            $errors[] = "{$data['nama']} sudah terdaftar di kelas {$kelasObj->nama} tahun {$tahunAktif->tahun} semester {$tahunAktif->semester}";
+                        } else {
+                            KelasSiswa::updateOrCreate([
+                                'siswa_id' => $siswaBaru->id,
+                                'tahun_semester_id' => $tahunAktif->id,
+                            ], [
+                                'kelas_id' => $kelasObj->id,
+                                'status' => $data['status'] ?? 'Aktif',
+                            ]);
+                        }
+                    }
+                }
             }),
             $request->file('file')
         );
@@ -896,9 +1062,6 @@ class SiswaController extends Controller
         if ($headerError) {
             return back()->with('error', implode('<br>', $errors));
         }
-        // return back()->with('success', $msg);
         return redirect()->to(role_route('siswa.index'))->with('success', $msg);
-        // return redirect()->to(role_route('siswa.index'))
-        //     ->with('success', "Siswa berhasil ditambahkan. Username: <b>{$username}</b>, password: <b>{$passwordPlain}</b>");
     }
 }
