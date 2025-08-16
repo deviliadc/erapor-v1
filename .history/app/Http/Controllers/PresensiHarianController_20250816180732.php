@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\GuruKelas;
-use App\Models\PresensiHarian;
 use App\Models\PresensiDetail;
 use App\Models\TahunAjaran;
 use App\Models\TahunSemester;
@@ -144,8 +143,7 @@ public function index(Request $request)
     {
         $user = Auth::user();
         $kelasId = $request->kelas_id;
-        // $tahun = TahunSemester::where('is_active', true)->first();
-        $tahun = TahunAjaran::where('is_active', true)->first();
+        $tahun = TahunSemester::where('is_active', true)->first();
 
         $kelas = collect(); // Default: kosong
         $siswa = collect();
@@ -159,7 +157,7 @@ public function index(Request $request)
             $guru = $user->guru;
             // Ambil kelas yang diampu sebagai wali atau pengajar di tahun aktif
             $kelasIds = GuruKelas::where('guru_id', $guru->id)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_semester_id', $tahun->id ?? null)
                 ->whereIn('peran', ['wali', 'pengajar'])
                 ->pluck('kelas_id');
             $kelas = Kelas::whereIn('id', $kelasIds)->get();
@@ -169,7 +167,7 @@ public function index(Request $request)
         if ($kelasId && $canFill) {
             $siswa = KelasSiswa::with('siswa')
                 ->where('kelas_id', $kelasId)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_semester_id', $tahun->id ?? null)
                 ->orderBy('no_absen')
                 ->get();
         }
@@ -177,7 +175,7 @@ public function index(Request $request)
         if ($kelasId) {
             $siswa = KelasSiswa::with('siswa')
                 ->where('kelas_id', $kelasId)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_semester_id', $tahun->id ?? null)
                 ->orderBy('no_absen')
                 ->get();
         }

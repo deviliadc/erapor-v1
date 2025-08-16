@@ -91,6 +91,7 @@ class KelasController extends Controller
     //         'tahunSemesterSelect'
     //     ));
     // }
+        <?php
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);

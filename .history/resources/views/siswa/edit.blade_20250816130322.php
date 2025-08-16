@@ -41,12 +41,6 @@
                     $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->format('Y-m-d') : '',
                 )"
                     placeholder="Pilih tanggal" required /> --}}
-                                        <x-form.date-picker
-                        name="tanggal_lahir"
-                        label="Tanggal Lahir"
-                        :value="old('tanggal_lahir', $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->format('Y-m-d') : '')"
-                        required
-                    />
 
                 {{-- Pendidikan Sebelumnya --}}
                 <x-form.input label="Pendidikan Sebelumnya" name="pendidikan_sebelumnya" :value="old('pendidikan_sebelumnya', $siswa->pendidikan_sebelumnya)" />

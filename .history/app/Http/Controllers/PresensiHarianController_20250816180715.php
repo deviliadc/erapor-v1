@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\GuruKelas;
-use App\Models\PresensiHarian;
 use App\Models\PresensiDetail;
-use App\Models\TahunAjaran;
+use App\Models\PresensiHarian;
 use App\Models\TahunSemester;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -70,72 +69,6 @@ class PresensiHarianController extends Controller
 //         ]);
 //     }
 
-public function index(Request $request)
-{
-    // Ambil tahun ajaran aktif dari tahun semester aktif
-    $tahunSemesterAktif = TahunSemester::where('is_active', true)->first();
-    $tahunAjaranAktifId = $tahunSemesterAktif ? $tahunSemesterAktif->tahun_ajaran_id : null;
-
-    // Filter: user memilih tahun semester, ambil tahun ajaran dari relasi
-    $selectedTahunSemesterId = $request->input('tahun_semester_id', $tahunSemesterAktif?->id);
-    $selectedTahunAjaranId = null;
-    if ($selectedTahunSemesterId) {
-        $selectedTahunSemester = TahunSemester::find($selectedTahunSemesterId);
-        $selectedTahunAjaranId = $selectedTahunSemester ? $selectedTahunSemester->tahun_ajaran_id : $tahunAjaranAktifId;
-    }
-
-    // Query presensi harian, filter berdasarkan tahun ajaran
-    $paginator = PresensiHarian::with('kelas')
-        ->when($selectedTahunAjaranId, function ($query) use ($selectedTahunAjaranId) {
-            $query->whereHas('detail.kelasSiswa', function ($q) use ($selectedTahunAjaranId) {
-                $q->where('tahun_ajaran_id', $selectedTahunAjaranId);
-            });
-        })
-        ->orderByDesc('tanggal')
-        ->paginate(10)
-        ->withQueryString();
-
-    $data = $paginator->getCollection()->map(function ($item) {
-        return [
-            'id' => $item->id,
-            'tanggal' => $item->tanggal,
-            'kelas' => $item->kelas->nama ?? '-',
-            'catatan' => $item->catatan ?? '-',
-        ];
-    });
-    $paginator->setCollection($data);
-
-    // Untuk filter: ambil semua tahun semester, tampilkan tahun ajaran dan semester
-    $tahun_semester = TahunSemester::with('tahunAjaran')
-        ->orderByDesc(
-            TahunAjaran::select('mulai')
-                ->whereColumn('tahun_ajaran_id', 'tahun_ajaran.id')
-        )
-        ->orderByDesc('semester')
-        ->get();
-
-    $tahunSemesterSelect = $tahun_semester->map(function ($ts) {
-        return [
-            'id' => $ts->id,
-            'name' => ($ts->tahunAjaran ? $ts->tahunAjaran->tahun : '-') . ' - ' . ucfirst($ts->semester)
-        ];
-    });
-
-    $breadcrumbs = [
-        ['label' => 'Presensi Harian'],
-    ];
-    $title = 'Presensi Harian';
-
-    return view('presensi-harian.index', [
-        'data' => $paginator,
-        'totalCount' => $paginator->total(),
-        'breadcrumbs' => $breadcrumbs,
-        'title' => $title,
-        'tahun_semester' => $tahun_semester,
-        'tahunSemesterSelect' => $tahunSemesterSelect,
-        'selectedTahunSemesterId' => $selectedTahunSemesterId,
-    ]);
-}
 
     /**
      * Show the form for creating a new resource.
@@ -144,8 +77,7 @@ public function index(Request $request)
     {
         $user = Auth::user();
         $kelasId = $request->kelas_id;
-        // $tahun = TahunSemester::where('is_active', true)->first();
-        $tahun = TahunAjaran::where('is_active', true)->first();
+        $tahun = TahunSemester::where('is_active', true)->first();
 
         $kelas = collect(); // Default: kosong
         $siswa = collect();
@@ -159,7 +91,7 @@ public function index(Request $request)
             $guru = $user->guru;
             // Ambil kelas yang diampu sebagai wali atau pengajar di tahun aktif
             $kelasIds = GuruKelas::where('guru_id', $guru->id)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_semester_id', $tahun->id ?? null)
                 ->whereIn('peran', ['wali', 'pengajar'])
                 ->pluck('kelas_id');
             $kelas = Kelas::whereIn('id', $kelasIds)->get();
@@ -169,7 +101,7 @@ public function index(Request $request)
         if ($kelasId && $canFill) {
             $siswa = KelasSiswa::with('siswa')
                 ->where('kelas_id', $kelasId)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_semester_id', $tahun->id ?? null)
                 ->orderBy('no_absen')
                 ->get();
         }
@@ -177,7 +109,7 @@ public function index(Request $request)
         if ($kelasId) {
             $siswa = KelasSiswa::with('siswa')
                 ->where('kelas_id', $kelasId)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_semester_id', $tahun->id ?? null)
                 ->orderBy('no_absen')
                 ->get();
         }

@@ -177,7 +177,7 @@ public function index(Request $request)
         if ($kelasId) {
             $siswa = KelasSiswa::with('siswa')
                 ->where('kelas_id', $kelasId)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_semester_id', $tahun->id ?? null)
                 ->orderBy('no_absen')
                 ->get();
         }
