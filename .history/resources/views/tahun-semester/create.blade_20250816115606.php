@@ -1,0 +1,63 @@
+<x-modal name="form-create-semester" title="Tambah Semester" maxWidth="2xl">
+    <form action="{{ role_route('tahun-semester.store') }}" method="POST" enctype="multipart/form-data"
+        class="space-y-6 sm:p-6">
+        @csrf
+        <input type="hidden" name="tab" value="">
+        
+
+        {{-- Tahun --}}
+        <x-form.input name="tahun" label="Tahun Ajaran" required />
+
+        {{-- Semester --}}
+        <x-form.select name="semester" label="Semester" :options="['Ganjil' => 'Ganjil', 'Genap' => 'Genap']" placeholder="Pilih semester" required />
+
+        {{-- Status --}}
+        <div x-data="{ isActive: {{ old('is_active') ? 'true' : 'false' }} }" @click.stop @mousedown.stop>
+            <input type="hidden" name="is_active" value="0">
+
+            <label for="is_active_create"
+                class="flex items-center text-sm font-medium text-gray-700 cursor-pointer select-none dark:text-gray-400"
+                @click.stop @mousedown.stop>
+                <div class="relative">
+                    <input type="checkbox" id="is_active_create" name="is_active" value="1" class="sr-only"
+                        @click.stop @mousedown.stop @change="isActive = !isActive" :checked="isActive">
+
+                    <div :class="isActive ? 'border-brand-500 bg-brand-500' : 'bg-transparent border-gray-300 dark:border-gray-700'"
+                        class="mr-3 flex h-5 w-5 items-center justify-center rounded-md border-[1.25px] transition-colors duration-200">
+                        <span :class="isActive ? 'opacity-100' : 'opacity-0'" class="transition-opacity duration-150">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="white" stroke-width="1.94437"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                Aktifkan Tahun & Semester ini <span class="text-error-500">*</span>
+            </label>
+
+            @error('is_active')
+                <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {{ $message }}
+                </div>
+            @enderror
+        </div>
+        {{-- <div class="flex items-center gap-2">
+            <input type="hidden" name="is_active" value="0">
+            <input type="checkbox" id="is_active" name="is_active" value="1"
+                class="rounded border-gray-300 text-brand-600 shadow-sm focus:ring-brand-500"
+                {{ old('is_active') ? 'checked' : '' }}>
+            <label for="is_active" class="text-sm text-gray-700 dark:text-gray-400">
+                Aktifkan Tahun & Semester ini <span class="text-error-500">*</span>
+            </label>
+        </div> --}}
+
+        {{-- Tombol Submit --}}
+        <div class="flex justify-end">
+            <button type="submit"
+                class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
+                Tambah
+            </button>
+        </div>
+    </form>
+</x-modal>
