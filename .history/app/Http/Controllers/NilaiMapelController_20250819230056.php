@@ -296,7 +296,7 @@ class NilaiMapelController extends Controller
             foreach ($mapel as $gk) {
                 if ($gk->mapel_id) {
                     foreach ($siswaList as $ks) {
-                        $nm = NilaiMapel::with('detailMapel')
+                        $nm = NilaiMapel::with('detail')
                             ->where('kelas_siswa_id', $ks->id)
                             ->where('mapel_id', $gk->mapel_id)
                             ->where('tahun_semester_id', $tahunAktif->id)
@@ -305,7 +305,7 @@ class NilaiMapelController extends Controller
                             ->first();
 
                         if ($nm) {
-                            foreach ($nm->detailMapel as $item) {
+                            foreach ($nm->detail as $item) {
                                 $jenis = $item->jenis_nilai;
                                 if (in_array($jenis, ['formatif', 'sumatif'])) {
                                     $key = $jenis == 'formatif' ? $item->tujuan_pembelajaran_id : $item->lingkup_materi_id;
@@ -344,7 +344,7 @@ class NilaiMapelController extends Controller
         $rekapNilai = [];
         foreach ($mapel as $gk) {
             foreach ($siswaList as $ks) {
-                $nm = NilaiMapel::with('detailMapel')
+                $nm = NilaiMapel::with('detail')
                     ->where('kelas_siswa_id', $ks->id)
                     ->where('mapel_id', $gk->mapel_id)
                     ->where('tahun_semester_id', $tahunAktif->id)
@@ -440,160 +440,6 @@ class NilaiMapelController extends Controller
     /**
      * Simpan nilai mapel detail dan rekap nilai akhir.
      */
-
-    // public function updateBatch(Request $request)
-    // {
-    //     $request->validate([
-    //         'kelas_id' => 'required|exists:kelas,id',
-    //         'tahun_semester_id' => 'required|exists:tahun_semester,id',
-    //         'periode' => 'required|in:tengah,akhir',
-    //         'mapel_id' => 'required|exists:mapel,id',
-    //         // 'nilai' => 'nullable|array',
-    //         'nilai.*.siswa_id' => 'required|exists:siswa,id',
-    //         'nilai.*.mapel_id' => 'required|exists:mapel,id',
-    //         'nilai.*.uts' => 'nullable|numeric|min:0|max:100',
-    //         'nilai.*.uas' => 'nullable|numeric|min:0|max:100',
-    //     ]);
-
-    //     DB::beginTransaction();
-
-    //     try {
-    //         $mapelId = $request->mapel_id;
-
-    //         foreach ($request->nilai ?? [] as $kelasSiswaId => $nilaiSet) {
-    //             $kelasSiswa = KelasSiswa::find($kelasSiswaId);
-    //             if (!$kelasSiswa) continue;
-
-    //             $nilaiTerisi = collect($nilaiSet)->filter(fn($v) => $v !== null && $v !== '');
-
-    //             // Jika semua nilai kosong, hapus detailnya saja, jangan hapus NilaiMapel
-    //             if ($nilaiTerisi->isEmpty()) {
-    //                 $nilaiMapel = NilaiMapel::where([
-    //                     'kelas_siswa_id' => $kelasSiswaId,
-    //                     'mapel_id' => $mapelId,
-    //                     'periode' => $request->periode,
-    //                     'tahun_semester_id' => $request->tahun_semester_id,
-    //                 ])->first();
-    //                 if ($nilaiMapel) {
-    //                     foreach ($nilaiSet as $key => $nilai) {
-    //                         $jenisKey = match ($key) {
-    //                             'uts_nontes' => 'uts-nontes',
-    //                             'uts_tes' => 'uts-tes',
-    //                             'uas_nontes' => 'uas-nontes',
-    //                             'uas_tes' => 'uas-tes',
-    //                             default => $key,
-    //                         };
-    //                         $data = [
-    //                             'nilai_mapel_id' => $nilaiMapel->id,
-    //                             'jenis_nilai' => $jenisKey,
-    //                         ];
-    //                         if (Str::startsWith($key, 'formatif_')) {
-    //                             $data['jenis_nilai'] = 'formatif';
-    //                             $data['tujuan_pembelajaran_id'] = Str::after($key, 'formatif_');
-    //                         } elseif (Str::startsWith($key, 'sumatif_')) {
-    //                             $data['jenis_nilai'] = 'sumatif';
-    //                             $data['lingkup_materi_id'] = Str::after($key, 'sumatif_');
-    //                         }
-    //                         NilaiMapelDetail::where($data)->delete();
-    //                     }
-    //                     if ($nilaiMapel->detailMapel()->count() === 0) {
-    //                         $nilaiMapel->delete();
-    //                     }
-    //                 }
-    //                 continue;
-    //             }
-
-    //             // Simpan/update NilaiMapel
-    //             $nilaiMapel = NilaiMapel::updateOrCreate(
-    //                 [
-    //                     'kelas_siswa_id' => $kelasSiswaId,
-    //                     'mapel_id' => $mapelId,
-    //                     'periode' => $request->periode,
-    //                     'tahun_semester_id' => $request->tahun_semester_id,
-    //                 ]
-    //             );
-
-    //             foreach ($nilaiSet as $key => $nilai) {
-    //                 $jenisKey = match ($key) {
-    //                     'uts_nontes' => 'uts-nontes',
-    //                     'uts_tes' => 'uts-tes',
-    //                     'uas_nontes' => 'uas-nontes',
-    //                     'uas_tes' => 'uas-tes',
-    //                     default => $key,
-    //                 };
-
-    //                 if ($request->periode === 'tengah' && str_starts_with($jenisKey, 'uas')) continue;
-
-    //                 $data = [
-    //                     'nilai_mapel_id' => $nilaiMapel->id,
-    //                     'tujuan_pembelajaran_id' => null,
-    //                     'lingkup_materi_id' => null,
-    //                     'jenis_nilai' => $jenisKey,
-    //                 ];
-
-    //                 if (Str::startsWith($key, 'formatif_')) {
-    //                     $data['jenis_nilai'] = 'formatif';
-    //                     $data['tujuan_pembelajaran_id'] = Str::after($key, 'formatif_');
-    //                 } elseif (Str::startsWith($key, 'sumatif_')) {
-    //                     $data['jenis_nilai'] = 'sumatif';
-    //                     $data['lingkup_materi_id'] = Str::after($key, 'sumatif_');
-    //                 }
-
-    //                 if ($nilai !== null && $nilai !== '') {
-    //                     NilaiMapelDetail::updateOrCreate(
-    //                         [
-    //                             'nilai_mapel_id' => $nilaiMapel->id,
-    //                             'jenis_nilai' => $data['jenis_nilai'],
-    //                             'tujuan_pembelajaran_id' => $data['tujuan_pembelajaran_id'],
-    //                             'lingkup_materi_id' => $data['lingkup_materi_id'],
-    //                         ],
-    //                         [
-    //                             'nilai' => $nilai,
-    //                             'is_validated' => false,
-    //                         ]
-    //                     );
-    //                 } else {
-    //                     NilaiMapelDetail::where([
-    //                         'nilai_mapel_id' => $nilaiMapel->id,
-    //                         'jenis_nilai' => $data['jenis_nilai'],
-    //                         'tujuan_pembelajaran_id' => $data['tujuan_pembelajaran_id'],
-    //                         'lingkup_materi_id' => $data['lingkup_materi_id'],
-    //                     ])->delete();
-    //                 }
-    //             }
-
-    //             // Hitung rekap, jika semua detail kosong, hapus NilaiMapel
-    //             $rekap = $this->hitungRekapNilaiMapel($nilaiMapel, $request->periode, $kelasSiswaId, $mapelId);
-    //             $isKosong = collect($rekap)->except(['deskripsi_tertinggi', 'deskripsi_terendah'])->filter()->isEmpty();
-
-    //             if ($isKosong) {
-    //                 if ($nilaiMapel->detailMapel()->count() === 0) {
-    //                     $nilaiMapel->delete();
-    //                 }
-    //             } else {
-    //                 $nilaiMapel->update([
-    //                     'nilai_akhir' => $rekap['nilai_akhir'],
-    //                     'deskripsi_tertinggi' => $rekap['deskripsi_tertinggi'],
-    //                     'deskripsi_terendah' => $rekap['deskripsi_terendah'],
-    //                 ]);
-    //             }
-    //         }
-
-    //         DB::commit();
-
-    //         return redirect()->to(role_route('nilai-mapel.index', [
-    //             'kelas_id' => $request->kelas_id,
-    //             'tahun_semester_id' => $request->tahun_semester_id,
-    //             'periode' => $request->periode,
-    //             'mapel' => $request->mapel_id,
-    //             'active_tab' => $request->active_tab,
-    //         ]))->with('success', 'Nilai berhasil disimpan.');
-    //     } catch (\Throwable $th) {
-    //         DB::rollback();
-    //         return back()->with('error', 'Terjadi kesalahan: ' . $th->getMessage());
-    //     }
-    // }
-
     public function updateBatch(Request $request)
     {
         $request->validate([
@@ -601,18 +447,56 @@ class NilaiMapelController extends Controller
             'tahun_semester_id' => 'required|exists:tahun_semester,id',
             'periode' => 'required|in:tengah,akhir',
             'nilai' => 'nullable|array',
+            'nilai.*.*' => 'nullable|numeric|min:0|max:100',
         ]);
 
         DB::beginTransaction();
 
         try {
-            // Loop semua mapel yang diinputkan
-            foreach ($request->nilai ?? [] as $mapelId => $nilaiSiswa) {
-                foreach ($nilaiSiswa as $kelasSiswaId => $nilaiSet) {
+            // Ambil semua mapel yang ada di form
+            $mapelIds = [];
+            foreach ($request->nilai ?? [] as $kelasSiswaId => $nilaiSet) {
+                foreach ($nilaiSet as $key => $nilai) {
+                    if (Str::startsWith($key, 'formatif_') || Str::startsWith($key, 'sumatif_')) {
+                        // formatif_7 atau sumatif_14, ambil mapel dari relasi
+                        // (atau bisa ambil dari hidden input mapel_id di form jika ada)
+                    }
+                }
+                // Atau ambil dari $request->mapel_id jika satu mapel per submit
+                if ($request->mapel_id) $mapelIds[] = $request->mapel_id;
+            }
+            $mapelIds = array_unique($mapelIds);
+
+            // Jika hanya satu mapel per submit, gunakan cara lama
+            if (count($mapelIds) === 0 && $request->mapel_id) {
+                $mapelIds = [$request->mapel_id];
+            }
+
+            // Jika form mengirim semua mapel, proses semua
+            foreach ($mapelIds as $mapelId) {
+                foreach ($request->nilai ?? [] as $kelasSiswaId => $nilaiSet) {
                     $kelasSiswa = KelasSiswa::find($kelasSiswaId);
                     if (!$kelasSiswa) continue;
 
-                    $nilaiTerisi = collect($nilaiSet)->filter(fn($v) => $v !== null && $v !== '');
+                    // Filter nilai yang benar-benar terisi
+                    $nilaiTerisi = collect($nilaiSet)->filter(function ($v) {
+                        return $v !== null && $v !== '';
+                    });
+
+                    // if ($nilaiTerisi->isEmpty()) {
+                    //     // Jika semua nilai kosong, hapus NilaiMapel & detail
+                    //     $nilaiMapel = NilaiMapel::where([
+                    //         'kelas_siswa_id' => $kelasSiswaId,
+                    //         'mapel_id' => $mapelId,
+                    //         'periode' => $request->periode,
+                    //         'tahun_semester_id' => $request->tahun_semester_id,
+                    //     ])->first();
+                    //     if ($nilaiMapel) {
+                    //         NilaiMapelDetail::where('nilai_mapel_id', $nilaiMapel->id)->delete();
+                    //         $nilaiMapel->delete();
+                    //     }
+                    //     continue;
+                    // }
 
                     // Jika semua nilai kosong, hapus detailnya saja, jangan hapus NilaiMapel
                     if ($nilaiTerisi->isEmpty()) {
@@ -623,6 +507,7 @@ class NilaiMapelController extends Controller
                             'tahun_semester_id' => $request->tahun_semester_id,
                         ])->first();
                         if ($nilaiMapel) {
+                            // Hapus detail yang dikosongkan
                             foreach ($nilaiSet as $key => $nilai) {
                                 $jenisKey = match ($key) {
                                     'uts_nontes' => 'uts-nontes',
@@ -644,6 +529,7 @@ class NilaiMapelController extends Controller
                                 }
                                 NilaiMapelDetail::where($data)->delete();
                             }
+                            // Jika setelah penghapusan, detail sudah benar-benar kosong, baru hapus NilaiMapel
                             if ($nilaiMapel->detailMapel()->count() === 0) {
                                 $nilaiMapel->delete();
                             }
@@ -655,11 +541,13 @@ class NilaiMapelController extends Controller
                     $nilaiMapel = NilaiMapel::updateOrCreate(
                         [
                             'kelas_siswa_id' => $kelasSiswaId,
+                            // 'siswa_id' => $kelasSiswa->siswa_id,
                             'mapel_id' => $mapelId,
                             'periode' => $request->periode,
                             'tahun_semester_id' => $request->tahun_semester_id,
                         ]
                     );
+                    \Log::info('NilaiMapel:', $nilaiMapel->toArray());
 
                     foreach ($nilaiSet as $key => $nilai) {
                         $jenisKey = match ($key) {
@@ -674,6 +562,7 @@ class NilaiMapelController extends Controller
 
                         $data = [
                             'nilai_mapel_id' => $nilaiMapel->id,
+                            // 'periode' => $request->periode,
                             'tujuan_pembelajaran_id' => null,
                             'lingkup_materi_id' => null,
                             'jenis_nilai' => $jenisKey,
@@ -694,18 +583,21 @@ class NilaiMapelController extends Controller
                                     'jenis_nilai' => $data['jenis_nilai'],
                                     'tujuan_pembelajaran_id' => $data['tujuan_pembelajaran_id'],
                                     'lingkup_materi_id' => $data['lingkup_materi_id'],
+                                    // 'periode' => $data['periode'],
                                 ],
                                 [
                                     'nilai' => $nilai,
                                     'is_validated' => false,
                                 ]
                             );
+                            \Log::info('NilaiMapelDetail:', $data);
                         } else {
                             NilaiMapelDetail::where([
                                 'nilai_mapel_id' => $nilaiMapel->id,
                                 'jenis_nilai' => $data['jenis_nilai'],
                                 'tujuan_pembelajaran_id' => $data['tujuan_pembelajaran_id'],
                                 'lingkup_materi_id' => $data['lingkup_materi_id'],
+                                // 'periode' => $data['periode'],
                             ])->delete();
                         }
                     }
@@ -715,6 +607,8 @@ class NilaiMapelController extends Controller
                     $isKosong = collect($rekap)->except(['deskripsi_tertinggi', 'deskripsi_terendah'])->filter()->isEmpty();
 
                     if ($isKosong) {
+                        // NilaiMapelDetail::where('nilai_mapel_id', $nilaiMapel->id)->delete();
+                        // $nilaiMapel->delete();
                         if ($nilaiMapel->detailMapel()->count() === 0) {
                             $nilaiMapel->delete();
                         }
@@ -734,6 +628,8 @@ class NilaiMapelController extends Controller
                 'kelas_id' => $request->kelas_id,
                 'tahun_semester_id' => $request->tahun_semester_id,
                 'periode' => $request->periode,
+                'mapel' => $request->mapel_id,
+                'active_tab' => $request->active_tab,
             ]))->with('success', 'Nilai berhasil disimpan.');
         } catch (\Throwable $th) {
             DB::rollback();

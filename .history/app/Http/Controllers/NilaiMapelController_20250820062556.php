@@ -594,6 +594,7 @@ class NilaiMapelController extends Controller
     //     }
     // }
 
+        <?php
     public function updateBatch(Request $request)
     {
         $request->validate([
