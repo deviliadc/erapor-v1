@@ -4,12 +4,13 @@
     'totalCount' => 0,
     'rowView' => null,
     'bulkDeleteRoute' => null,
-    'selectable' => true,
+    'selectable' => false,
     'actions' => ['detail' => false, 'edit' => false, 'delete' => false],
     'sortPrefix' => '',
 ])
 
-<div x-data="tableComponent({{ $selectable ? 'true' : 'false' }}, '{{ $sortPrefix }}')" x-init="init()">
+<div x-data="tableComponent({{ $selectable ? 'true' : 'false' }},
+'{{ $sortPrefix }}')" x-init="init()">
 
     {{-- Tombol Hapus Semua --}}
     {{-- <div x-show="selected.length > 0" x-transition
@@ -42,12 +43,12 @@
             <thead class="border-y border-gray-100 py-3 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
                 <tr>
                     {{-- Toogle Select --}}
-                    @if ($selectable)
+                    {{-- @if ($selectable)
                         <th class="px-4 py-3 text-left">
                             <input type="checkbox" :checked="pageRowIds.every(id => selected.includes(id))"
                                 @change="togglePageSelection()" />
                         </th>
-                    @endif
+                    @endif --}}
                     {{-- Kolom Data --}}
                     @foreach ($columns as $key => $config)
                         <th class="px-4 py-3 text-left text-sm font-medium text-gray-900 dark:text-gray-400 whitespace-nowrap {{ $config['sortable'] ? 'cursor-pointer' : '' }}"
@@ -93,13 +94,13 @@
                         <tr :class="selected.includes({{ $id }}) ? 'bg-gray-100 dark:bg-gray-800' : ''"
                             class="duration-200 cursor-pointer" @click="handleClick({{ $id }}, $event)">
                             {{-- Selectable Checkbox --}}
-                            @if ($selectable)
+                            {{-- @if ($selectable)
                                 <td class="px-4 py-3">
                                     <input type="checkbox" :value="{{ $id }}"
                                         :checked="selected.includes({{ $id }})"
                                         @click.stop="toggleSingle({{ $id }})" />
                                 </td>
-                            @endif
+                            @endif --}}
                             @if ($rowView)
                                 @include($rowView, ['item' => $item])
                             @else
@@ -187,38 +188,40 @@
 
     {{-- Pagination --}}
     @if ($data instanceof \Illuminate\Pagination\LengthAwarePaginator || $data instanceof \Illuminate\Pagination\Paginator)
-    <div class="border-t border-gray-200 px-6 py-4 dark:border-gray-800 pagination-wrapper">
-        <div class="flex items-center justify-between">
-            {{-- Previous --}}
-            @if ($data->onFirstPage())
-                <span class="text-sm cursor-not-allowed rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
-                    Previous
-                </span>
-            @else
-                <a href="{{ $data->previousPageUrl() }}{{ request('tab') ? (Str::contains($data->previousPageUrl(), '?') ? '&' : '?') . 'tab=' . request('tab') : '' }}"
-                    class="text-sm rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
-                    Previous
-                </a>
-            @endif
+        <div class="border-t border-gray-200 px-6 py-4 dark:border-gray-800 pagination-wrapper">
+            <div class="flex items-center justify-between">
+                {{-- Previous --}}
+                @if ($data->onFirstPage())
+                    <span
+                        class="text-sm cursor-not-allowed rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
+                        Previous
+                    </span>
+                @else
+                    <a href="{{ $data->previousPageUrl() }}{{ request('tab') ? (Str::contains($data->previousPageUrl(), '?') ? '&' : '?') . 'tab=' . request('tab') : '' }}"
+                        class="text-sm rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
+                        Previous
+                    </a>
+                @endif
 
-            <span class="block text-sm font-medium text-gray-700 dark:text-gray-400">
-                Page {{ $data->currentPage() }} of {{ $data->lastPage() }}
-            </span>
-
-            {{-- Next --}}
-            @if ($data->hasMorePages())
-                <a href="{{ $data->nextPageUrl() }}{{ request('tab') ? (Str::contains($data->nextPageUrl(), '?') ? '&' : '?') . 'tab=' . request('tab') : '' }}"
-                    class="text-sm rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
-                    Next
-                </a>
-            @else
-                <span class="text-sm cursor-not-allowed rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
-                    Next
+                <span class="block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Page {{ $data->currentPage() }} of {{ $data->lastPage() }}
                 </span>
-            @endif
+
+                {{-- Next --}}
+                @if ($data->hasMorePages())
+                    <a href="{{ $data->nextPageUrl() }}{{ request('tab') ? (Str::contains($data->nextPageUrl(), '?') ? '&' : '?') . 'tab=' . request('tab') : '' }}"
+                        class="text-sm rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
+                        Next
+                    </a>
+                @else
+                    <span
+                        class="text-sm cursor-not-allowed rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500">
+                        Next
+                    </span>
+                @endif
+            </div>
         </div>
-    </div>
-@endif
+    @endif
 </div>
 
 <script>

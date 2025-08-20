@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\PresensiDetail;
 use App\Models\PresensiHarian;
+use App\Models\RekapAbsensi;
+use App\Models\TahunSemester;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -100,15 +102,78 @@ class PresensiDetailController extends Controller
         ]);
 
         $presensi_detail = PresensiDetail::findOrFail($id);
-        $presensi_harian_id = $presensi_detail->presensi_harian_id;
+        // $presensi_harian_id = $presensi_detail->presensi_harian_id;
 
+        // $presensi_detail->update([
+        //     'status' => $request->status,
+        //     'keterangan' => $request->keterangan,
+        // ]);
+
+        // return redirect()->to(role_route('presensi-harian.show', ['presensi_harian' => $presensi_harian_id]))
+        //     ->with('success', 'Presensi berhasil diperbarui.');
+
+        $presensi_harian = $presensi_detail->presensiHarian; // relasi ke presensi_harian
+        $tahunSemester = TahunSemester::where('is_active', true)->first();
+
+        if (!$tahunSemester) {
+            return back()->withErrors(['tahun_semester_id' => 'Tahun semester aktif tidak ditemukan.']);
+        }
+
+        // Simpan status lama untuk koreksi rekap
+        $statusLama = $presensi_detail->status;
+
+        // Update presensi detail
         $presensi_detail->update([
             'status' => $request->status,
             'keterangan' => $request->keterangan,
         ]);
 
-        return redirect()->to(role_route('presensi-harian.show', ['presensi_harian' => $presensi_harian_id]))
-            ->with('success', 'Presensi berhasil diperbarui.');
+        // Ambil atau buat rekap_absensi
+        $rekap = RekapAbsensi::firstOrCreate(
+            [
+                'kelas_siswa_id' => $presensi_detail->kelas_siswa_id,
+                'tahun_semester_id' => $tahunSemester->id,
+                'periode' => $presensi_harian->periode,
+            ],
+            [
+                // 'total_hadir' => 0,
+                'total_sakit' => 0,
+                'total_izin' => 0,
+                'total_alfa' => 0,
+            ]
+        );
+
+        // Kurangi count status lama
+        switch ($statusLama) {
+            // case 'Hadir':
+            //     $rekap->decrement('total_hadir');
+            //     break;
+            case 'Sakit':
+                $rekap->decrement('total_sakit');
+                break;
+            case 'Izin':
+                $rekap->decrement('total_izin');
+                break;
+            case 'Alpha':
+                $rekap->decrement('total_alfa');
+                break;
+        }
+
+        // Tambahkan count status baru
+        switch ($request->status) {
+            // case 'Hadir':
+            //     $rekap->increment('total_hadir');
+            //     break;
+            case 'Sakit':
+                $rekap->increment('total_sakit');
+                break;
+            case 'Izin':
+                $rekap->increment('total_izin');
+                break;
+            case 'Alpha':
+                $rekap->increment('total_alfa');
+                break;
+        }
     }
 
     /**

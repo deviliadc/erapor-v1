@@ -38,7 +38,8 @@ use App\Http\Controllers\{
     SiswaMenuController,
     KepalaSekolahMenuController,
     PengaturanRaporController,
-    TahunAjaranController
+    TahunAjaranController,
+    ValidasiSemesterController
 };
 
 // Halaman Awal
@@ -155,6 +156,12 @@ Route::middleware(['auth', 'checkrole:admin'])->prefix('admin')->name('admin.')-
     Route::resource('pengaturan-rapor',  PengaturanRaporController::class);
     // Route::get('arsip-siswa', [ArsipSiswaController::class, 'index'])->name('arsip-siswa.index');
     // Route::get('arsip-guru', [ArsipGuruController::class, 'index'])->name('arsip-guru.index');
+    Route::resource('validasi-semester', ValidasiSemesterController::class);
+    Route::post('validasi-semester/validate/{validasiSemester}', [ValidasiSemesterController::class, 'validateType'])->name('validasi-semester.validate');
+    Route::post('validasi-semester/cancel/{validasiSemester}', [ValidasiSemesterController::class, 'cancelValidation'])->name('validasi-semester.cancel');
+Route::post('validasi-semester/validate-all', [ValidasiSemesterController::class, 'validateAll'])
+    ->name('validasi_semester.validateAll');
+
 });
 
 Route::middleware(['auth', 'checkrole:guru'])->prefix('guru')->name('guru.')->group(function () {

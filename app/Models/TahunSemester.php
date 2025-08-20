@@ -40,6 +40,13 @@ class TahunSemester extends Model
         return $this->hasMany(ValidasiSemester::class);
     }
 
+    // Ambil query semester aktif
+    public function scopeAktif($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+
     // public function isUTSValidated()
     // {
     //     return $this->is_validated_uts;

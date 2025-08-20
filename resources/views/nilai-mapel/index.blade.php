@@ -2,46 +2,26 @@
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
     <div x-data="{
-        activeTab: '{{ old('active_tab', request('mapel', $mapel->first()?->mapel->id ?? '')) }}',
-        editMode: false,
-        periode: '{{ request('periode', $periode) }}'
+        {{-- activeTab: '{{ old('active_tab', request('mapel', $mapel->first()?->mapel->id ?? '')) }}', --}}
+        activeTab: '{{ old('active_tab', request('active_tab', $mapel->first()?->mapel->id ?? '')) }}',
+            editMode: false,
+            periode: '{{ request('periode', $periode) }}'
     }" class="rounded-2xl bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4">
 
         {{-- Filter Form --}}
         <form method="GET" class="mb-4 flex flex-wrap gap-4">
-            <x-form.select
-                label="Tahun Semester"
-                name="tahun_semester_id"
-                :options="$daftarTahunSemester->mapWithKeys(
-                    fn($ts) => [
-                        $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester),
-                    ]
-                )"
-                :selected="request('tahun_semester_id', $tahunAktif->id)"
-                placeholder="Pilih Tahun Semester"
-                searchable required
-                onchange="this.form.submit()"
-            />
+            <x-form.select label="Tahun Semester" name="tahun_semester_id" :options="$daftarTahunSemester->mapWithKeys(
+                fn($ts) => [
+                    $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester),
+                ],
+            )" :selected="request('tahun_semester_id', $tahunAktif->id)"
+                placeholder="Pilih Tahun Semester" searchable required onchange="this.form.submit()" />
 
-            <x-form.select
-                label="Kelas"
-                name="kelas_id"
-                :options="$daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])"
-                :selected="request('kelas_id')"
-                placeholder="Pilih Kelas"
-                searchable required
-                onchange="this.form.submit()"
-            />
+            <x-form.select label="Kelas" name="kelas_id" :options="$daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])" :selected="request('kelas_id')" placeholder="Pilih Kelas"
+                searchable required onchange="this.form.submit()" />
 
-            <x-form.select
-                label="Periode"
-                name="periode"
-                :options="['tengah' => 'Tengah Semester', 'akhir' => 'Akhir Semester']"
-                :selected="$periode"
-                placeholder="Pilih Periode"
-                searchable required
-                onchange="this.form.submit()"
-            />
+            <x-form.select label="Periode" name="periode" :options="['tengah' => 'Tengah Semester', 'akhir' => 'Akhir Semester']" :selected="$periode"
+                placeholder="Pilih Periode" searchable required onchange="this.form.submit()" />
         </form>
 
         {{-- Kondisi Data --}}
@@ -80,7 +60,9 @@
                     class="flex space-x-2 border-b mb-4 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     @foreach ($mapel as $gk)
                         @if ($gk->mapel)
-                            <a href="?kelas_id={{ $kelasDipilih->id }}&mapel={{ $gk->mapel->id }}&tahun_semester_id={{ $tahunAktif->id }}&periode={{ $periode }}"
+                            {{-- <a href="?kelas_id={{ $kelasDipilih->id }}&mapel={{ $gk->mapel->id }}&tahun_semester_id={{ $tahunAktif->id }}&periode={{ $periode }}"
+                                @click.prevent="activeTab = '{{ $gk->mapel->id }}'" --}}
+                            <a href="?kelas_id={{ $kelasDipilih->id }}&active_tab={{ $gk->mapel->id }}&tahun_semester_id={{ $tahunAktif->id }}&periode={{ $periode }}"
                                 @click.prevent="activeTab = '{{ $gk->mapel->id }}'"
                                 :class="{ 'border-b-2 border-brand-500 font-semibold text-brand-600': activeTab === '{{ $gk->mapel->id }}' }"
                                 class="px-4 py-2 text-sm hover:text-brand-600 transition">
@@ -107,9 +89,11 @@
                                         <tr>
                                             <th rowspan="2" class="px-3 py-2">No Absen</th>
                                             <th rowspan="2" class="px-3 py-2">Nama Siswa</th>
-                                            <th colspan="{{ max($tpList->count(), 1) }}" class="bg-success-50">Formatif</th>
+                                            <th colspan="{{ $tpList->count(), 1 }}" class="bg-success-50">Formatif
+                                            </th>
                                             <th rowspan="2" class="bg-success-50">NA</th>
-                                            <th colspan="{{ max($lmList->count(), 1) }}" class="bg-warning-50">Sumatif</th>
+                                            <th colspan="{{ $lmList->count(), 1 }}" class="bg-warning-50">Sumatif
+                                            </th>
                                             <th rowspan="2" class="bg-warning-50">NA</th>
                                             <th colspan="2" class="bg-brand-50">Tengah Semester</th>
                                             <th rowspan="2" class="bg-brand-50">NA</th>
@@ -128,7 +112,8 @@
                                                 <th class="px-2 py-1 bg-success-50">-</th>
                                             @endforelse
                                             @forelse ($lmList as $bab)
-                                                <th class="px-2 py-1 bg-warning-50">{{ is_object($bab) ? $bab->nama : $bab }}</th>
+                                                <th class="px-2 py-1 bg-warning-50">
+                                                    {{ is_object($bab) ? $bab->nama : $bab }}</th>
                                             @empty
                                                 <th class="px-2 py-1 bg-warning-50">-</th>
                                             @endforelse
@@ -154,20 +139,22 @@
                                                 @if ($tpList->isNotEmpty())
                                                     @foreach ($tpList as $tp)
                                                         @php
-                                                            $val = old("nilai.$mapelId.$ksId.formatif_$tp->id") ?? ($nilaiMapelTab['formatif'][$ksId][$tp->id] ?? null);
+                                                            $val =
+                                                                old("nilai.$mapelId.$ksId.formatif_$tp->id") ??
+                                                                ($nilaiMapelTab['formatif'][$ksId][$tp->id] ?? null);
                                                         @endphp
                                                         <td>
                                                             <input x-show="editMode" type="number"
                                                                 name="nilai[{{ $mapelId }}][{{ $ksId }}][formatif_{{ $tp->id }}]"
                                                                 value="{{ $val }}"
                                                                 class="input-nilai w-16 text-sm border rounded" />
-                                                            <span x-show="!editMode">{{ $val === null || $val === '' ? '-' : $val }}</span>
+                                                            <span
+                                                                x-show="!editMode">{{ $val === null || $val === '' ? '-' : $val }}</span>
                                                         </td>
                                                     @endforeach
                                                 @else
                                                     <td>-</td>
                                                 @endif
-
                                                 {{-- NA Formatif --}}
                                                 <td class="bg-success-50">{{ $nilai['na_formatif'] ?? '-' }}</td>
 
@@ -176,14 +163,17 @@
                                                     @foreach ($lmList as $bab)
                                                         @php
                                                             $babKey = is_object($bab) ? $bab->id : $bab;
-                                                            $val = old("nilai.$mapelId.$ksId.sumatif_$babKey") ?? ($nilaiMapelTab['sumatif'][$ksId][$babKey] ?? null);
+                                                            $val =
+                                                                old("nilai.$mapelId.$ksId.sumatif_$babKey") ??
+                                                                ($nilaiMapelTab['sumatif'][$ksId][$babKey] ?? null);
                                                         @endphp
                                                         <td>
                                                             <input x-show="editMode" type="number"
                                                                 name="nilai[{{ $mapelId }}][{{ $ksId }}][sumatif_{{ $babKey }}]"
                                                                 value="{{ $val }}"
                                                                 class="input-nilai w-16 text-sm border rounded" />
-                                                            <span x-show="!editMode">{{ $val === null || $val === '' ? '-' : $val }}</span>
+                                                            <span
+                                                                x-show="!editMode">{{ $val === null || $val === '' ? '-' : $val }}</span>
                                                         </td>
                                                     @endforeach
                                                 @else
@@ -194,25 +184,67 @@
                                                 <td class="bg-warning-50">{{ $nilai['na_sumatif'] ?? '-' }}</td>
 
                                                 {{-- UTS --}}
-                                                <td>
+                                                {{-- <td>
                                                     @php
-                                                        $valUtsNonTes = old("nilai.$mapelId.$ksId.uts_nontes") ?? ($nilaiMapelTab['uts'][$ksId]['non_tes'] ?? null);
+                                                        $valUtsNonTes =
+                                                            old("nilai.$mapelId.$ksId.uts_nontes") ??
+                                                            ($nilaiMapelTab['uts'][$ksId]['non_tes'] ?? null);
                                                     @endphp
                                                     <input x-show="editMode && periode==='tengah'" type="number"
                                                         name="nilai[{{ $mapelId }}][{{ $ksId }}][uts_nontes]"
                                                         value="{{ $valUtsNonTes }}"
                                                         class="input-nilai w-16 text-sm border rounded" />
-                                                    <span x-show="!editMode || periode!=='tengah'">{{ $valUtsNonTes ?? '-' }}</span>
+                                                    <span
+                                                        x-show="!editMode || periode!=='tengah'">{{ $valUtsNonTes ?? '-' }}</span>
                                                 </td>
                                                 <td>
                                                     @php
-                                                        $valUtsTes = old("nilai.$mapelId.$ksId.uts_tes") ?? ($nilaiMapelTab['uts'][$ksId]['tes'] ?? null);
+                                                        $valUtsTes =
+                                                            old("nilai.$mapelId.$ksId.uts_tes") ??
+                                                            ($nilaiMapelTab['uts'][$ksId]['tes'] ?? null);
                                                     @endphp
                                                     <input x-show="editMode && periode==='tengah'" type="number"
                                                         name="nilai[{{ $mapelId }}][{{ $ksId }}][uts_tes]"
                                                         value="{{ $valUtsTes }}"
                                                         class="input-nilai w-16 text-sm border rounded" />
-                                                    <span x-show="!editMode || periode!=='tengah'">{{ $valUtsTes ?? '-' }}</span>
+                                                    <span
+                                                        x-show="!editMode || periode!=='tengah'">{{ $valUtsTes ?? '-' }}</span>
+                                                </td> --}}
+                                                <td>
+                                                    @php
+                                                        $valUtsNonTes =
+                                                            old("nilai.$mapelId.$ksId.uts_nontes") ??
+                                                            ($nilaiMapelTab['uts'][$ksId]['non_tes'] ?? null);
+                                                    @endphp
+                                                    @if ($periode == 'tengah')
+                                                        <input x-show="editMode" type="number"
+                                                            name="nilai[{{ $mapelId }}][{{ $ksId }}][uts_nontes]"
+                                                            value="{{ $valUtsNonTes }}"
+                                                            class="input-nilai w-16 text-sm border rounded" />
+                                                        <span
+                                                            x-show="!editMode">{{ $valUtsNonTes === null || $valUtsNonTes === '' ? '-' : $valUtsNonTes }}</span>
+                                                    @else
+                                                        {{-- periode akhir → tampilkan readonly --}}
+                                                        <span>{{ $valUtsNonTes === null || $valUtsNonTes === '' ? '-' : $valUtsNonTes }}</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $valUtsTes =
+                                                            old("nilai.$mapelId.$ksId.uts_tes") ??
+                                                            ($nilaiMapelTab['uts'][$ksId]['tes'] ?? null);
+                                                    @endphp
+                                                    @if ($periode == 'tengah')
+                                                        <input x-show="editMode" type="number"
+                                                            name="nilai[{{ $mapelId }}][{{ $ksId }}][uts_tes]"
+                                                            value="{{ $valUtsTes }}"
+                                                            class="input-nilai w-16 text-sm border rounded" />
+                                                        <span
+                                                            x-show="!editMode">{{ $valUtsTes === null || $valUtsTes === '' ? '-' : $valUtsTes }}</span>
+                                                    @else
+                                                        {{-- periode akhir → tampilkan readonly --}}
+                                                        <span>{{ $valUtsTes === null || $valUtsTes === '' ? '-' : $valUtsTes }}</span>
+                                                    @endif
                                                 </td>
                                                 <td class="bg-brand-50">{{ $nilai['na_uts'] ?? '-' }}</td>
 
@@ -220,7 +252,9 @@
                                                 @if ($periode == 'akhir')
                                                     <td>
                                                         @php
-                                                            $valUasNonTes = old("nilai.$mapelId.$ksId.uas_nontes") ?? ($nilaiMapelTab['uas'][$ksId]['non_tes'] ?? null);
+                                                            $valUasNonTes =
+                                                                old("nilai.$mapelId.$ksId.uas_nontes") ??
+                                                                ($nilaiMapelTab['uas'][$ksId]['non_tes'] ?? null);
                                                         @endphp
                                                         <input x-show="editMode" type="number"
                                                             name="nilai[{{ $mapelId }}][{{ $ksId }}][uas_nontes]"
@@ -230,7 +264,9 @@
                                                     </td>
                                                     <td>
                                                         @php
-                                                            $valUasTes = old("nilai.$mapelId.$ksId.uas_tes") ?? ($nilaiMapelTab['uas'][$ksId]['tes'] ?? null);
+                                                            $valUasTes =
+                                                                old("nilai.$mapelId.$ksId.uas_tes") ??
+                                                                ($nilaiMapelTab['uas'][$ksId]['tes'] ?? null);
                                                         @endphp
                                                         <input x-show="editMode" type="number"
                                                             name="nilai[{{ $mapelId }}][{{ $ksId }}][uas_tes]"
@@ -248,7 +284,8 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="100%" class="text-center py-4 text-gray-500">Tidak ada siswa.</td>
+                                                <td colspan="100%" class="text-center py-4 text-gray-500">Tidak ada
+                                                    siswa.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>

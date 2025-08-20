@@ -10,6 +10,7 @@ use App\Models\KelasSiswa;
 use App\Models\GuruKelas;
 use App\Models\PresensiHarian;
 use App\Models\PresensiDetail;
+use App\Models\RekapAbsensi;
 use App\Models\TahunAjaran;
 use App\Models\TahunSemester;
 use Illuminate\Http\Request;
@@ -227,28 +228,7 @@ class PresensiHarianController extends Controller
     {
         // $user = Auth::user();
         $kelas_id = $request->kelas_id;
-        // $tahun = TahunSemester::where('is_active', true)->first();
 
-        // $tanggal = $request->tanggal;
-        // $kelas_id = $request->kelas_id;
-
-        // $request->validate([
-        //     'kelas_id' => 'required|exists:kelas,id',
-        //     'tanggal' => [
-        //         'required',
-        //         'date',
-        //         function ($attribute, $value, $fail) use ($tanggal, $kelas_id) {
-        //             $exists = PresensiHarian::where('kelas_id', $kelas_id)
-        //                 ->where('tanggal', $tanggal)
-        //                 ->exists();
-        //             if ($exists) {
-        //                 $fail('Presensi untuk kelas dan tanggal ini sudah ada.');
-        //             }
-        //         }
-        //     ],
-        //     'catatan' => 'nullable|string|max:255',
-        //     // 'periode' => 'required|in:tengah,akhir',
-        // ]);
         $request->validate([
             'kelas_id' => 'required|exists:kelas,id',
             'tanggal' => [
@@ -266,11 +246,7 @@ class PresensiHarianController extends Controller
             'catatan' => 'nullable|string|max:255',
         ]);
 
-        // $tahun = TahunSemester::where('is_active', true)->first();
-        // $jumlahSiswa = KelasSiswa::where('kelas_id', $kelas_id)
-        //     ->where('tahun_semester_id', $tahun->id ?? null)
-        //     ->count();
-        // Ambil tahun semester aktif
+
         $tahunSemester = TahunSemester::where('is_active', true)->first();
         if (!$tahunSemester) {
             return back()->withErrors(['tahun_semester_id' => 'Tahun semester aktif tidak ditemukan.']);
@@ -285,12 +261,6 @@ class PresensiHarianController extends Controller
             return redirect()->back()->with('error', 'Tidak ada siswa di kelas ini. Presensi tidak bisa disimpan.');
         }
 
-        // $presensiTanggal = $request->tanggal;
-        // $tahunSemester = TahunSemester::find($request->tahun_semester_id);
-
-        // if ($presensiTanggal < $tahunSemester->mulai || $presensiTanggal > $tahunSemester->selesai) {
-        //     return back()->withErrors(['tanggal' => 'Tanggal di luar rentang semester.']);
-        // }
 
         // Cek atau buat presensi_harian
         $presensi = PresensiHarian::updateOrCreate(
@@ -318,6 +288,37 @@ class PresensiHarianController extends Controller
                     'keterangan' => $request->keterangan[$kelas_siswa_id] ?? null,
                 ]
             );
+
+            // Update rekap absensi otomatis
+            $rekap = RekapAbsensi::firstOrCreate(
+                [
+                    'kelas_siswa_id' => $kelas_siswa_id,
+                    'tahun_semester_id' => $tahunSemester->id,
+                    'periode' => 'akhir',
+                ],
+                [
+                    // 'total_hadir' => 0,
+                    'total_sakit' => 0,
+                    'total_izin' => 0,
+                    'total_alfa' => 0,
+                ]
+            );
+
+            // Increment sesuai status
+            switch ($status) {
+                // case 'Hadir':
+                //     $rekap->increment('total_hadir');
+                //     break;
+                case 'Sakit':
+                    $rekap->increment('total_sakit');
+                    break;
+                case 'Izin':
+                    $rekap->increment('total_izin');
+                    break;
+                case 'Alpha':
+                    $rekap->increment('total_alfa');
+                    break;
+            }
         }
 
         return redirect()->to(role_route('presensi-harian.index'))->with('success', 'Presensi berhasil disimpan');
@@ -671,7 +672,7 @@ class PresensiHarianController extends Controller
                         ->where('tahun_ajaran_id', $tahunAjaranAktif?->id)
                         ->whereHas('siswa', function ($q) use ($nipd, $namaSiswa) {
                             $q->where('nipd', ltrim($nipd, "'"))
-                              ->where('nama', $namaSiswa);
+                                ->where('nama', $namaSiswa);
                         })
                         ->where('no_absen', $noAbsen)
                         ->first();

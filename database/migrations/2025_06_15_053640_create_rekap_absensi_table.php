@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('kelas_siswa_id')->constrained('kelas_siswa')->onDelete('cascade');
             // $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade');
-            // $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
+            $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
             $table->integer('total_sakit')->default(0);
             $table->integer('total_izin')->default(0);
             $table->integer('total_alfa')->default(0);
@@ -25,7 +25,7 @@ return new class extends Migration
 
             $table->unique([
                 // 'siswa_id',
-                // 'tahun_semester_id',
+                'tahun_semester_id',
                 'kelas_siswa_id',
                 'periode'
             ], 'rekap_absensi_unique');

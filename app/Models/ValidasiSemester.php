@@ -21,8 +21,13 @@ class ValidasiSemester extends Model
         return $this->belongsTo(TahunSemester::class);
     }
 
-    public function user()
+    // public function user()
+    // {
+    //     return $this->belongsTo(User::class, 'validated_by');
+    // }
+
+    public function validator()
     {
-        return $this->belongsTo(User::class, 'validated_by');
+            return $this->belongsTo(User::class, 'validated_by');
     }
 }

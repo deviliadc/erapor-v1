@@ -15,7 +15,7 @@ class RekapAbsensi extends Model
         // 'siswa_id',
         // 'kelas_id',
         'kelas_siswa_id',
-        // 'tahun_semester_id',
+        'tahun_semester_id',
         'total_sakit',
         'total_izin',
         'total_alfa',
