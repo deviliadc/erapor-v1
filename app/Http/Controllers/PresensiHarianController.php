@@ -106,6 +106,7 @@ class PresensiHarianController extends Controller
                 'tanggal' => $item->tanggal,
                 'kelas' => $item->kelas->nama ?? '-',
                 'catatan' => $item->catatan ?? '-',
+                'tahun_semester_id' => $item->tahun_semester_id, 
             ];
         });
         $paginator->setCollection($data);
@@ -168,12 +169,13 @@ class PresensiHarianController extends Controller
     {
         $user = Auth::user();
         $kelasId = $request->kelas_id;
-        // $tahun = TahunSemester::where('is_active', true)->first();
-        $tahun = TahunAjaran::where('is_active', true)->first();
 
-        $kelas = collect(); // Default: kosong
+        // Tahun ajaran & semester aktif
+        $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
+        $tahunSemesterAktif = TahunSemester::where('is_active', true)->first();
+
+        $kelas = collect();
         $siswa = collect();
-
         $canFill = false;
 
         if ($user->hasRole('admin')) {
@@ -181,27 +183,21 @@ class PresensiHarianController extends Controller
             $canFill = true;
         } elseif ($user->hasRole('guru')) {
             $guru = $user->guru;
-            // Ambil kelas yang diampu sebagai wali atau pengajar di tahun aktif
+
             $kelasIds = GuruKelas::where('guru_id', $guru->id)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_ajaran_id', $tahunAjaranAktif?->id) // filter dengan tahun ajaran
                 ->whereIn('peran', ['wali', 'pengajar'])
                 ->pluck('kelas_id');
+
             $kelas = Kelas::whereIn('id', $kelasIds)->get();
             $canFill = $kelasIds->isNotEmpty();
         }
 
+        // Ambil siswa berdasarkan tahun ajaran aktif
         if ($kelasId && $canFill) {
             $siswa = KelasSiswa::with('siswa')
                 ->where('kelas_id', $kelasId)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
-                ->orderBy('no_absen')
-                ->get();
-        }
-
-        if ($kelasId) {
-            $siswa = KelasSiswa::with('siswa')
-                ->where('kelas_id', $kelasId)
-                ->where('tahun_ajaran_id', $tahun->id ?? null)
+                ->where('tahun_ajaran_id', $tahunAjaranAktif?->id)
                 ->orderBy('no_absen')
                 ->get();
         }
@@ -210,6 +206,7 @@ class PresensiHarianController extends Controller
             ['label' => 'Presensi Harian', 'url' => role_route('presensi-harian.index')],
             ['label' => 'Buat Presensi'],
         ];
+
         $title = 'Buat Presensi Harian';
 
         return view('presensi-harian.create', compact(
@@ -217,16 +214,17 @@ class PresensiHarianController extends Controller
             'siswa',
             'breadcrumbs',
             'title',
-            'tahun'
+            'tahunAjaranAktif',
+            'tahunSemesterAktif'
         ));
     }
+
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        // $user = Auth::user();
         $kelas_id = $request->kelas_id;
 
         $request->validate([
@@ -244,15 +242,16 @@ class PresensiHarianController extends Controller
                 }
             ],
             'catatan' => 'nullable|string|max:255',
+            'status' => 'required|array',
         ]);
 
-
+        // Ambil tahun semester aktif
         $tahunSemester = TahunSemester::where('is_active', true)->first();
         if (!$tahunSemester) {
             return back()->withErrors(['tahun_semester_id' => 'Tahun semester aktif tidak ditemukan.']);
         }
 
-        // Cek apakah ada siswa di kelas pada tahun semester aktif
+        // Pastikan ada siswa di kelas (cek berdasarkan tahun ajaran dari semester aktif)
         $jumlahSiswa = KelasSiswa::where('kelas_id', $kelas_id)
             ->where('tahun_ajaran_id', $tahunSemester->tahun_ajaran_id)
             ->count();
@@ -261,35 +260,27 @@ class PresensiHarianController extends Controller
             return redirect()->back()->with('error', 'Tidak ada siswa di kelas ini. Presensi tidak bisa disimpan.');
         }
 
+        // Simpan presensi_harian
+        $presensi = PresensiHarian::create([
+            'kelas_id' => $kelas_id,
+            'tahun_semester_id' => $tahunSemester->id,
+            'tanggal' => $request->tanggal,
+            'catatan' => $request->catatan,
+            'periode' => 'akhir',
+            // 'input_by' => Auth::id(),
+        ]);
 
-        // Cek atau buat presensi_harian
-        $presensi = PresensiHarian::updateOrCreate(
-            [
-                'kelas_id' => $request->kelas_id,
-                'tanggal' => $request->tanggal,
-            ],
-            [
-                // 'input_by' => Auth::id(),
-                'catatan' => $request->catatan,
-                'periode' => 'akhir',
-            ]
-        );
-
-        // Loop setiap siswa
+        // Simpan detail presensi per siswa
         foreach ($request->status as $kelas_siswa_id => $status) {
-            PresensiDetail::updateOrCreate(
-                [
-                    'presensi_harian_id' => $presensi->id,
-                    'kelas_siswa_id' => $kelas_siswa_id,
-                ],
-                [
-                    'periode' => 'akhir',
-                    'status' => $status,
-                    'keterangan' => $request->keterangan[$kelas_siswa_id] ?? null,
-                ]
-            );
+            PresensiDetail::create([
+                'presensi_harian_id' => $presensi->id,
+                'kelas_siswa_id' => $kelas_siswa_id,
+                'periode' => 'akhir',
+                'status' => $status,
+                'keterangan' => $request->keterangan[$kelas_siswa_id] ?? null,
+            ]);
 
-            // Update rekap absensi otomatis
+            // Update / buat rekap absensi per semester
             $rekap = RekapAbsensi::firstOrCreate(
                 [
                     'kelas_siswa_id' => $kelas_siswa_id,
@@ -297,18 +288,14 @@ class PresensiHarianController extends Controller
                     'periode' => 'akhir',
                 ],
                 [
-                    // 'total_hadir' => 0,
                     'total_sakit' => 0,
                     'total_izin' => 0,
                     'total_alfa' => 0,
                 ]
             );
 
-            // Increment sesuai status
+            // Tambahkan sesuai status
             switch ($status) {
-                // case 'Hadir':
-                //     $rekap->increment('total_hadir');
-                //     break;
                 case 'Sakit':
                     $rekap->increment('total_sakit');
                     break;
@@ -321,8 +308,11 @@ class PresensiHarianController extends Controller
             }
         }
 
-        return redirect()->to(role_route('presensi-harian.index'))->with('success', 'Presensi berhasil disimpan');
+        return redirect()
+            ->to(role_route('presensi-harian.index'))
+            ->with('success', 'Presensi berhasil disimpan');
     }
+
 
     /**
      * Display the specified resource.
@@ -337,14 +327,21 @@ class PresensiHarianController extends Controller
      */
     public function edit(string $id)
     {
-        $presensi = PresensiHarian::with('kelas')->findOrFail($id);
+//         $presensi = PresensiHarian::with(['kelas', 'tahunSemester'])->findOrFail($id);
 
-        // Agar bisa dipakai di @foreach pada edit.blade.php, bungkus dengan koleksi
-        $presensiCollection = collect([$presensi]);
+//         $presensiCollection = collect([[
+//             'id' => $presensi->id,
+//             'tanggal' => $presensi->tanggal,
+//             'kelas' => $presensi->kelas->nama ?? '-',
+//             'catatan' => $presensi->catatan,
+//             'tahun_semester_id' => $presensi->tahunSemester->id ?? null, // dari relasi
+//         ]]);
+        
+// dd($presensiCollection);
 
-        return view('presensi-harian.edit', [
-            'presensi' => $presensiCollection
-        ]);
+//         return view('presensi-harian.edit', [
+//             'data' => $presensiCollection
+//         ]);
     }
 
     /**

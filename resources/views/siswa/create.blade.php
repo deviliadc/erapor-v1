@@ -108,6 +108,7 @@
                     onchange="toggleWaliForm(this.value)" />
 
                 <div id="wali_baru_inputs" style="display: none;" class="space-y-6 mt-4"> --}}
+
                 {{-- Nama Ayah --}}
                 <x-form.input label="Nama Ayah" name="nama_ayah" :value="old('nama_ayah')" required />
 

@@ -24,7 +24,7 @@
     <main class="flex flex-col lg:flex-row h-screen w-screen bg-gray-100 dark:bg-gray-900">
         {{-- Kiri: Gambar (hanya desktop) --}}
         <div class="hidden lg:flex lg:w-1/2 h-64 lg:h-full items-center justify-center bg-gray-200">
-            <img src="{{ asset('images/sekolah.jpeg') }}" alt="Foto Sekolah"
+            <img src="{{ asset('images/login-logo.png') }}" alt="Login"
                 class="w-full h-full object-cover object-center" />
         </div>
         {{-- Kanan: Konten --}}

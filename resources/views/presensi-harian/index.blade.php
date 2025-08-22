@@ -28,7 +28,7 @@ $filters = [
     @include('presensi-harian.export')
 
     {{-- Import Modal --}}
-    @include('presensi-harian.import')
+    {{-- @include('presensi-harian.import') --}}
 
     {{-- Tahun Aktif --}}
     <div class="p-4">
@@ -42,8 +42,9 @@ $filters = [
         <x-table.toolbar
             :filters="$filters"
             :enable-add-button="true"
-            :enable-import="true"
-            :importModalName="'import-presensi-harian'"
+            :enable-import="false"
+            {{-- :enable-import="true" --}}
+            {{-- :importModalName="'import-presensi-harian'" --}}
             :enable-export="true"
             :exportModalName="'export-presensi-harian'"
             :enable-search="true"

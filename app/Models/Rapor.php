@@ -6,39 +6,39 @@ use Illuminate\Database\Eloquent\Model;
 
 class Rapor extends Model
 {
-    protected $table = 'rapor';
+
     protected $fillable = [
         'kelas_siswa_id',
-        // 'tahun_semester_id',
-        // 'siswa_id',
+        'tahun_semester_id',
         'rekap_nilai_mapel',
         'rekap_nilai_ekstra',
         'rekap_nilai_p5',
         'catatan_wali',
-        'jumlah_sakit',
-        'jumlah_izin',
-        'jumlah_alpha',
         'is_final',
-        'tanggal_finalisasi',
+        'tanggal_finalisasi'
     ];
 
-    public function siswa()
+    protected $casts = [
+        'rekap_nilai_mapel' => 'array',
+        'rekap_nilai_ekstra' => 'array',
+        'rekap_nilai_p5' => 'array',
+        'is_final' => 'boolean',
+        'tanggal_finalisasi' => 'date',
+    ];
+
+    public function kelasSiswa()
     {
-        return $this->belongsTo(Siswa::class);
+        return $this->belongsTo(KelasSiswa::class);
     }
 
-    public function nilaiMapel()
+    public function tahunSemester()
     {
-        return $this->hasMany(NilaiMapel::class);
+        return $this->belongsTo(TahunSemester::class);
     }
 
-    public function nilaiEkstra()
+    public function rekapAbsensi()
     {
-        return $this->hasMany(NilaiEkstra::class);
-    }
-
-    public function nilaiP5()
-    {
-        return $this->hasMany(NilaiP5::class);
+        return $this->hasOne(RekapAbsensi::class, 'kelas_siswa_id', 'kelas_siswa_id')
+            ->where('tahun_semester_id', $this->tahun_semester_id);
     }
 }

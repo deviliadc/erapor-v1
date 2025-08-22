@@ -13,7 +13,7 @@
             {{-- Tahun Aktif saat ini --}}
             <div class="px-5 py-4 sm:px-6 sm:py-5">
                 <h4 class="text-sm font-medium text-gray-800 dark:text-white/90">
-                    Tahun Ajaran Aktif: {{ $tahun ->tahun ?? '-' }}
+                    Tahun Semester Aktif: {{ $tahunSemesterAktif->tahunAjaran->tahun ?? '-' }} - {{ $tahunSemesterAktif->semester ?? '-' }}
                 </h4>
             </div>
 
@@ -38,6 +38,9 @@
                 <form method="POST" action="{{ role_route('presensi-harian.store') }}" class="px-5 pb-5 space-y-6 mt-4">
                     @csrf
                     <input type="hidden" name="kelas_id" value="{{ request('kelas_id') }}">
+                    {{-- <input type="hidden" name="tahun_semester_id" value="{{ $tahunSemester->id ?? '' }}"> --}}
+                    <input type="hidden" name="tahun_semester_id" value="{{ $tahunSemesterAktif->id ?? '' }}">
+
                     <!-- Tanggal Presensi -->
                     <x-form.date-picker
                         label="Tanggal"

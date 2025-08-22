@@ -73,6 +73,11 @@ class Kelas extends Model
         return $this->hasMany(GuruKelas::class, 'kelas_id')->where('peran', 'pengajar');
     }
 
+    public function mapel()
+    {
+        return $this->belongsToMany(Mapel::class, 'guru_kelas', 'kelas_id', 'mapel_id')
+            ->where('peran', 'pengajar');
+    }
     // Mendapatkan daftar pengajar mapel (melalui guru_kelas)
     // public function getMapel($tahunAjaranId = null)
     // {

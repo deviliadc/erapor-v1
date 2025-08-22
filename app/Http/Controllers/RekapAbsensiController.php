@@ -133,6 +133,7 @@ class RekapAbsensiController extends Controller
         foreach ($request->rekap as $kelasSiswaId => $data) {
             RekapAbsensi::updateOrCreate(
                 [
+                    'tahun_semester_id' => $request->tahun_semester_id,
                     'kelas_siswa_id' => $kelasSiswaId,
                     'periode' => $request->periode,
                 ],

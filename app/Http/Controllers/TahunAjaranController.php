@@ -74,19 +74,30 @@ public function store(Request $request)
     $isActive = $request->has('is_active');
 
     if ($isActive) {
-        // Nonaktifkan semua tahun ajaran & semester lain
-        TahunAjaran::query()->update(['is_active' => false]);
+        // Nonaktifkan semua tahun ajaran lain
+        TahunAjaran::where('is_active', true)->update(['is_active' => false]);
+
+        // Nonaktifkan semua semester lain
         TahunSemester::query()->update(['is_active' => false]);
     }
 
-    TahunAjaran::create([
+    $tahunAjaran = TahunAjaran::create([
         'tahun' => $validated['tahun'],
         'is_active' => $isActive,
     ]);
 
+    if ($isActive) {
+        // Aktifkan 1 semester default, misal Ganjil
+        $semesterGanjil = $tahunAjaran->tahunSemester()->where('semester', 'Ganjil')->first();
+        if ($semesterGanjil) {
+            $semesterGanjil->update(['is_active' => true]);
+        }
+    }
+
     return redirect()->to(role_route('tahun-semester.index', ['tab' => $request->tab ?? 'tahun-ajaran']))
         ->with('success', 'Data berhasil ditambahkan.');
 }
+
 
     /**
      * Display the specified resource.
@@ -99,9 +110,11 @@ public function store(Request $request)
 
         // Ambil semua kelas_siswa pada tahun semester ini dengan paging
         $perPage = request()->input('per_page', 10);
-        $kelasSiswaQuery = KelasSiswa::with('siswa', 'kelas')
-            ->where('tahun_ajaran_id', $tahunSemester->tahun_ajaran_id);
-
+        // $kelasSiswaQuery = KelasSiswa::with('siswa', 'kelas')
+        //     ->where('tahun_ajaran_id', $tahunSemester->tahun_ajaran_id);
+$kelasSiswaQuery = KelasSiswa::with('siswa', 'kelas')
+    ->where('tahun_ajaran_id', $tahunSemester->tahun_ajaran_id)
+    ->where('status', 'Aktif');
         $totalCount = $kelasSiswaQuery->count();
         $kelasSiswaPaginator = $kelasSiswaQuery->paginate($perPage)->withQueryString();
 
@@ -192,87 +205,11 @@ public function store(Request $request)
     /**
      * Update the specified resource in storage.
      */
-    // public function update(Request $request, string $id)
-    // {
-    //     $validated = $request->validate([
-    //         'tahun' => 'required|string|max:9|regex:/^\d{4}\/\d{4}$/',
-    //         'mulai' => 'required|date',
-    //         'selesai' => 'required|date|after:mulai',
-    //         'is_active' => 'nullable|boolean',
-    //     ]);
-    //     $item = TahunAjaran::findOrFail($id);
-    //     $isActive = $request->has('is_active');
-    //     if ($isActive) {
-    //         TahunAjaran::where('is_active', true)->where('id', '!=', $id)->update(['is_active' => false]);
-    //     }
-    //     $item->update([
-    //         'tahun' => $validated['tahun'],
-    //         'mulai' => $validated['mulai'],
-    //         'selesai' => $validated['selesai'],
-    //         'is_active' => $isActive,
-    //     ]);
 
-
-    //     return redirect()->to(role_route('tahun-semester.index', ['tab' => $request->tab ?? 'tahun-ajaran']))->with('success', 'Data berhasil diperbarui.');
-    // }
-    // public function update(Request $request, string $id)
-    // {
-    //     $validated = $request->validate([
-    //         'tahun'   => 'required|string|max:9|regex:/^\d{4}\/\d{4}$/',
-    //         'is_active' => 'nullable|boolean',
-    //     ]);
-
-    //     // Cek duplikasi tahun ajaran selain data sendiri
-    //     if (TahunAjaran::where('tahun', $validated['tahun'])->where('id', '!=', $id)->exists()) {
-    //         return redirect()->back()
-    //             ->withInput()
-    //             ->withErrors(['tahun' => 'Tahun ajaran sudah ada di database.']);
-    //     }
-
-    //     $item = TahunAjaran::findOrFail($id);
-    //     $isActive = $request->has('is_active');
-
-    //     if ($isActive) {
-    //         // Nonaktifkan semua tahun ajaran lain
-    //         TahunAjaran::where('id', '!=', $id)->update(['is_active' => false]);
-
-    //         // Aktifkan salah satu tahun semester terkait (utamakan Ganjil)
-    //         $semesterGanjil = $item->tahunSemester()->where('semester', 'Ganjil')->first();
-    //         if ($semesterGanjil) {
-    //             // Aktifkan Ganjil, nonaktifkan semester lain
-    //             TahunSemester::where('tahun_ajaran_id', $item->id)
-    //                 ->update(['is_active' => false]);
-    //             $semesterGanjil->update(['is_active' => true]);
-    //         } else {
-    //             // Jika tidak ada semester sama sekali, matikan semua tahun semester
-    //             // TahunSemester::update(['is_active' => false]);
-    //             TahunSemester::query()->update(['is_active' => false]);
-    //         }
-    //     } else {
-    //         // Tahun Ajaran HARUS ada 1 yang aktif
-    //         $activeCount = TahunAjaran::where('is_active', true)->where('id', '!=', $id)->count();
-    //         if ($activeCount === 0 && $item->is_active) {
-    //             return redirect()->back()
-    //                 ->withInput()
-    //                 ->withErrors(['is_active' => 'Minimal harus ada satu Tahun Ajaran yang aktif.']);
-    //         }
-    //     }
-
-    //     $item->update([
-    //         'tahun'   => $validated['tahun'],
-    //         // 'mulai'   => $validated['mulai'],
-    //         // 'selesai' => $validated['selesai'],
-    //         'is_active' => $isActive,
-    //     ]);
-
-    //     return redirect()->to(role_route('tahun-semester.index', ['tab' => $request->tab ?? 'tahun-ajaran']))
-    //         ->with('success', 'Data berhasil diperbarui.');
-    // }
-
-    public function update(Request $request, string $id)
+   public function update(Request $request, string $id)
 {
     $validated = $request->validate([
-        'tahun'   => 'required|string|max:9|regex:/^\d{4}\/\d{4}$/',
+        'tahun' => 'required|string|max:9|regex:/^\d{4}\/\d{4}$/',
         'is_active' => 'nullable|boolean',
     ]);
 
@@ -289,15 +226,13 @@ public function store(Request $request)
         // Nonaktifkan semua tahun ajaran lain
         TahunAjaran::where('id', '!=', $id)->update(['is_active' => false]);
 
-        // Nonaktifkan semua semester dulu
+        // Nonaktifkan semua semester lain
         TahunSemester::query()->update(['is_active' => false]);
 
-        // Ambil semester terkait (utamakan Ganjil)
+        // Aktifkan 1 semester default di tahun ajaran ini (misal Ganjil)
         $semesterGanjil = $item->tahunSemester()->where('semester', 'Ganjil')->first();
         if ($semesterGanjil) {
             $semesterGanjil->update(['is_active' => true]);
-        } else {
-            // Kalau tidak ada semester, semua semester tetap nonaktif
         }
     } else {
         // Minimal harus ada 1 Tahun Ajaran aktif
@@ -310,7 +245,7 @@ public function store(Request $request)
     }
 
     $item->update([
-        'tahun'   => $validated['tahun'],
+        'tahun' => $validated['tahun'],
         'is_active' => $isActive,
     ]);
 

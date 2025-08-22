@@ -1,3 +1,7 @@
+@php
+    $isGuru = auth()->user()->hasRole('guru');
+@endphp
+
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
@@ -50,13 +54,11 @@
             'edit' => true,
             // 'delete' => true,
             // 'editRoute' => role_route('lingkup-materi.edit'),
-            'delete' => $canDelete,
+            'delete' => !$isGuru,
             'routes' => [
                 // 'edit' => fn($item) => role_route('siswa.edit', ['siswa' => $item['id']]),
                 'detail' => fn($item) => role_route('lingkup-materi.show', ['lingkup-materi' => $item['id']]),
-                'delete' => $canDelete
-                    ? fn($item) => role_route('lingkup-materi.destroy', ['lingkup-materi' => $item['id']])
-                    : null,
+                'delete' => fn($item) => role_route('lingkup-materi.destroy', ['lingkup-materi' => $item['id']])
             ]
         ]"
         :use-modal-edit="true"/>

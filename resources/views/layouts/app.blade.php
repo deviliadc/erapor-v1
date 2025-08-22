@@ -33,8 +33,13 @@
 
 </head>
 
-<body x-data="{ page: 'dashboard', 'loaded': true, 'darkMode': false, 'stickyMenu': false, 'sidebarToggle': false, 'scrollTop': false }" x-init="darkMode = JSON.parse(localStorage.getItem('darkMode'));
-$watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))" :class="{ 'dark bg-gray-900': darkMode === true }">
+<body x-data="{ page: 'dashboard', loaded: true, darkMode: false, stickyMenu: false, sidebarToggle: false, scrollTop: false }"
+    x-init="
+        darkMode = JSON.parse(localStorage.getItem('darkMode'));
+        $store.sidebar = { toggle: false };
+    "
+    x-effect="$watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))"
+    :class="{ 'dark bg-gray-900': darkMode === true }">
     <!-- ===== Preloader Start ===== -->
     <div x-show="loaded" x-init="window.addEventListener('DOMContentLoaded', () => { setTimeout(() => loaded = false, 500) })"
         class="fixed left-0 top-0 z-999999 flex h-screen w-screen items-center justify-center bg-white dark:bg-black">
@@ -113,15 +118,19 @@ $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(valu
             }
         @endphp
 
-        <x-sidebar-item :items="$filteredMenu" :sidebarToggle="$sidebarToggle ?? false" />
+        <x-sidebar-item :items="$filteredMenu"
+        {{-- :sidebarToggle="$sidebarToggle ?? false" --}}
+        />
         <!-- ===== Sidebar End ===== -->
 
-        <!-- ===== Content Area Start ===== -->
-        <div class="relative flex flex-col flex-1 overflow-x-hidden overflow-y-auto">
-            <!-- Small Device Overlay Start -->
+       <!-- Small Device Overlay Start -->
             <div @click="sidebarToggle = false" :class="sidebarToggle ? 'block lg:hidden' : 'hidden'"
                 class="fixed inset-0 z-[999998] bg-gray-900/50"></div>
             <!-- Small Device Overlay End -->
+
+        <!-- ===== Content Area Start ===== -->
+        <div class="relative flex flex-col flex-1 overflow-x-hidden overflow-y-auto">
+
 
             <!-- ===== Header Start ===== -->
             <x-header />

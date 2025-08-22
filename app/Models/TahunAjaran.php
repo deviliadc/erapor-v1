@@ -19,4 +19,15 @@ class TahunAjaran extends Model
     {
         return $this->hasMany(TahunSemester::class);
     }
+
+    protected static function booted()
+{
+    static::saving(function ($tahun) {
+        if ($tahun->is_active) {
+            // Nonaktifkan semua tahun ajaran lain
+            self::where('id', '!=', $tahun->id)->update(['is_active' => false]);
+        }
+    });
+}
+
 }

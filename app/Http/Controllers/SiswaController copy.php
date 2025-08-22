@@ -325,14 +325,11 @@ class SiswaController extends Controller
     {
         $siswa = Siswa::with(['user.roles', 'waliMurid'])->findOrFail($id);
         $user = $siswa->user;
-
         if ($user->roles()->whereIn('name', ['guru', 'wali_kelas'])->exists()) {
             return back()->withErrors('User sudah berperan guru atau wali kelas.');
         }
-
         // Simpan wali lama sebelum update
         $waliLamaId = $siswa->wali_murid_id;
-
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'nis' => ['required', Rule::unique('siswa', 'nis')->ignore($siswa->id)],
@@ -359,7 +356,6 @@ class SiswaController extends Controller
                 }
             ],
         ]);
-
         // Format nomor HP siswa
         if (!empty($validated['no_hp'])) {
             $noHp = preg_replace('/[^0-9]/', '', $validated['no_hp']);
@@ -368,7 +364,6 @@ class SiswaController extends Controller
             }
             $validated['no_hp'] = $noHp;
         }
-
         // Update user dan siswa
         $user->update([
             'name' => $validated['nama'],
@@ -376,15 +371,10 @@ class SiswaController extends Controller
             'username' => $validated['nisn'], // tetap pakai NISN sebagai username
         ]);
         $updateData = collect($validated)->except('wali_murid_id')->toArray();
-
         // Update siswa tanpa wali dulu
         $siswa->update($updateData);
-
-
         // --- Penanganan Wali Murid ---
-
         $inputWaliId = $request->wali_murid_id;
-
         if ($inputWaliId === 'baru') {
             // Validasi data wali baru
             $request->validate([
@@ -402,12 +392,10 @@ class SiswaController extends Controller
                 'pekerjaan_wali'  => 'nullable|string|max:255',
                 'alamat_wali'     => 'nullable|string|max:500',
             ]);
-
             $noHpWali = preg_replace('/[^0-9]/', '', $request->no_hp_wali);
             if ($noHpWali && str_starts_with($noHpWali, '0')) {
                 $noHpWali = '62' . substr($noHpWali, 1);
             }
-
             // Simpan wali baru
             $waliBaru = WaliMurid::create([
                 'nama_ayah'       => $request->nama_ayah,
@@ -419,11 +407,9 @@ class SiswaController extends Controller
                 'pekerjaan_wali'  => $request->pekerjaan_wali,
                 'alamat'          => $request->alamat_wali,
             ]);
-
             // Set wali baru ke siswa
             $siswa->wali_murid_id = $waliBaru->id;
             $siswa->save();
-
             // Hapus wali lama jika tidak dipakai
             if ($waliLamaId && Siswa::where('wali_murid_id', $waliLamaId)->count() === 0) {
                 WaliMurid::find($waliLamaId)?->delete();
@@ -433,7 +419,6 @@ class SiswaController extends Controller
             if ($inputWaliId != $waliLamaId) {
                 $siswa->wali_murid_id = $inputWaliId;
                 $siswa->save();
-
                 // Hapus wali lama kalau tidak ada anak lagi
                 if ($waliLamaId && Siswa::where('wali_murid_id', $waliLamaId)->count() === 0) {
                     WaliMurid::find($waliLamaId)?->delete();
@@ -457,12 +442,10 @@ class SiswaController extends Controller
                     'pekerjaan_wali'  => 'nullable|string|max:255',
                     'alamat_wali'     => 'nullable|string|max:500',
                 ]);
-
                 $noHpWali = preg_replace('/[^0-9]/', '', $request->no_hp_wali);
                 if ($noHpWali && str_starts_with($noHpWali, '0')) {
                     $noHpWali = '62' . substr($noHpWali, 1);
                 }
-
                 $siswa->wali->update([
                     'nama_ayah'       => $request->nama_ayah,
                     'nama_ibu'        => $request->nama_ibu,
@@ -475,7 +458,6 @@ class SiswaController extends Controller
                 ]);
             }
         }
-
         return redirect()->to(role_route('siswa.index'))
             ->with('success', 'Data siswa berhasil diperbarui.');
     }

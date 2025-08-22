@@ -350,58 +350,170 @@ class KelasSiswaController extends Controller
     {
         $request->validate([
             'kelas_lama_id' => 'required|exists:kelas,id',
-            'kelas_baru_id' => 'required|exists:kelas,id',
-            'tahun_baru_id' => 'required|exists:tahun_semester,id',
+            'tahun_lama_id' => 'required|exists:tahun_ajaran,id',
+            // 'kelas_baru_id' => 'nullable|exists:kelas,id', // tidak perlu, sistem tentukan otomatis
+            // 'tahun_baru_id' => 'nullable|exists:tahun_ajaran,id', // sistem tentukan otomatis
+            'siswa_id' => 'nullable|array',
+            'siswa_id.*' => 'exists:siswa,id',
         ]);
 
-        // $tahunLama = TahunSemester::where('is_active', true)->first();
-        $tahunLamaId = $request->input('tahun_lama_id') ?? TahunSemester::where('is_active', true)->first()?->id;
-        $siswaList = KelasSiswa::where('kelas_id', $request->kelas_lama_id)
-            ->where('tahun_ajaran_id', $tahunLamaId)
-            ->get();
+        $kelasLama = Kelas::findOrFail($request->kelas_lama_id);
+        $tahunLama = TahunAjaran::findOrFail($request->tahun_lama_id);
+
+        // Tentukan tahun ajaran baru (next year)
+        $tahunBaru = TahunAjaran::where('tahun', $tahunLama->tahun + 1)->first();
+        if (!$tahunBaru) {
+            $tahunBaru = TahunAjaran::create([
+                'tahun' => $tahunLama->tahun + 1,
+                'is_active' => false,
+            ]);
+        }
+
+        // Ambil siswa yang dipilih, jika tidak pilih, ambil semua siswa aktif di kelas lama
+        $siswaQuery = KelasSiswa::where('kelas_id', $kelasLama->id)
+            ->where('tahun_ajaran_id', $tahunLama->id)
+            ->where('status', 'Aktif');
+
+        if ($request->filled('siswa_id')) {
+            $siswaQuery->whereIn('siswa_id', $request->siswa_id);
+        }
+
+        $siswaList = $siswaQuery->get();
+
+        // Kelas terakhir (misal kelas 6)
+        $kelasTerakhir = Kelas::orderByDesc('id')->first();
+        $isKelasTerakhir = $kelasLama->id == $kelasTerakhir->id;
+
+        $promoted = [];
+        $lulus = [];
 
         foreach ($siswaList as $entry) {
-            // Cek apakah siswa sudah pernah dipromosikan ke tahun baru
-            $sudahAda = KelasSiswa::where('siswa_id', $entry->siswa_id)
-                // ->where('tahun_ajaran_id', $request->tahun_baru_id)
-                ->where('kelas_id', $request->kelas_baru_id)
+            // Cek apakah siswa sudah pernah di kelas tujuan di tahun ajaran manapun
+            $sudahPernah = KelasSiswa::where('siswa_id', $entry->siswa_id)
+                ->where('kelas_id', '>=', $kelasLama->id) // hanya kelas sama atau lebih tinggi
                 ->exists();
 
-            if (!$sudahAda) {
-                KelasSiswa::create([
-                    'siswa_id' => $entry->siswa_id,
-                    'kelas_id' => $request->kelas_baru_id,
-                    'tahun_ajaran_id' => $request->tahun_baru_id,
-                    'no_absen' => null,
-                ]);
+            // Tidak bisa turun kelas
+            if ($kelasLama->id < $kelasTerakhir->id && $sudahPernah) {
+                continue;
+            }
+
+            if ($isKelasTerakhir) {
+                // Luluskan siswa
+                $entry->status = 'Lulus';
+                $entry->save();
+                $lulus[] = $entry->siswa->nama;
+            } else {
+                // Naikkan kelas (id kelas + 1)
+                $kelasBaru = Kelas::where('id', $kelasLama->id + 1)->first();
+                if (!$kelasBaru) continue;
+
+                // Cek duplikat di tahun ajaran baru
+                $sudahAda = KelasSiswa::where('siswa_id', $entry->siswa_id)
+                    ->where('kelas_id', $kelasBaru->id)
+                    ->where('tahun_ajaran_id', $tahunBaru->id)
+                    ->exists();
+
+                if (!$sudahAda) {
+                    KelasSiswa::create([
+                        'siswa_id' => $entry->siswa_id,
+                        'kelas_id' => $kelasBaru->id,
+                        'tahun_ajaran_id' => $tahunBaru->id,
+                        'no_absen' => null,
+                        'status' => 'Aktif',
+                    ]);
+                    $promoted[] = $entry->siswa->nama;
+                }
             }
         }
 
+        $msg = [];
+        if ($promoted) $msg[] = 'Siswa dipromosikan: ' . implode(', ', $promoted);
+        if ($lulus) $msg[] = 'Siswa diluluskan: ' . implode(', ', $lulus);
+
         return redirect()->to(role_route('kelas-siswa.index', [
-            'kelas' => $request->kelas_baru_id,
-            'tahun_ajaran_filter' => $request->tahun_baru_id,
-        ]))->with('success', 'Siswa berhasil dipindahkan ke kelas baru.');
+            'tahun_ajaran_filter' => $tahunBaru->id,
+        ]))->with('success', implode(' | ', $msg));
     }
 
-    public function luluskan(Request $request)
+
+    public function promoteGlobal(Request $request)
     {
         $request->validate([
-            'kelas_id' => 'required|exists:kelas,id',
-            'tahun_ajaran_id' => 'required|exists:tahun_ajaran,id',
+            'kelas_id' => 'required|array',
+            'kelas_id.*' => 'exists:kelas,id',
         ]);
 
-        $siswaList = KelasSiswa::where('kelas_id', $request->kelas_id)
-            ->where('tahun_ajaran_id', $request->tahun_ajaran_id)
-            ->get();
-
-        foreach ($siswaList as $entry) {
-            $entry->status = 'Lulus';
-            $entry->save();
+        // Tambahkan ini di awal!
+        $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
+        if (!$tahunAjaranAktif) {
+            return back()->with('error', 'Tahun ajaran aktif tidak ditemukan.');
         }
 
-        return redirect()->to(role_route('kelas-siswa.detail', [
-            'kelas' => $request->kelas_id,
-            'tahun_ajaran_filter' => $request->tahun_ajaran_id,
-        ]))->with('success', 'Siswa berhasil diluluskan.');
+        $nextTahun = nextTahunAjaran($tahunAjaranAktif->tahun);
+        $tahunAjaranBaru = TahunAjaran::where('tahun', $nextTahun)->first();
+        if (!$tahunAjaranBaru) {
+            $tahunAjaranBaru = TahunAjaran::create([
+                'tahun' => $nextTahun,
+                'is_active' => false,
+            ]);
+        }
+
+        $kelasTerakhir = Kelas::orderByDesc('id')->first();
+        $promoted = [];
+        $lulus = [];
+
+        foreach ($request->kelas_id as $kelasId) {
+            $kelas = Kelas::find($kelasId);
+
+            // Ambil semua siswa aktif di kelas ini
+            $siswaList = KelasSiswa::where('kelas_id', $kelasId)
+                ->where('tahun_ajaran_id', $tahunAjaranAktif->id)
+                ->where('status', 'Aktif')
+                ->get();
+
+            foreach ($siswaList as $entry) {
+                if ($kelasId == $kelasTerakhir->id) {
+                    // Kelas terakhir, luluskan siswa
+                    $entry->status = 'Lulus';
+                    $entry->save();
+                    $lulus[] = $entry->siswa->nama . ' (' . $kelas->nama . ')';
+                } else {
+                    // Naikkan kelas (id + 1)
+                    $kelasBaru = Kelas::where('id', $kelasId + 1)->first();
+                    if (!$kelasBaru) continue;
+
+                    // Cek duplikat di tahun ajaran baru
+                    $sudahAda = KelasSiswa::where('siswa_id', $entry->siswa_id)
+                        ->where('kelas_id', $kelasBaru->id)
+                        ->where('tahun_ajaran_id', $tahunAjaranBaru->id)
+                        ->exists();
+
+                    // Tidak bisa pilih kelas yang sudah pernah ditempati siswa di tahun ajaran manapun
+                    $pernah = KelasSiswa::where('siswa_id', $entry->siswa_id)
+                        ->where('kelas_id', $kelasBaru->id)
+                        ->exists();
+
+                    if (!$sudahAda && !$pernah) {
+                        KelasSiswa::create([
+                            'siswa_id' => $entry->siswa_id,
+                            'kelas_id' => $kelasBaru->id,
+                            'tahun_ajaran_id' => $tahunAjaranBaru->id,
+                            'no_absen' => null,
+                            'status' => 'Aktif',
+                        ]);
+                        $promoted[] = $entry->siswa->nama . ' (' . $kelas->nama . ' → ' . $kelasBaru->nama . ')';
+                    }
+                }
+            }
+        }
+
+        $msg = [];
+        if ($promoted) $msg[] = 'Dipromosikan: ' . implode(', ', $promoted);
+        if ($lulus) $msg[] = 'Diluluskan: ' . implode(', ', $lulus);
+
+        return redirect()->to(role_route('kelas-siswa.index', [
+            'tahun_ajaran_filter' => $tahunAjaranBaru->id,
+        ]))->with('success', implode(' | ', $msg));
     }
 }

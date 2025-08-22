@@ -313,8 +313,8 @@ public function index(Request $request)
             if (!$gk->mapel_id) continue;
 
             foreach ($siswaList as $ks) {
-                $periodeList = $periode === 'akhir' ? ['tengah', 'akhir'] : [$periode];
-
+                // $periodeList = $periode === 'akhir' ? ['tengah', 'akhir'] : [$periode];
+                $periodeList = [$periode];
                 $nmList = NilaiMapel::with('detailMapel')
                     ->where('kelas_siswa_id', $ks->id)
                     ->where('mapel_id', $gk->mapel_id)
@@ -351,8 +351,8 @@ public function index(Request $request)
 
         // Lingkup materi & tujuan pembelajaran (PERBAIKAN → ikut periodeList)
         foreach ($mapel as $gk) {
-            $periodeList = $periode === 'akhir' ? ['tengah', 'akhir'] : [$periode];
-
+            // $periodeList = $periode === 'akhir' ? ['tengah', 'akhir'] : [$periode];
+            $periodeList = [$periode];
             $lmList = LingkupMateri::with('tujuanPembelajaran')
                 ->where('mapel_id', $gk->mapel_id)
                 ->where('kelas_id', $gk->kelas_id)

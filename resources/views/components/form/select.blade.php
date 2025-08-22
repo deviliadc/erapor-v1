@@ -34,7 +34,8 @@
         x-init="new TomSelect($el, {
             plugins: ['clear_button'],
             allowEmptyOption: true,
-            create: false
+            create: false,
+            dropdownParent: 'body'
         })"
         class="tom-select h-9 w-full sm:w-auto rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
         name="{{ $name }}"

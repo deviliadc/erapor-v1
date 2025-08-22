@@ -9,21 +9,20 @@
             <select name="tahun_semester_id" id="tahun_semester_id" onchange="this.form.submit()" class="border rounded px-2 py-1 dark:bg-gray-800 dark:text-white dark:border-gray-600">
                 @foreach($daftarTahunSemester as $ts)
                     <option value="{{ $ts->id }}" {{ request('tahun_semester_id', $tahunAktif->id) == $ts->id ? 'selected' : '' }}>
-                        {{ $ts->tahun }} - {{ ucfirst($ts->semester) }}
-                    </option>
+    {{ $ts->tahunAjaran->tahun }} - {{ ucfirst($ts->semester) }}
+</option>
+
                 @endforeach
             </select>
         </form>
 
-        {{-- Chart Pie & Line --}}
-        <div class="flex flex-row gap-4 mb-8 justify-center items-start">
-            <div class="w-1/3 max-w-xs bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg shadow p-4 flex items-center justify-center">
-                <canvas id="pieAbsensi" width="180" height="180" style="max-width:150px;max-height:150px;"></canvas>
-            </div>
-            <div class="w-2/3 min-w-[220px] bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg shadow p-4 flex items-center justify-center">
-                <canvas id="linePresensi" width="400" height="180" style="max-width:100%;max-height:180px;"></canvas>
-            </div>
-        </div>
+    {{-- Chart Bar --}}
+<div class="flex justify-center mb-8">
+    <div class="w-full max-w-md bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg shadow p-4 flex items-center justify-center">
+        <canvas id="barAbsensi" width="320" height="200" style="max-width:320px;max-height:200px;"></canvas>
+    </div>
+</div>
+
 
         {{-- Tabel detail presensi harian --}}
         <div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03] mb-8">
@@ -52,86 +51,62 @@
         </div>
     </div>
 
-    {{-- Chart.js --}}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Pie Chart Data
-        const pieData = {
-            labels: ['Sakit', 'Izin', 'Alfa'],
-            datasets: [{
-                data: [
-                    {{ $rekapAbsensi->total_sakit ?? 0 }},
-                    {{ $rekapAbsensi->total_izin ?? 0 }},
-                    {{ $rekapAbsensi->total_alfa ?? 0 }}
-                ],
-                backgroundColor: ['#fbbf24', '#60a5fa', '#ef4444'],
-                borderColor: ['#d97706', '#2563eb', '#b91c1c'],
-                borderWidth: 2
-            }]
-        };
-        new Chart(document.getElementById('pieAbsensi'), {
-            type: 'pie',
-            data: pieData,
-            options: {
-                plugins: {
-                    legend: { labels: { color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' } }
-                }
-            }
-        });
 
-        // Line Chart Data
-        const lineChartData = {
-            labels: {!! json_encode($chartTanggal) !!},
-            datasets: [
-                {
-                    label: 'Hadir',
-                    data: {!! json_encode($chartHadir) !!},
-                    borderColor: '#34d399',
-                    backgroundColor: '#34d399',
-                    fill: false,
-                    tension: 0.3,
-                },
-                {
-                    label: 'Sakit',
-                    data: {!! json_encode($chartSakit) !!},
-                    borderColor: '#fbbf24',
-                    backgroundColor: '#fbbf24',
-                    fill: false,
-                    tension: 0.3,
-                },
-                {
-                    label: 'Izin',
-                    data: {!! json_encode($chartIzin) !!},
-                    borderColor: '#60a5fa',
-                    backgroundColor: '#60a5fa',
-                    fill: false,
-                    tension: 0.3,
-                },
-                {
-                    label: 'Alfa',
-                    data: {!! json_encode($chartAlfa) !!},
-                    borderColor: '#ef4444',
-                    backgroundColor: '#ef4444',
-                    fill: false,
-                    tension: 0.3,
+{{-- Chart.js --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = @json($chartTanggal);
+    const data = {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Hadir',
+                data: @json($chartHadir),
+                backgroundColor: '#34d399'
+            },
+            {
+                label: 'Sakit',
+                data: @json($chartSakit),
+                backgroundColor: '#fbbf24'
+            },
+            {
+                label: 'Izin',
+                data: @json($chartIzin),
+                backgroundColor: '#60a5fa'
+            },
+            {
+                label: 'Alfa',
+                data: @json($chartAlfa),
+                backgroundColor: '#ef4444'
+            }
+        ]
+    };
+
+    new Chart(document.getElementById('barAbsensi'), {
+        type: 'bar',
+        data: data,
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Rekap Absensi Harian',
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
                 }
-            ]
-        };
-        new Chart(document.getElementById('linePresensi'), {
-            type: 'line',
-            data: lineChartData,
-            options: {
-                plugins: {
-                    legend: { labels: { color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' } }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    ticks: { color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' }
                 },
-                scales: {
-                    x: { ticks: { color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' } },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1, color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' }
-                    }
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' }
                 }
             }
-        });
-    </script>
+        }
+    });
+</script>
+
 </x-app-layout>

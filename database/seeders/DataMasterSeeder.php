@@ -78,7 +78,27 @@ class DataMasterSeeder extends Seeder
             ['id' => 9, 'tahun_ajaran_id' => 5, 'semester' => 'Ganjil', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 10, 'tahun_ajaran_id' => 5, 'semester' => 'Genap', 'is_active' => false, 'created_at' => $now, 'updated_at' => $now],
         ]);
-        
+
+        $semesters = DB::table('tahun_semester')->get();
+        $types = ['UTS', 'UAS', 'P5', 'Ekstra', 'Presensi'];
+
+        $validasiData = [];
+        foreach ($semesters as $semester) {
+            foreach ($types as $type) {
+                $validasiData[] = [
+                    'tahun_semester_id' => $semester->id,
+                    'tipe' => $type,
+                    'is_validated' => false,
+                    'validated_at' => null,
+                    'validated_by' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        DB::table('validasi_semester')->insert($validasiData);
+
         // DB::table('tahun_ajaran')->insert([
         //     ['id' => 1, 'tahun' => '2021/2022', 'mulai' => '2021-07-12', 'selesai' => '2022-06-25', 'is_active' => false, 'created_at' => $now, 'updated_at' => $now],
         //     ['id' => 2, 'tahun' => '2022/2023', 'mulai' => '2022-07-11', 'selesai' => '2023-06-24', 'is_active' => false, 'created_at' => $now, 'updated_at' => $now],
@@ -123,8 +143,8 @@ class DataMasterSeeder extends Seeder
         DB::table('mapel')->insert([
             [
                 'id' => 1,
-                'kode_mapel' => 'PAI',
-                'nama' => 'Pendidikan Agama Islam',
+                'kode_mapel' => 'PA1',
+                'nama' => 'Pendidikan Agama',
                 'kategori' => 'Wajib',
                 'agama' => 'Islam',
                 'created_at' => $now,
@@ -202,6 +222,51 @@ class DataMasterSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
+            [
+                'id' => 10,
+                'kode_mapel' => 'PA2',
+                'nama' => 'Pendidikan Agama',
+                'kategori' => 'Wajib',
+                'agama' => 'Kristen',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'id' => 11,
+                'kode_mapel' => 'PA3',
+                'nama' => 'Pendidikan Agama',
+                'kategori' => 'Wajib',
+                'agama' => 'Katolik',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'id' => 12,
+                'kode_mapel' => 'PA4',
+                'nama' => 'Pendidikan Agama',
+                'kategori' => 'Wajib',
+                'agama' => 'Hindu',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'id' => 13,
+                'kode_mapel' => 'PA5',
+                'nama' => 'Pendidikan Agama',
+                'kategori' => 'Wajib',
+                'agama' => 'Buddha',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'id' => 14,
+                'kode_mapel' => 'PA6',
+                'nama' => 'Pendidikan Agama',
+                'kategori' => 'Wajib',
+                'agama' => 'Konghucu',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]
         ]);
 
         DB::table('bab')->insert([

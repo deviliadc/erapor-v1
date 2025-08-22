@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('kelas_siswa_id')->constrained('kelas_siswa')->onDelete('cascade');
             // $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade');
-            // $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
+            $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
 
             // Ringkasan nilai
             $table->json('rekap_nilai_mapel')->nullable();
@@ -26,9 +26,9 @@ return new class extends Migration
             $table->text('catatan_wali')->nullable();
 
             // Rekap presensi
-            $table->unsignedTinyInteger('jumlah_sakit')->nullable();
-            $table->unsignedTinyInteger('jumlah_izin')->nullable();
-            $table->unsignedTinyInteger('jumlah_alpha')->nullable();
+            // $table->unsignedTinyInteger('jumlah_sakit')->nullable();
+            // $table->unsignedTinyInteger('jumlah_izin')->nullable();
+            // $table->unsignedTinyInteger('jumlah_alpha')->nullable();
 
             // Status validasi rapor
             $table->boolean('is_final')->default(false);
@@ -38,7 +38,7 @@ return new class extends Migration
 
             $table->unique([
                 // 'siswa_id',
-                // 'tahun_semester_id',
+                'tahun_semester_id',
                 'kelas_siswa_id',
             ]);
         });

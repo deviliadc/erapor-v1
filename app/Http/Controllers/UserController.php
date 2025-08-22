@@ -167,10 +167,17 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
+        // $request->validate([
+        //     'username' => 'required|unique:users,username,' . $user->id,
+        //     'email' => 'nullable|email|unique:users,email,' . $user->id,
+        //     'roles' => 'array|required'
+        // ]);
         $request->validate([
             'username' => 'required|unique:users,username,' . $user->id,
             'email' => 'nullable|email|unique:users,email,' . $user->id,
-            'roles' => 'array|required'
+            'roles' => 'array|required',
+            'roles.*' => 'exists:roles,id',
+            'password' => $request->filled('password') ? 'confirmed|min:6' : '',
         ]);
 
         $roleGuru = Role::where('name', 'guru')->first();
@@ -263,9 +270,9 @@ class UserController extends Controller
         $type = $request->input('type', 'excel');
         $tanggal = now()->format('Ymd_His');
         $filename = $request->input('filename', "data_user_{$tanggal}");
-    
+
         $query = User::with(['siswa', 'guru', 'roles']);
-    
+
         // Filter pencarian
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -276,12 +283,12 @@ class UserController extends Controller
                     ->orWhereHas('siswa', fn($q3) => $q3->where('nama', 'like', "%{$search}%"));
             });
         }
-    
+
         // Filter role
         if ($request->filled('role_filter')) {
             $query->whereHas('roles', fn($q) => $q->where('roles.id', $request->role_filter));
         }
-    
+
         $data = $query->get()->map(function ($user) {
             return [
                 $user->guru?->nama ?? $user->siswa?->nama ?? '-',
@@ -290,7 +297,7 @@ class UserController extends Controller
                 $user->roles->pluck('name')->join(', '),
             ];
         })->toArray();
-    
+
         $headings = ['Nama', 'Username', 'Email', 'Roles'];
         $enumInfo = [
             '',
@@ -298,12 +305,12 @@ class UserController extends Controller
             '',
             'admin/guru/siswa/wali_kelas'
         ];
-    
+
         // Jika data kosong, beri minimal 1 baris kosong agar file tetap terbuat
         if (empty($data)) {
             $data[] = ['', '', '', ''];
         }
-    
+
         // Export Excel
         return Excel::download(
             new \App\Exports\ReusableExport($headings, $enumInfo, $data),

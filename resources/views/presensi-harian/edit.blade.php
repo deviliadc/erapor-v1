@@ -4,6 +4,8 @@
             class="space-y-6 sm:p-6">
             @csrf
             @method('PUT')
+            {{-- <input type="hidden" name="kelas_id" value="{{ $item['kelas_id'] }}"> --}}
+            <input type="hidden" name="tahun_semester_id" value="{{ $item['tahun_semester_id'] }}">
 
             {{-- Tanggal (readonly) --}}
             <x-form.input

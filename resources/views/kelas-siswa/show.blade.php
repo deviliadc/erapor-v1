@@ -104,30 +104,17 @@
         ]" 
             :data="$query" {{-- :data="$siswaList" --}}
             :total-count="$totalCount"
-            row-view="kelas.siswa.partials.row"
+            row-view="kelas-siswa.partials.row-detail"
             :actions="[
                 'detail' => true,
                 'edit' => true,
                 'delete' => true,
-                // 'routes' => [
-                //     'detail' => fn($item) => route('siswa.show', $item['siswa_id']),
-                //     'delete' => fn($item) => route('kelas.siswa.destroy', [
-                //         'kelas' => $kelas->id,
-                //         'siswa' => $item['id'], // ID dari KelasSiswa (pivot)
-                //     ]),
-                // ],
-                // 'delete' => $canDelete,
                 'routes' => [
                     'detail' => fn($item) => role_route('siswa.show', [
                         // 'kelas' => $kelas->id,
                         'siswa' => $item['siswa_id'],
                         'tahun_ajaran_filter' => request('tahun_ajaran_filter') ?? ($tahunAjaranId ?? $tahunAjaranAktif?->id),
                     ]),
-                    // 'delete' => $canDelete
-                    //     ? fn($item) => role_route('kelas.siswa.destroy', [
-                    //         'kelas' => $kelas->id,
-                    //         'mapel' => $item['id'],])
-                    //     : null,
                     'delete' => fn($item) => role_route('kelas-siswa.destroy', [
                         'kelas_siswa' => $item['id'],
                     ]),

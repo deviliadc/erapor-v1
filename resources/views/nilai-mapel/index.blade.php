@@ -1,15 +1,19 @@
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
-    <div x-data="{
-        {{-- activeTab: '{{ old('active_tab', request('mapel', $mapel->first()?->mapel->id ?? '')) }}', --}}
+    {{-- <div x-data="{
         activeTab: '{{ old('active_tab', request('active_tab', $mapel->first()?->mapel->id ?? '')) }}',
-            editMode: false,
-            periode: '{{ request('periode', $periode) }}'
-    }" class="rounded-2xl bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4">
-
+        editMode: false,
+        periode: '{{ request('periode', $periode) }}'
+    }" class="rounded-2xl bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4"> --}}
+<div x-data="{
+    activeTab: '{{ old('active_tab', request('active_tab', $mapel->first()?->mapel?->id ?? '')) }}',
+    editMode: false,
+    periode: '{{ request('periode', $periode) }}'
+}" class="rounded-2xl bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4">
+        {{-- Tahun Ajaran Aktif --}}
         {{-- Filter Form --}}
-        <form method="GET" class="mb-4 flex flex-wrap gap-4">
+        {{-- <form method="GET" class="mb-4 flex flex-wrap gap-4">
             <x-form.select label="Tahun Semester" name="tahun_semester_id" :options="$daftarTahunSemester->mapWithKeys(
                 fn($ts) => [
                     $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester),
@@ -22,17 +26,42 @@
 
             <x-form.select label="Periode" name="periode" :options="['tengah' => 'Tengah Semester', 'akhir' => 'Akhir Semester']" :selected="$periode"
                 placeholder="Pilih Periode" searchable required onchange="this.form.submit()" />
+        </form> --}}
+        <form method="GET" class="mb-4 flex gap-4 items-end">
+            <div class="flex-1">
+                <x-form.select label="Tahun Semester" name="tahun_semester_id" :options="$daftarTahunSemester->mapWithKeys(
+                    fn($ts) => [
+                        $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester),
+                    ],
+                )" :selected="request('tahun_semester_id', $tahunAktif->id)"
+                    placeholder="Pilih Tahun Semester" searchable required onchange="this.form.submit()" />
+            </div>
+
+            <div class="flex-1">
+                <x-form.select label="Kelas" name="kelas_id" {{-- :options="$daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])"  --}} 
+                    :options="['' => '-- Pilih Kelas --'] +
+                    $daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])->toArray()" 
+                    :selected="request('kelas_id')"
+                    placeholder="Pilih Kelas" searchable required onchange="this.form.submit()" />
+            </div>
+
+            <div class="flex-1">
+                <x-form.select label="Periode" name="periode" :options="['tengah' => 'Tengah Semester', 'akhir' => 'Akhir Semester']" :selected="$periode"
+                    placeholder="Pilih Periode" searchable required onchange="this.form.submit()" />
+            </div>
         </form>
+
 
         {{-- Kondisi Data --}}
         @if (!$kelasDipilih)
             <div class="text-center text-gray-500 py-8">
                 Silakan pilih kelas terlebih dahulu untuk menampilkan mapel yang tersedia.
             </div>
-        @elseif ($mapel->isEmpty())
+        {{-- @elseif ($mapel->isEmpty())
             <div class="text-center text-gray-500 py-8">
-                Tidak ada mata pelajaran yang bisa ditampilkan. Silakan tambahkan mata pelajaran untuk kelas ini.
-            </div>
+                Tidak ada mata pelajaran untuk kelas <span class="font-semibold">{{ $kelasDipilih->nama }}</span>.
+                Silakan tambahkan mata pelajaran terlebih dahulu.
+            </div> --}}
         @else
             <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">
                 Mapel Kelas {{ $kelasDipilih->nama }}
@@ -56,12 +85,10 @@
                 </div>
 
                 {{-- Tab Mapel --}}
-                <div
+                {{-- <div
                     class="flex space-x-2 border-b mb-4 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     @foreach ($mapel as $gk)
                         @if ($gk->mapel)
-                            {{-- <a href="?kelas_id={{ $kelasDipilih->id }}&mapel={{ $gk->mapel->id }}&tahun_semester_id={{ $tahunAktif->id }}&periode={{ $periode }}"
-                                @click.prevent="activeTab = '{{ $gk->mapel->id }}'" --}}
                             <a href="?kelas_id={{ $kelasDipilih->id }}&active_tab={{ $gk->mapel->id }}&tahun_semester_id={{ $tahunAktif->id }}&periode={{ $periode }}"
                                 @click.prevent="activeTab = '{{ $gk->mapel->id }}'"
                                 :class="{ 'border-b-2 border-brand-500 font-semibold text-brand-600': activeTab === '{{ $gk->mapel->id }}' }"
@@ -70,7 +97,30 @@
                             </a>
                         @endif
                     @endforeach
-                </div>
+                </div> --}}
+                {{-- Tab Mapel --}}
+@if($mapel->isNotEmpty())
+    <div
+        class="flex space-x-2 border-b mb-4 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        @foreach ($mapel as $gk)
+            @if ($gk->mapel)
+                <a href="?kelas_id={{ $kelasDipilih->id }}&active_tab={{ $gk->mapel->id }}&tahun_semester_id={{ $tahunAktif->id }}&periode={{ $periode }}"
+                    @click.prevent="activeTab = '{{ $gk->mapel->id }}'"
+                    :class="{ 'border-b-2 border-brand-500 font-semibold text-brand-600': activeTab === '{{ $gk->mapel->id }}' }"
+                    class="px-4 py-2 text-sm hover:text-brand-600 transition">
+                    {{ $gk->mapel->nama }}
+                </a>
+            @endif
+        @endforeach
+    </div>
+@else
+    <div class="text-gray-500 italic mb-4">
+        Tidak ada mata pelajaran untuk kelas 
+        <span class="font-semibold">{{ $kelasDipilih->nama }}</span>. 
+        Silakan tambahkan mata pelajaran terlebih dahulu.
+    </div>
+@endif
+
 
                 {{-- Konten Tab --}}
                 @foreach ($mapel as $gk)

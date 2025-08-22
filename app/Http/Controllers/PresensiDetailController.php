@@ -128,54 +128,52 @@ class PresensiDetailController extends Controller
             'keterangan' => $request->keterangan,
         ]);
 
-        // Ambil atau buat rekap_absensi
-        $rekap = RekapAbsensi::firstOrCreate(
+        // Hitung ulang total sakit, izin, alfa untuk siswa ini di semester dan periode terkait
+        $kelasSiswaId = $presensi_detail->kelas_siswa_id;
+        $periode = $presensi_harian->periode;
+
+        $totalSakit = PresensiDetail::whereHas('presensiHarian', function ($q) use ($tahunSemester, $periode) {
+            $q->where('tahun_semester_id', $tahunSemester->id)
+                ->where('periode', $periode);
+        })
+            ->where('kelas_siswa_id', $kelasSiswaId)
+            ->where('status', 'Sakit')
+            ->count();
+
+        $totalIzin = PresensiDetail::whereHas('presensiHarian', function ($q) use ($tahunSemester, $periode) {
+            $q->where('tahun_semester_id', $tahunSemester->id)
+                ->where('periode', $periode);
+        })
+            ->where('kelas_siswa_id', $kelasSiswaId)
+            ->where('status', 'Izin')
+            ->count();
+
+        $totalAlfa = PresensiDetail::whereHas('presensiHarian', function ($q) use ($tahunSemester, $periode) {
+            $q->where('tahun_semester_id', $tahunSemester->id)
+                ->where('periode', $periode);
+        })
+            ->where('kelas_siswa_id', $kelasSiswaId)
+            ->where('status', 'Alpha')
+            ->count();
+
+        // Update atau create rekap absensi
+        RekapAbsensi::updateOrCreate(
             [
-                'kelas_siswa_id' => $presensi_detail->kelas_siswa_id,
+                'kelas_siswa_id' => $kelasSiswaId,
                 'tahun_semester_id' => $tahunSemester->id,
-                'periode' => $presensi_harian->periode,
+                'periode' => $periode,
             ],
             [
-                // 'total_hadir' => 0,
-                'total_sakit' => 0,
-                'total_izin' => 0,
-                'total_alfa' => 0,
+                'total_sakit' => $totalSakit,
+                'total_izin' => $totalIzin,
+                'total_alfa' => $totalAlfa,
             ]
         );
 
-        // Kurangi count status lama
-        switch ($statusLama) {
-            // case 'Hadir':
-            //     $rekap->decrement('total_hadir');
-            //     break;
-            case 'Sakit':
-                $rekap->decrement('total_sakit');
-                break;
-            case 'Izin':
-                $rekap->decrement('total_izin');
-                break;
-            case 'Alpha':
-                $rekap->decrement('total_alfa');
-                break;
-        }
-
-        // Tambahkan count status baru
-        switch ($request->status) {
-            // case 'Hadir':
-            //     $rekap->increment('total_hadir');
-            //     break;
-            case 'Sakit':
-                $rekap->increment('total_sakit');
-                break;
-            case 'Izin':
-                $rekap->increment('total_izin');
-                break;
-            case 'Alpha':
-                $rekap->increment('total_alfa');
-                break;
-        }
+        return redirect()->to(role_route('presensi-harian.show', ['presensi_harian' => $presensi_harian->id]))
+            ->with('success', 'Presensi berhasil diperbarui.');
     }
-
+    
     /**
      * Remove the specified resource from storage.
      */

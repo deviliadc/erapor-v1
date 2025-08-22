@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('presensi_harian', function (Blueprint $table) {
             $table->id();
             $table->foreignId('kelas_id')->constrained('kelas')->onDelete('cascade');
+            $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
             $table->date('tanggal');
             // $table->foreignId('input_by')->nullable()->constrained('users')->onDelete('set null');
             $table->text('catatan')->nullable(); // Misalnya "Upacara bendera", opsional
@@ -22,7 +23,11 @@ return new class extends Migration
             // $table->boolean('is_validated')->default(false); // Untuk menandakan apakah presensi sudah diverifikasi
             $table->timestamps();
 
-            $table->unique(['kelas_id', 'tanggal']); // Biar 1 kelas hanya 1 entri per hari
+            $table->unique([
+                'kelas_id', 
+                'tahun_semester_id',
+                'tanggal'
+            ]); // Biar 1 kelas hanya 1 entri per hari
         });
 
         Schema::create('presensi_detail', function (Blueprint $table) {

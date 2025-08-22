@@ -18,6 +18,8 @@ return new class extends Migration
             // $table->date('selesai'); // 2026-06-30
             $table->boolean('is_active')->default(false);
             $table->timestamps();
+
+                $table->unique('tahun'); 
         });
 
         Schema::create('tahun_semester', function (Blueprint $table) {
@@ -33,7 +35,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['tahun_ajaran_id', 'semester']);
+            // $table->unique(['is_active'], 'unique_active_semester')->where('is_active', true);
             // $table->unique(['tahun', 'semester']); // mencegah duplikasi
+            // $table->unique(['tahun_ajaran_id', 'is_active'], 'unique_active_per_tahun')->where('is_active', true);
+
         });
     }
 

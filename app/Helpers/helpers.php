@@ -58,3 +58,13 @@ function role_route(string $name, array $params = []): string
 
 //     return route('dashboard');
 // }
+function nextTahunAjaran($tahun)
+{
+    // Format: '2024/2025'
+    if (preg_match('/^(\d{4})\/(\d{4})$/', $tahun, $m)) {
+        $awal = (int)$m[1] + 1;
+        $akhir = (int)$m[2] + 1;
+        return "{$awal}/{$akhir}";
+    }
+    return $tahun;
+}

@@ -2,37 +2,56 @@
     'items' => [],
     'sidebarToggle' => false,
 ])
+<!-- Overlay untuk mobile -->
+<div
+    {{-- x-show="sidebarToggle"
+    @click="sidebarToggle = false" --}}
+x-show="$store.sidebar.toggle"
+    @click="$store.sidebar.toggle = false"
+    class="fixed inset-0 bg-black/50 z-[999998] lg:hidden">
+</div>
 
-<aside x-data="{ sidebarToggle: {{ $sidebarToggle ? 'true' : 'false' }}, isHovered: false }" @mouseenter="isHovered = true" @mouseleave="isHovered = false"
-    @click.outside="sidebarToggle = false" {{-- :class="sidebarToggle ? 'translate-x-0 lg:w-[90px]' : '-translate-x-full'" --}}
+{{-- <aside x-data="{ sidebarToggle: {{ $sidebarToggle ? 'true' : 'false' }}, isHovered: false }" @mouseenter="isHovered = true" @mouseleave="isHovered = false"
+    @click.outside="sidebarToggle = false"
     :class="$store.sidebar.toggle ? 'translate-x-0 lg:w-[90px]' : '-translate-x-full'"
-    class="sidebar fixed left-0 top-0 z-[999999] flex h-screen w-[290px] flex-col overflow-y-hidden border-r border-gray-200 bg-white px-5 duration-300 ease-linear dark:border-gray-800 dark:bg-black lg:static lg:translate-x-0">
+    class="sidebar fixed left-0 top-0 z-[999999] flex h-screen w-[290px] flex-col overflow-y-hidden border-r border-gray-200 bg-white px-5 duration-300 ease-linear dark:border-gray-800 dark:bg-black lg:static lg:translate-x-0"> --}}
+<aside
+    {{-- @click.outside="sidebarToggle = false" --}}
+    {{-- :class="sidebarToggle ? 'translate-x-0' : '-translate-x-full'" --}}
+    @click.outside="$store.sidebar.toggle = false"
+        :class="$store.sidebar.toggle ? 'translate-x-0' : '-translate-x-full'"
+    class="fixed left-0 top-0 z-[999999] flex h-screen w-[290px] flex-col
+           overflow-y-hidden border-r border-gray-200 bg-white px-5
+           duration-300 ease-linear dark:border-gray-800 dark:bg-black
+           lg:static lg:translate-x-0">
 
-    <!-- SIDEBAR HEADER -->
-    {{-- <div class="pt-8 pb-7 px-4">
-        <a href="{{ homeRouteForUser() }}" class="flex items-center">
-            <img src="{{ asset('images/logo-1.png') }}" alt="Logo SDN Darmorejo 02"
-                class="h-9 w-10 rounded-full object-cover transition-all duration-300" />
-            <span class="ml-3 text-lg font-semibold text-gray-800 dark:text-white transition-all duration-300"
-                :class="sidebarToggle ? 'hidden' : 'inline-block'">
-                SDN Darmorejo 02
-            </span>
-        </a>
-    </div> --}}
-     <div :class="sidebarToggle ? 'justify-center' : 'justify-between'" class="sidebar-header flex items-center gap-2 pt-8 pb-7 justify-center">
-        <a href="{{ homeRouteForUser() }}">
-            <!-- Logo besar (expand) -->
-            <span x-show="!sidebarToggle || isHovered" class="logo w-full flex justify-center">
-                <img class="dark:hidden w-full h-9 object-cover rounded-full" src="{{ asset('images/logo-1.png') }}" alt="Logo">
-                <img class="hidden dark:block w-full h-9 object-cover rounded-full" src="{{ asset('images/logo-1-dark.png') }}" alt="Logo">
-            </span>
-            <!-- Logo kecil (collapse) -->
-            <span x-show="sidebarToggle && !isHovered" class="logo-icon flex justify-center">
-                <img class="dark:hidden w-10 h-9 object-cover rounded-full" src="{{ asset('images/logo-app.png') }}" alt="Logo">
-                <img class="hidden dark:block w-10 h-9 object-cover rounded-full" src="{{ asset('images/logo-app-dark.png') }}" alt="Logo">
-            </span>
-        </a>
-    </div>
+ <!-- SIDEBAR HEADER -->
+<div :class="sidebarToggle ? 'justify-center' : 'justify-between'"
+     class="sidebar-header flex items-center gap-2 pt-8 pb-7 px-4">
+
+    <a href="{{ homeRouteForUser() }}" class="flex items-center justify-center">
+        <!-- Logo besar (expand) -->
+        <span x-show="!sidebarToggle"
+              x-transition
+              class="logo flex items-center">
+            <img class="dark:hidden h-9 object-cover rounded-full"
+                 src="{{ asset('images/logo-1.png') }}" alt="Logo">
+            <img class="hidden dark:block h-9 object-cover rounded-full"
+                 src="{{ asset('images/logo-1-dark.png') }}" alt="Logo">
+        </span>
+
+        <!-- Logo kecil (collapse) -->
+        <span x-show="sidebarToggle"
+              x-transition
+              class="logo-icon flex items-center">
+            <img class="dark:hidden w-10 h-10 object-cover rounded-full"
+                 src="{{ asset('images/logo-app.png') }}" alt="Logo">
+            <img class="hidden dark:block w-10 h-10 object-cover rounded-full"
+                 src="{{ asset('images/logo-app-dark.png') }}" alt="Logo">
+        </span>
+    </a>
+</div>
+
 
     <!-- SIDEBAR BODY -->
     <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">

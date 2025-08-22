@@ -15,7 +15,7 @@
                 :columns="[
                     'proyek' => ['label' => 'Proyek', 'sortable' => false],
                     'sub_elemen' => ['label' => 'Sub Elemen', 'sortable' => false],
-                    'nilai_akhir' => ['label' => 'Nilai', 'sortable' => false],
+                    // 'nilai_akhir' => ['label' => 'Nilai', 'sortable' => false],
                     'predikat' => ['label' => 'Predikat', 'sortable' => false],
                     'tahun_semester' => ['label' => 'Tahun Semester', 'sortable' => false],
                 ]"

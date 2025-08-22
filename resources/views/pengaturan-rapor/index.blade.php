@@ -8,7 +8,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tahun Semester</label>
                 <div class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
-                    {{ $tahunAktif->tahun ?? '-' }} - {{ ucfirst($tahunAktif->semester ?? '-') }}
+                    {{ $tahunAktif->tahunAjaran->tahun ?? '-' }} - {{ ucfirst($tahunAktif->semester ?? '-') }}
                 </div>
             </div>
 

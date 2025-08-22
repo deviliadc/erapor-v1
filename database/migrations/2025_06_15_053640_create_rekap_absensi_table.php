@@ -16,9 +16,9 @@ return new class extends Migration
             $table->foreignId('kelas_siswa_id')->constrained('kelas_siswa')->onDelete('cascade');
             // $table->foreignId('siswa_id')->constrained('siswa')->onDelete('cascade');
             $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
-            $table->integer('total_sakit')->default(0);
-            $table->integer('total_izin')->default(0);
-            $table->integer('total_alfa')->default(0);
+            $table->unsignedTinyInteger('total_sakit')->default(0);
+            $table->unsignedTinyInteger('total_izin')->default(0);
+            $table->unsignedTinyInteger('total_alfa')->default(0);
             $table->enum('periode', ['tengah', 'akhir']);
             // $table->boolean('is_validated')->default(false);
             $table->timestamps();

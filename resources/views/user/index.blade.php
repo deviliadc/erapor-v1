@@ -17,9 +17,11 @@ $filters = [
     {{-- Form Tambah User --}}
     @include('user.create')
     {{-- Form Edit User --}}
-    @foreach ($users as $user)
-        @include('user.edit', ['user' => $user, 'roles' => $roles])
-    @endforeach
+    {{-- @foreach ($users as $user) --}}
+        @include('user.edit'
+        // , ['user' => $user, 'roles' => $roles]
+        )
+    {{-- @endforeach --}}
 
     <!-- Wrapper -->
     <div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">

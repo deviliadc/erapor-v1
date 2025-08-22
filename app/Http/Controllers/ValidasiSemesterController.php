@@ -14,60 +14,58 @@ class ValidasiSemesterController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-{
-    $perPage = $request->input('per_page', 10);
+    {
+        $perPage = $request->input('per_page', 10);
 
-    // Ambil dropdown data
-    $kelas = Kelas::orderBy('nama')->get();
-    $semester = TahunSemester::with('tahunAjaran')
-        ->orderByDesc('tahun_ajaran_id')
-        ->orderBy('semester')
-        ->get()
-        ->map(function ($s) {
-            $s->label = $s->tahunAjaran->tahun . ' - ' . $s->semester;
+        // Ambil semua semester dengan relasi tahun ajaran
+        $semester = TahunSemester::with('tahunAjaran')
+            ->orderByDesc('tahun_ajaran_id')
+            ->orderBy('semester')
+            ->get();
+
+        // Ambil semester aktif
+        $semesterAktif = TahunSemester::aktif()->first();
+
+        // Tambahkan label untuk dropdown + tandai aktif
+        $semester = $semester->map(function ($s) use ($semesterAktif) {
+            $label = $s->tahunAjaran->tahun . ' - ' . $s->semester;
+            if ($semesterAktif && $s->id === $semesterAktif->id) {
+                $label .= ' (Aktif)';
+            }
+            $s->label = $label;
             return $s;
         });
 
-    // Ambil semester aktif
-    $semesterAktif = TahunSemester::aktif()->first();
+        // Default filter ke semester aktif
+        $semesterId = $request->input('tahun_semester', $semesterAktif?->id);
 
-    // Gunakan semester filter dari request, default ke semester aktif
-    $semesterId = $request->input('semester_id', $semesterAktif?->id);
+        // Query validasi sesuai filter semester
+        $query = ValidasiSemester::with('tahunSemester.tahunAjaran', 'validator')
+            ->where('tahun_semester_id', $semesterId);
 
-    // Query validasi global sesuai filter
-    $query = ValidasiSemester::with('tahunSemester.tahunAjaran', 'validator')
-        ->when($semesterId, fn($q) => $q->where('tahun_semester_id', $semesterId));
+        $totalCount = $query->count();
+        $paginator = $query->paginate($perPage)->withQueryString();
 
-    $totalCount = $query->count();
-    $paginator = $query->paginate($perPage)->withQueryString();
+        $validasi = $paginator->through(fn($item) => [
+            'id' => $item->id,
+            'tipe' => $item->tipe,
+            'is_validated' => $item->is_validated,
+            'validated_at' => $item->validated_at,
+            'validator_name' => $item->validator?->name,
+            'validator_username' => $item->validator?->username,
+            'tahun_semester' => $item->tahunSemester
+                ? $item->tahunSemester->tahunAjaran->tahun . ' - ' . $item->tahunSemester->semester
+                : '-',
+        ]);
 
-    $validasi = $paginator->through(fn($item) => [
-        'id' => $item->id,
-        'tipe' => $item->tipe,
-        'is_validated' => $item->is_validated,
-        'validated_at' => $item->validated_at
-            ? \Carbon\Carbon::parse($item->validated_at)
-                ->timezone('Asia/Jakarta')
-                ->format('d-m-Y H:i')
-            : '-',
-        'validator_name' => $item->validator?->name,
-        'validator_username' => $item->validator?->username,
-        'tahun_semester' => $item->tahunSemester
-            ? $item->tahunSemester->tahunAjaran->tahun . ' - ' . $item->tahunSemester->semester
-            : '-',
-    ]);
-
-    return view('validasi-semester.index', compact(
-        'validasi',
-        'totalCount',
-        'paginator',
-        'kelas',
-        'semester',
-        'semesterAktif',
-        'semesterId' // <-- supaya Blade tahu filter aktif
-    ));
-}
-
+        return view('validasi-semester.index', compact(
+            'validasi',
+            'totalCount',
+            'paginator',
+            'semester',
+            'semesterId'
+        ));
+    }
 
 
     public function validateType(ValidasiSemester $validasiSemester)
@@ -92,77 +90,77 @@ class ValidasiSemesterController extends Controller
         return redirect()->back()->with('success', "{$validasiSemester->tipe} validasi dibatalkan!");
     }
 
-//     public function validateAll(Request $request)
-// {
-//     ValidasiSemester::where('is_validated', false)->update([
-//         'is_validated' => true,
-//         'validated_at' => now(),
-//         'validated_by' => Auth::id(),
-//     ]);
+    //     public function validateAll(Request $request)
+    // {
+    //     ValidasiSemester::where('is_validated', false)->update([
+    //         'is_validated' => true,
+    //         'validated_at' => now(),
+    //         'validated_by' => Auth::id(),
+    //     ]);
 
-//     return redirect()->back()->with('success', 'Semua validasi berhasil dilakukan!');
-// }
+    //     return redirect()->back()->with('success', 'Semua validasi berhasil dilakukan!');
+    // }
 
-// public function validateAll(Request $request)
-// {
-//     $semesterId = $request->input('tahun_semester');
+    // public function validateAll(Request $request)
+    // {
+    //     $semesterId = $request->input('tahun_semester');
 
-//     // Query data yang belum divalidasi dan sesuai filter semester
-//     $query = ValidasiSemester::where('is_validated', false);
+    //     // Query data yang belum divalidasi dan sesuai filter semester
+    //     $query = ValidasiSemester::where('is_validated', false);
 
-//     if ($semesterId) {
-//         $query->where('tahun_semester_id', $semesterId);
-//     }
+    //     if ($semesterId) {
+    //         $query->where('tahun_semester_id', $semesterId);
+    //     }
 
-//     $pending = $query->get();
+    //     $pending = $query->get();
 
-//     if ($pending->isEmpty()) {
-//         // Kalau tidak ada data yang bisa divalidasi
-//         return redirect()->back()->with('error', 'Tidak ada data yang bisa divalidasi untuk tahun semester ini.');
-//     }
+    //     if ($pending->isEmpty()) {
+    //         // Kalau tidak ada data yang bisa divalidasi
+    //         return redirect()->back()->with('error', 'Tidak ada data yang bisa divalidasi untuk tahun semester ini.');
+    //     }
 
-//     // Optional: cek kelengkapan data
-//     foreach ($pending as $item) {
-//         if (!$item->tahun_semester_id || !$item->tipe) {
-//             return redirect()->back()->with('error', "Data {$item->id} belum lengkap dan tidak bisa divalidasi.");
-//         }
-//     }
+    //     // Optional: cek kelengkapan data
+    //     foreach ($pending as $item) {
+    //         if (!$item->tahun_semester_id || !$item->tipe) {
+    //             return redirect()->back()->with('error', "Data {$item->id} belum lengkap dan tidak bisa divalidasi.");
+    //         }
+    //     }
 
-//     // Validasi semua data yang sesuai
-//     $pending->each(function ($item) {
-//         $item->update([
-//             'is_validated' => true,
-//             'validated_at' => now(),
-//             'validated_by' => Auth::id(),
-//         ]);
-//     });
+    //     // Validasi semua data yang sesuai
+    //     $pending->each(function ($item) {
+    //         $item->update([
+    //             'is_validated' => true,
+    //             'validated_at' => now(),
+    //             'validated_by' => Auth::id(),
+    //         ]);
+    //     });
 
-//     return redirect()->back()->with('success', 'Semua data yang sesuai filter berhasil divalidasi!');
-// }
+    //     return redirect()->back()->with('success', 'Semua data yang sesuai filter berhasil divalidasi!');
+    // }
 
-public function validateAll(Request $request)
-{
-    $semesterId = $request->input('semester_id');
+    public function validateAll(Request $request)
+    {
+        $semesterId = $request->input('semester_id');
 
-    $query = ValidasiSemester::where('is_validated', false)
-        ->when($semesterId, fn($q) => $q->where('tahun_semester_id', $semesterId));
+        $query = ValidasiSemester::where('is_validated', false)
+            ->when($semesterId, fn($q) => $q->where('tahun_semester_id', $semesterId));
 
-    $pending = $query->get();
+        $pending = $query->get();
 
-    if ($pending->isEmpty()) {
-        return redirect()->back()->with('error', 'Tidak ada data yang bisa divalidasi untuk filter ini.');
+        if ($pending->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada data yang bisa divalidasi untuk filter ini.');
+        }
+
+        $pending->each(function ($item) {
+            $item->update([
+                'is_validated' => true,
+                'validated_at' => now(),
+                'validated_by' => Auth::id(),
+            ]);
+        });
+
+        return redirect()->back()->with('success', 'Semua data yang sesuai filter berhasil divalidasi!');
     }
-
-    $pending->each(function ($item) {
-        $item->update([
-            'is_validated' => true,
-            'validated_at' => now(),
-            'validated_by' => Auth::id(),
-        ]);
-    });
-
-    return redirect()->back()->with('success', 'Semua data yang sesuai filter berhasil divalidasi!');
-}
 
 
 

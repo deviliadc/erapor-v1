@@ -10,7 +10,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
 // class ReusableExport implements FromArray, WithHeadings, ShouldAutoSize, WithStyles
-class ReusableExport implements FromArray, ShouldAutoSize, WithStyles
+class ReusableExport implements FromArray, ShouldAutoSize, WithStyles, WithTitle
 {
     /**
      * @return array

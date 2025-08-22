@@ -8,61 +8,38 @@
     }" class="bg-white dark:bg-white/[0.03] p-4 rounded-2xl">
 
         <!-- Filter Tahun Semester, Kelas, Periode -->
-        <form method="GET" class="mb-4 flex flex-wrap gap-4">
-            {{-- <div>
-                <label for="tahun_semester_id" class="block text-sm font-medium">Tahun Semester</label>
-                <select name="tahun_semester_id" id="tahun_semester_id" onchange="this.form.submit()"
-                    class="mt-1 rounded border px-3 py-2">
-                    @foreach ($tahunSemesterList as $ts)
-                        <option value="{{ $ts->id }}" {{ $ts->id == $tahunSemesterId ? 'selected' : '' }}>
-                            {{ $ts->tahun }} - {{ ucfirst($ts->semester) }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label for="kelas_id" class="block text-sm font-medium">Kelas</label>
-                <select name="kelas_id" id="kelas_id" onchange="this.form.submit()"
-                    class="mt-1 rounded border px-3 py-2">
-                    @foreach ($kelasList as $kls)
-                        <option value="{{ $kls->id }}" {{ $kls->id == $kelasId ? 'selected' : '' }}>
-                            Kelas {{ $kls->nama }}
-                        </option>
-                    @endforeach
-                </select>
-            </div> --}}
-            {{-- <div>
-                <label for="periode" class="block text-sm font-medium">Periode</label>
-                <select name="periode" id="periode" onchange="this.form.submit()"
-                    class="mt-1 rounded border px-3 py-2">
-                    <option value="tengah" {{ $periode == 'tengah' ? 'selected' : '' }}>Tengah Semester</option>
-                    <option value="akhir" {{ $periode == 'akhir' ? 'selected' : '' }}>Akhir Semester</option>
-                </select>
-            </div> --}}
-            <x-form.select
-        label="Tahun Semester"
-        name="tahun_semester_id"
-        :options="$daftarTahunSemester->mapWithKeys(fn($ts) => [
-            $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester)
-        ])"
-        :selected="$tahunSemesterId"
-        placeholder="Pilih Tahun Semester"
-        searchable
-        required
-        onchange="this.form.submit()"
-    />
+    <form method="GET" class="mb-4 flex flex-wrap gap-4">
+    {{-- Tahun Semester --}}
+    <div class="flex-1 min-w-0">
+        <x-form.select
+            label="Tahun Semester"
+            name="tahun_semester_id"
+            :options="$daftarTahunSemester->mapWithKeys(fn($ts) => [
+                $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester)
+            ])"
+            :selected="$tahunSemesterId"
+            placeholder="Pilih Tahun Semester"
+            searchable
+            required
+            onchange="this.form.submit()"
+        />
+    </div>
 
-    <x-form.select
-        label="Kelas"
-        name="kelas_id"
-        :options="$daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])"
-        :selected="$kelasId"
-        placeholder="Pilih Kelas"
-        searchable
-        required
-        onchange="this.form.submit()"
-    />
-        </form>
+    {{-- Kelas --}}
+    <div class="flex-1 min-w-0">
+        <x-form.select
+            label="Kelas"
+            name="kelas_id"
+            :options="$daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])"
+            :selected="$kelasId"
+            placeholder="Pilih Kelas"
+            searchable
+            required
+            onchange="this.form.submit()"
+        />
+    </div>
+</form>
+
 
         <!-- Tab Ekstra Tanpa Reload -->
         <div class="mb-4">

@@ -76,18 +76,26 @@ class TahunSemesterController extends Controller
 
     private function getTahunSemesterData(Request $request, $perPage)
     {
-        $query = TahunSemester::with('tahunAjaran')->orderByDesc('tahun_ajaran_id')->orderBy('semester');
+        $query = TahunSemester::with('tahunAjaran')
+            ->select('tahun_semester.*') // ambil hanya kolom dari tahun_semester
+            ->join('tahun_ajaran', 'tahun_semester.tahun_ajaran_id', '=', 'tahun_ajaran.id')
+            ->orderByDesc('tahun_ajaran.tahun')
+            ->orderBy('semester');
+
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
+
         $tahunSemester = $paginator->through(function ($item) {
+            // pastikan ambil dari tabel tahun_semester
+            $isActive = $item->getAttribute('is_active') ? true : false;
+
             return [
                 'id' => $item->id,
                 'tahun_ajaran_id' => $item->tahun_ajaran_id,
                 'tahun' => $item->tahunAjaran->tahun,
                 'semester' => $item->semester,
-                // 'semester_mulai' => $item->mulai,
-                // 'semester_selesai' => $item->selesai,
-                'semester_status' => $item->is_active,
+                'semester_status' => $isActive,
+                'label' => $item->semester . ($isActive ? ' (Aktif)' : ''),
             ];
         });
 

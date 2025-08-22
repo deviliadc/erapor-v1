@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('mapel_id')->constrained('mapel')->onDelete('cascade');
             $table->foreignId('tahun_semester_id')->constrained('tahun_semester')->onDelete('cascade');
 
-            $table->float('nilai_akhir')->nullable();
+            $table->decimal('nilai_akhir', 5, 2)->nullable();
             $table->text('deskripsi_tertinggi')->nullable();
             $table->text('deskripsi_terendah')->nullable();
             $table->enum('periode', ['tengah', 'akhir']); // tengah = UTS, akhir = rapor akhir

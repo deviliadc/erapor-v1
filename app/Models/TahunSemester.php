@@ -46,6 +46,17 @@ class TahunSemester extends Model
         return $query->where('is_active', true);
     }
 
+protected static function booted()
+{
+    static::saving(function ($semester) {
+        if ($semester->is_active) {
+            // Nonaktifkan semua semester lain di tahun ajaran ini
+            self::where('tahun_ajaran_id', $semester->tahun_ajaran_id)
+                ->where('id', '!=', $semester->id)
+                ->update(['is_active' => false]);
+        }
+    });
+}
 
     // public function isUTSValidated()
     // {

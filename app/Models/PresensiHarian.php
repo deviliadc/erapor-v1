@@ -13,6 +13,7 @@ class PresensiHarian extends Model
 
     protected $fillable = [
         'kelas_id',
+        'tahun_semester_id',
         'tanggal',
         // 'penginput_id',
         'catatan',
@@ -31,7 +32,10 @@ class PresensiHarian extends Model
         return $this->belongsTo(Kelas::class, 'kelas_id');
     }
 
-    
+    public function tahunSemester()
+    {
+        return $this->belongsTo(TahunSemester::class, 'tahun_semester_id');
+    }
 
     public function penginput()
     {
