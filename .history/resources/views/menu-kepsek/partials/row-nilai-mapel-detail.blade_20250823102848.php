@@ -1,0 +1,11 @@
+{{-- <td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap">
+    {{ $loop->iteration + ($data->firstItem() - 1) }}
+</td> --}}
+{{-- <td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap">
+    {{ $loop->iteration + ($nilaiEkstra instanceof \Illuminate\Pagination\AbstractPaginator ? $nilaiEkstra->firstItem() - 1 : 0) }}
+</td> --}}
+{{-- <td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['no'] }}</td> --}}
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['nama'] }}</td>
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['uts'] ?? '-' }}</td>
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['uas'] ?? '-' }}
+</td>

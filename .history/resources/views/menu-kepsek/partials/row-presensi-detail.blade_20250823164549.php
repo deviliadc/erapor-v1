@@ -1,0 +1,10 @@
+{{-- <td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap">
+    {{ $loop->iteration + ($data->firstItem() - 1) }}
+</td> --}}
+{{-- <td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['no'] }}</td> --}}
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['no_absen'] }}</td>
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['nama'] }}</td>
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['hadir'] ?? '-' }}</td>
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['sakit'] ?? '-' }}</td>
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['izin'] ?? '-' }}</td>
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap min-w-[150px]">{{ $item['alfa'] ?? '-' }}</td>
