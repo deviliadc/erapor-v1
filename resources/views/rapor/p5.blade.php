@@ -82,6 +82,18 @@
         .ttd .nama {
             font-weight: bold;
         }
+
+        .catatan {
+            margin-top: 18px;
+        }
+
+        .catatan-box {
+            border: 1px solid #333;
+            padding: 8px 10px;
+            margin-top: 6px;
+            background: #fcfcfc;
+            min-height: 40px;
+        }
     </style>
 </head>
 {{-- <body> --}}
@@ -148,10 +160,12 @@
         </table>
 
         <div class="catatan">
-            <strong>Catatan Proses</strong><br>
-            {{ $p5['catatan'] ?? '-' }}
+            <strong>Catatan Proses</strong>
+            <div class="catatan-box">
+                {{ $p5['catatan'] ?? '-' }}
+            </div>
         </div>
-        <hr>
+
     @empty
         <div class="text-center text-gray-500 py-8">Data P5 tidak ditemukan untuk semester ini.</div>
     @endforelse
@@ -183,7 +197,7 @@
             <td width="50%" style="text-align:center;">
                 Mengetahui,<br>Orang Tua
                 <br><br><br><br>
-                ............
+                {{ $siswa->nama_ayah ?? $siswa->nama_ibu ?? $siswa->nama_wali ?? '-' }}<br>
             </td>
             <td width="50%" style="text-align:center;">
                 {{ $pengaturan->tempat ?? ($sekolah->kabupaten ?? '-') }},

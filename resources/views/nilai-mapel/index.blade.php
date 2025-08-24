@@ -13,34 +13,26 @@
 }" class="rounded-2xl bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4">
         {{-- Tahun Ajaran Aktif --}}
         {{-- Filter Form --}}
-        {{-- <form method="GET" class="mb-4 flex flex-wrap gap-4">
-            <x-form.select label="Tahun Semester" name="tahun_semester_id" :options="$daftarTahunSemester->mapWithKeys(
-                fn($ts) => [
-                    $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester),
-                ],
-            )" :selected="request('tahun_semester_id', $tahunAktif->id)"
-                placeholder="Pilih Tahun Semester" searchable required onchange="this.form.submit()" />
-
-            <x-form.select label="Kelas" name="kelas_id" :options="$daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])" :selected="request('kelas_id')" placeholder="Pilih Kelas"
-                searchable required onchange="this.form.submit()" />
-
-            <x-form.select label="Periode" name="periode" :options="['tengah' => 'Tengah Semester', 'akhir' => 'Akhir Semester']" :selected="$periode"
-                placeholder="Pilih Periode" searchable required onchange="this.form.submit()" />
-        </form> --}}
         <form method="GET" class="mb-4 flex gap-4 items-end">
             <div class="flex-1">
-                <x-form.select label="Tahun Semester" name="tahun_semester_id" :options="$daftarTahunSemester->mapWithKeys(
+                <x-form.select label="Tahun Semester"
+                name="tahun_semester_id"
+                    :options="$daftarTahunSemester->mapWithKeys(
                     fn($ts) => [
                         $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester),
                     ],
-                )" :selected="request('tahun_semester_id', $tahunAktif->id)"
-                    placeholder="Pilih Tahun Semester" searchable required onchange="this.form.submit()" />
+                )"
+                    :selected="request('tahun_semester_id', $tahunAktif->id)"
+                    placeholder="Pilih Tahun Semester"
+                    searchable
+                    required
+                    onchange="this.form.submit()" />
             </div>
 
             <div class="flex-1">
-                <x-form.select label="Kelas" name="kelas_id" {{-- :options="$daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])"  --}} 
+                <x-form.select label="Kelas" name="kelas_id"
                     :options="['' => '-- Pilih Kelas --'] +
-                    $daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])->toArray()" 
+                    $daftarKelas->mapWithKeys(fn($kls) => [$kls->id => $kls->nama])->toArray()"
                     :selected="request('kelas_id')"
                     placeholder="Pilih Kelas" searchable required onchange="this.form.submit()" />
             </div>
@@ -115,8 +107,8 @@
     </div>
 @else
     <div class="text-gray-500 italic mb-4">
-        Tidak ada mata pelajaran untuk kelas 
-        <span class="font-semibold">{{ $kelasDipilih->nama }}</span>. 
+        Tidak ada mata pelajaran untuk kelas
+        <span class="font-semibold">{{ $kelasDipilih->nama }}</span>.
         Silakan tambahkan mata pelajaran terlebih dahulu.
     </div>
 @endif

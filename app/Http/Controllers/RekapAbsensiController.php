@@ -63,28 +63,66 @@ class RekapAbsensiController extends Controller
     //         'rekapListByKelas' => $rekapListByKelas,
     //     ]);
     // }
-    
     public function index(Request $request)
     {
-        $tahunSemesterList = TahunSemester::orderByDesc('id')->get();
-        $tahunSemesterId = $request->input('tahun_semester_id') ?? $tahunSemesterList->first()?->id;
-        $periode = $request->input('periode', 'akhir'); // default ke 'akhir'
+        // Ambil daftar tahun semester, urut berdasarkan tahun ajaran dan semester
+        $daftarTahunSemester = \App\Models\TahunSemester::with('tahunAjaran')
+            ->get()
+            ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
+            ->sortByDesc('semester')
+            ->values();
 
-        $selectedTahunSemester = TahunSemester::find($tahunSemesterId);
-        $tahunAjaranId = $selectedTahunSemester?->tahun_ajaran_id;
+        // Tahun semester aktif
+        $tahunSemesterAktif = $daftarTahunSemester->firstWhere('is_active', true);
 
-        $kelasList = Kelas::orderBy('nama')->get();
-        $kelasId = $request->input('kelas_id') ?? $kelasList->first()?->id;
+        // Ambil id tahun semester dari request, jika tidak ada pakai yang aktif
+        $tahunSemesterId = $request->input('tahun_semester_id');
+        if (!$tahunSemesterId || !$daftarTahunSemester->firstWhere('id', $tahunSemesterId)) {
+            $tahunSemesterId = $tahunSemesterAktif?->id;
+        }
+        $selectedTahunSemester = $daftarTahunSemester->firstWhere('id', $tahunSemesterId);
 
+        // Buat options tahun semester untuk filter
+        $tahunSemesterOptions = $daftarTahunSemester->mapWithKeys(function ($ts) use ($daftarTahunSemester) {
+            $label = ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester);
+
+            if ($daftarTahunSemester->firstWhere('is_active', true)?->id === $ts->id) {
+                $label .= ' (Aktif)';
+            }
+
+            return [$ts->id => $label];
+        })->toArray();
+
+
+        // Periode absensi (default ke akhir)
+        $periode = $request->input('periode', 'akhir');
+
+        // Daftar kelas sesuai tahun ajaran dari tahun semester terpilih
+        $daftarKelas = collect();
+        if ($selectedTahunSemester) {
+            $daftarKelas = \App\Models\KelasSiswa::with('kelas')
+                ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
+                ->get()
+                ->pluck('kelas')
+                ->unique('id')
+                ->sortBy('nama')
+                ->values();
+        }
+
+        // Kelas yang dipilih (default kosong)
+        $kelasId = $request->kelas_id;
+
+        // Data rekap absensi per kelas
         $rekapListByKelas = [];
-        foreach ($kelasList as $kelas) {
-            $rekapListByKelas[$kelas->id] = KelasSiswa::with(['siswa'])
+        foreach ($daftarKelas as $kelas) {
+            $rekapListByKelas[$kelas->id] = \App\Models\KelasSiswa::with(['siswa'])
                 ->where('kelas_id', $kelas->id)
-                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->where('tahun_ajaran_id', $selectedTahunSemester?->tahun_ajaran_id)
                 ->orderBy('no_absen')
                 ->get()
-                ->map(function ($item) use ($periode) {
-                    $item->rekapAbsensi = RekapAbsensi::where('kelas_siswa_id', $item->id)
+                ->map(function ($item) use ($periode, $tahunSemesterId) {
+                    $item->rekapAbsensi = \App\Models\RekapAbsensi::where('kelas_siswa_id', $item->id)
+                        ->where('tahun_semester_id', $tahunSemesterId)
                         ->where('periode', $periode)
                         ->first();
                     return $item;
@@ -96,17 +134,20 @@ class RekapAbsensiController extends Controller
         ];
         $title = 'Rekap Absensi';
 
-        return view('rekap-absensi.index', [
-            'breadcrumbs' => $breadcrumbs,
-            'title' => $title,
-            'tahunSemesterList' => $tahunSemesterList,
-            'selectedTahunSemester' => $selectedTahunSemester,
-            'kelasList' => $kelasList,
-            'selectedKelasId' => $kelasId,
-            'periode' => $periode,
-            'rekapListByKelas' => $rekapListByKelas,
-        ]);
+        return view('rekap-absensi.index', compact(
+            'breadcrumbs',
+            'title',
+            'daftarTahunSemester',
+            'tahunSemesterId',
+            'selectedTahunSemester',
+            'daftarKelas',
+            'kelasId',
+            'periode',
+            'rekapListByKelas',
+            'tahunSemesterOptions'
+        ));
     }
+
 
     public function updateBatch(Request $request)
     {

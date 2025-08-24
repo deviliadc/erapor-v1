@@ -9,6 +9,7 @@ use App\Models\Kelas;
 use App\Models\KelasSiswa;
 use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class KelasController extends Controller
 {
@@ -181,42 +182,52 @@ class KelasController extends Controller
         $perPage = $request->input('per_page', 10);
 
         // Ambil tahun ajaran dari filter, default ke tahun ajaran aktif
-        // $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
-        // $tahunAjaranId = $request->input('tahun_ajaran_filter', $tahunAjaranAktif ? $tahunAjaranAktif->id : null);
-        // Ambil tahun ajaran dari filter, jika tidak ada pakai tahun ajaran aktif
         $tahunAjaranId = $request->input('tahun_ajaran_filter');
         $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
         if (!$tahunAjaranId) {
             $tahunAjaranId = $tahunAjaranAktif?->id;
         }
-        // Query kelas
+
+        // Cek apakah user login adalah guru
+        $user = Auth::user();
+        $guruId = $user->guru?->id; // pastikan relasi `guru()` ada di model User
+
         $query = Kelas::query()
             ->orderBy('nama', 'asc')
             ->orderBy('fase_id', 'asc');
+
+        // Jika user adalah guru, filter hanya kelas yang dia jadi wali
+        if ($guruId) {
+            $query->whereHas('guruKelas', function ($q) use ($guruId, $tahunAjaranId) {
+                $q->where('guru_id', $guruId)
+                    ->where('peran', 'wali')
+                    ->where('tahun_ajaran_id', $tahunAjaranId);
+            });
+        }
+
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
 
         // Ambil semua tahun ajaran untuk filter
-        // $tahunAjaranList = TahunAjaran::orderByDesc('tahun')->get();
+        $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
 
-        // Data untuk tampilan
+        $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
+            return [
+                'id' => $item->id,
+                'name' => $item->tahun . ($item->id == $tahunAjaranAktif?->id ? ' (Aktif)' : ''),
+            ];
+        });
+
         $kelas = $paginator->through(function ($item) use ($tahunAjaranId) {
-            // Ambil wali kelas dari GuruKelas berdasarkan tahun ajaran (jika ada relasi)
-            // $waliKelas = GuruKelas::where('kelas_id', $item->id)
-            //     ->where('peran', 'wali')
-            //     ->whereHas('tahunSemester', function ($q) use ($tahunAjaranId) {
-            //         $q->where('tahun_ajaran_id', $tahunAjaranId);
-            //     })
-            //     ->with('guru')
-            //     ->first();
             $waliKelas = GuruKelas::where('kelas_id', $item->id)
                 ->where('peran', 'wali')
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->with('guru')
                 ->first();
+
             $fase = $item->fase ? $item->fase->nama : ($item->fase ?? '-');
-            // Mapel tetap bisa pakai tahun ajaran jika relasi ada
-            $mapelList = $item->getMapelByTahunAjaran($tahunAjaranId); // Buat method custom jika perlu
+            $mapelList = $item->getMapelByTahunAjaran($tahunAjaranId);
+
             return [
                 'id' => $item->id,
                 'nama' => $item->nama,
@@ -235,27 +246,7 @@ class KelasController extends Controller
         $guru = Guru::pluck('nama', 'id');
         $faseList = Fase::pluck('nama', 'id');
 
-        // Untuk filter select tahun ajaran
-        // $tahunAjaranSelect = $tahunAjaranList->map(function ($ta) use ($tahunAjaranAktif) {
-        //     return [
-        //         'id' => $ta->id,
-        //         'name' => $ta->tahun . ($ta->id == $tahunAjaranAktif?->id ? ' (Aktif)' : ''),
-        //     ];
-        // });
-        // Ambil semua tahun ajaran untuk select filter (terbaru di atas)
-        $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
-
-        // Untuk select filter di toolbar (terbaru di atas)
-        $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
-            return [
-                'id' => $item->id,
-                'name' => $item->tahun . ($item->id == $tahunAjaranAktif?->id ? ' (Aktif)' : ''),
-            ];
-        });
-
-        $breadcrumbs = [
-            ['label' => 'Manage Kelas'],
-        ];
+        $breadcrumbs = [['label' => 'Manage Kelas']];
         $title = 'Manage Kelas';
 
         return view('kelas.index', compact(
@@ -271,6 +262,7 @@ class KelasController extends Controller
             'tahunAjaranId',
         ));
     }
+
 
     /**
      * Show the form for creating a new resource.

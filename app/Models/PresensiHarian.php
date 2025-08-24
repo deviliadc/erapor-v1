@@ -20,12 +20,12 @@ class PresensiHarian extends Model
         'periode',
     ];
 
-    public function kelasSiswa()
-    {
-        return $this->belongsToMany(Kelas::class, 'kelas_siswa_id', 'kelas_id')
-                    ->withPivot('siswa_id')
-                    ->using(KelasSiswa::class);
-    }
+    // public function kelasSiswa()
+    // {
+    //     return $this->belongsToMany(Kelas::class, 'kelas_siswa_id', 'kelas_id')
+    //                 ->withPivot('siswa_id')
+    //                 ->using(KelasSiswa::class);
+    // }
 
     public function kelas()
     {

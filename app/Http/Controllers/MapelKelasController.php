@@ -9,6 +9,7 @@ use App\Models\Mapel;
 // use App\Models\TahunSemester;
 use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class MapelKelasController extends Controller
 {
@@ -146,11 +147,25 @@ class MapelKelasController extends Controller
     // }
     public function index(Request $request)
     {
+        $user = Auth::user();
+        $guruId = $user->guru?->id ?? null; // asumsi relasi user->guru ada
+
         $tahunAjaranId = $request->input('tahun_ajaran_filter');
         $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
         if (!$tahunAjaranId) {
             $tahunAjaranId = $tahunAjaranAktif?->id;
         }
+
+           if ($guruId && $user->hasRole('guru')) {
+        $isWali = GuruKelas::where('guru_id', $guruId)
+            ->where('peran', 'wali')
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->exists();
+
+        if (!$isWali) {
+            return abort(403, 'Anda bukan wali kelas');
+        }
+    }
 
         $perPage = $request->input('per_page', 10);
 

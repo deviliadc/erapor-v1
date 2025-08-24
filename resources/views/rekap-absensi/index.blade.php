@@ -1,71 +1,42 @@
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
-    <div x-data="{
-        editMode: false,
-        activeKelas: '{{ $selectedKelasId ?? (count($kelasList) ? $kelasList[0]->id : '') }}'
-    }" class="bg-white dark:bg-white/[0.03] p-4 rounded-2xl">
+    <div
+        x-data="{
+            editMode: false,
+            activeKelas: '{{ $kelasId ?? ($daftarKelas->count() ? $daftarKelas[0]->id : '') }}'
+        }"
+        class="bg-white dark:bg-white/[0.03] p-4 rounded-2xl">
 
         <!-- Filter Tahun Semester & Periode -->
         <form method="GET" class="mb-4 flex flex-wrap gap-4">
-            <div>
-                <label for="tahun_semester_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Tahun Semester
-                </label>
-                {{-- <select name="tahun_semester_id" id="tahun_semester_id" onchange="this.form.submit()"
-                    class="mt-1 rounded border px-3 py-2">
-                    <option value="">Pilih Tahun Semester</option>
-                    @foreach ($tahunSemesterList as $ts)
-                        <option value="{{ $ts->id }}"
-                            {{ $ts->id == ($selectedTahunSemester?->id ?? '') ? 'selected' : '' }}>
-                            {{ $ts->tahun }} - {{ Str::ucfirst($ts->semester) }}
-                        </option>
-                    @endforeach
-                </select> --}}
-                <select name="tahun_semester_id" id="tahun_semester_id" onchange="this.form.submit()"
-                    class="mt-1 rounded border px-3 py-2">
-                    <option value="">Pilih Tahun Semester</option>
-                    @foreach ($tahunSemesterList as $ts)
-                        <option value="{{ $ts->id }}"
-                            {{ $ts->id == ($selectedTahunSemester?->id ?? '') ? 'selected' : '' }}>
-                            {{ $ts->tahunAjaran->tahun ?? '-' }} - {{ Str::ucfirst($ts->semester) }}
-                        </option>
-                    @endforeach
-                </select>
+            <div class="flex-1 min-w-0">
+                <x-form.select
+                    label="Tahun Semester"
+                    name="tahun_semester_id"
+                    :options="$tahunSemesterOptions"
+                    {{-- :options="$daftarTahunSemester->mapWithKeys(
+                    fn($ts) => [
+                        $ts->id => ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester),
+                    ],
+                )" --}}
+                    :selected="$tahunSemesterId"
+                    placeholder="Pilih Tahun Semester"
+                    searchable
+                    required
+                    onchange="this.form.submit()" />
             </div>
-            {{-- <div>
-                <label for="periode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Periode
-                </label>
-                <select name="periode" id="periode" onchange="this.form.submit()"
-                    class="mt-1 rounded border px-3 py-2">
-                    <option value="tengah" {{ $periode == 'tengah' ? 'selected' : '' }}>Tengah Semester</option>
-                    <option value="akhir" {{ $periode == 'akhir' ? 'selected' : '' }}>Akhir Semester</option>
-                </select>
-            </div> --}}
         </form>
 
-        <!-- Tab Kelas -->
-        {{-- <div class="border-b border-gray-200 dark:border-gray-800">
-            @foreach ($kelasList as $kls)
-                <button type="button" @click="activeKelas = '{{ $kls->id }}'"
-                    :class="activeKelas === '{{ $kls->id }}' ? 'bg-blue-600 text-white border-blue-600' :
-                        'bg-gray-100 text-gray-700 border-gray-300'"
-                    class="px-4 py-2 rounded-t-md border font-semibold focus:outline-none transition">
-                    Kelas {{ $kls->nama }}
-                </button>
-            @endforeach
-        </div> --}}
         <!-- Tab Kelas -->
         <div class="border-b border-gray-200 dark:border-gray-800 mb-4">
             <nav
                 class="-mb-px flex space-x-2 overflow-x-auto [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 dark:[&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1.5">
-                @foreach ($kelasList as $kls)
+                @foreach ($daftarKelas as $kls)
                     <button type="button"
                         x-bind:class="activeKelas === '{{ $kls->id }}'
-                            ?
-                            'inline-flex items-center border-b-2 px-2.5 py-2 text-sm font-medium transition-colors duration-200 ease-in-out text-brand-500 dark:text-brand-400 border-brand-500 dark:border-brand-400' :
-                            'inline-flex items-center border-b-2 px-2.5 py-2 text-sm font-medium transition-colors duration-200 ease-in-out bg-transparent text-gray-500 border-transparent hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+                            ? 'inline-flex items-center border-b-2 px-2.5 py-2 text-sm font-medium text-brand-500 border-brand-500'
+                            : 'inline-flex items-center border-b-2 px-2.5 py-2 text-sm font-medium text-gray-500 border-transparent hover:text-gray-700'"
                         @click="activeKelas = '{{ $kls->id }}'">
                         Kelas {{ $kls->nama }}
                     </button>
@@ -88,9 +59,9 @@
                 @csrf
                 <input type="hidden" name="kelas_id" x-bind:value="activeKelas">
                 <input type="hidden" name="tahun_semester_id" value="{{ $selectedTahunSemester->id }}">
-                <input type="hidden" name="periode" value="akhir">
+                <input type="hidden" name="periode" value="{{ $periode }}">
 
-                @foreach ($kelasList as $kls)
+                @foreach ($daftarKelas as $kls)
                     <div x-show="activeKelas === '{{ $kls->id }}'" x-cloak>
                         <div class="overflow-x-auto">
                             <table class="w-full table-auto text-sm border border-gray-300 dark:border-gray-600">
@@ -108,13 +79,13 @@
                                         @foreach ($rekapListByKelas[$kls->id] as $rekap)
                                             @php $absensi = $rekap->rekapAbsensi; @endphp
                                             <tr class="border-t border-gray-200 dark:border-gray-600">
-                                                <td class="px-3 py-2"> {{ $rekap->no_absen ?? $loop->iteration }}</td>
+                                                <td class="px-3 py-2">{{ $rekap->no_absen ?? $loop->iteration }}</td>
                                                 <td class="px-3 py-2">{{ $rekap->siswa->nama }}</td>
                                                 <td class="px-3 py-2 text-center">
                                                     <template x-if="editMode">
                                                         <input type="number" name="rekap[{{ $rekap->id }}][sakit]"
                                                             value="{{ $absensi->total_sakit ?? 0 }}"
-                                                            class="w-16 border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-md text-center border rounded" />
+                                                            class="w-16 border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-md text-center border" />
                                                     </template>
                                                     <template x-if="!editMode">
                                                         <span>{{ $absensi->total_sakit ?? 0 }}</span>
@@ -124,7 +95,7 @@
                                                     <template x-if="editMode">
                                                         <input type="number" name="rekap[{{ $rekap->id }}][izin]"
                                                             value="{{ $absensi->total_izin ?? 0 }}"
-                                                            class="w-16 border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-md text-center border rounded" />
+                                                            class="w-16 border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-md text-center border" />
                                                     </template>
                                                     <template x-if="!editMode">
                                                         <span>{{ $absensi->total_izin ?? 0 }}</span>
@@ -134,7 +105,7 @@
                                                     <template x-if="editMode">
                                                         <input type="number" name="rekap[{{ $rekap->id }}][alfa]"
                                                             value="{{ $absensi->total_alfa ?? 0 }}"
-                                                            class="w-16 border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-md text-center border rounded" />
+                                                            class="w-16 border-gray-300 dark:bg-gray-800 dark:border-gray-600 rounded-md text-center border" />
                                                     </template>
                                                     <template x-if="!editMode">
                                                         <span>{{ $absensi->total_alfa ?? 0 }}</span>
@@ -156,7 +127,6 @@
                 @endforeach
 
                 <div class="flex justify-end mt-6" x-show="editMode">
-                    {{-- Tombol Submit --}}
                     <button type="submit"
                         class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
                         Simpan

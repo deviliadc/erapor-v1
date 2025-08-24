@@ -1,4 +1,5 @@
 @php
+$isGuru = Auth::user()->hasRole('guru');
 $filters = [
     [
         'name' => 'tahun_ajaran_filter',
@@ -33,7 +34,7 @@ $filters = [
         {{-- Toolbar Table --}}
         <x-table.toolbar
             :filters="$filters"
-            :enable-add-button="true"
+            :enable-add-button="!$isGuru"
             :enable-import="false"
             :enable-export="false"
             :enable-search="true"
@@ -67,11 +68,11 @@ $filters = [
             :total-count="$totalCount"
             row-view="kelas.partials.row"
             :tahunAjaranId="$tahunAjaranId"
-    :tahunAjaranAktif="$tahunAjaranAktif"
+            :tahunAjaranAktif="$tahunAjaranAktif"
             :selectable="false"
             :actions="[
-            'edit' => true,
-            'delete' => true,
+            'edit' => !$isGuru,
+            'delete' => !$isGuru,
             // 'editRoute' => role_route('kelas.edit'),
         ]"
         :use-modal-edit="true"/>

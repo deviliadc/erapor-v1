@@ -1,24 +1,84 @@
 {{-- filepath: d:\DEVI\DRAFT\erapor-v1\resources\views\rapor\uas.blade.php --}}
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Laporan Hasil Belajar Semester</title>
     <style>
-        body { font-family: "Times New Roman", Times, serif; font-size: 12px; margin: 30px; }
-        h2 { text-align: center; text-transform: uppercase; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        td, th { padding: 4px; vertical-align: top; }
-        .biodata td { border: none; }
-        .nilai th, .nilai td { border: 1px solid #000; padding: 6px; font-size: 11px; }
-        .nilai th { background: #f2f2f2; text-align: center; }
-        .ekstra th, .ekstra td { border: 1px solid #000; padding: 6px; font-size: 11px; }
-        .ekstra th { background: #f2f2f2; text-align: center; }
-        .absensi td, .absensi th { border: 1px solid #000; padding: 6px; font-size: 11px; }
-        .ttd { width: 100%; margin-top: 40px; font-size: 12px; }
-        .ttd td { text-align: center; vertical-align: bottom; height: 80px; }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12px;
+            margin: 30px;
+        }
+
+        h2 {
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        td,
+        th {
+            padding: 4px;
+            vertical-align: top;
+        }
+
+        .biodata td {
+            border: none;
+        }
+
+        .nilai th,
+        .nilai td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 11px;
+        }
+
+        .nilai th {
+            background: #f2f2f2;
+            text-align: center;
+        }
+
+        .ekstra th,
+        .ekstra td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 11px;
+        }
+
+        .ekstra th {
+            background: #f2f2f2;
+            text-align: center;
+        }
+
+        .absensi td,
+        .absensi th {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 11px;
+        }
+
+        .ttd {
+            width: 100%;
+            margin-top: 40px;
+            font-size: 12px;
+        }
+
+        .ttd td {
+            text-align: center;
+            vertical-align: bottom;
+            height: 80px;
+        }
     </style>
 </head>
+
 <body onload="window.print()">
 
     <h2>LAPORAN HASIL BELAJAR SEMESTER</h2>
@@ -57,9 +117,9 @@
     </table>
 
     @php
-    $nilaiMapelById = $nilaiMapelById ?? [];
-    $kategoriSebelumnya = null;
-@endphp
+        $nilaiMapelById = $nilaiMapelById ?? [];
+        $kategoriSebelumnya = null;
+    @endphp
     <table class="nilai">
         <tr>
             <th>No</th>
@@ -67,10 +127,9 @@
             <th>Nilai Akhir</th>
             <th>Capaian Kompetensi</th>
         </tr>
-        @foreach ($mapelList as $i => $mapel)
+       @foreach ($mapelList as $i => $mapel)
         @php
             $nilai = $nilaiMapelById[$mapel->id] ?? null;
-            // Baris batas Muatan Lokal
             $isBatasMuatanLokal = $kategoriSebelumnya !== 'Muatan Lokal' && $mapel->kategori === 'Muatan Lokal';
             $kategoriSebelumnya = $mapel->kategori;
         @endphp
@@ -84,18 +143,20 @@
             </tr>
         @endif
 
+        {{-- baris utama --}}
         <tr>
-            <td>{{ $mapel->kategori === 'Muatan Lokal' ? chr(96 + ($loop->iteration - $mapelList->where('kategori', '!=', 'Muatan Lokal')->count())) : $i + 1 }}</td>
-            <td>{{ $mapel->nama }}</td>
-            <td align="center">{{ $nilai?->nilai_akhir ?? '-' }}</td>
-            <td>
-                @if ($nilai)
-                    <div>{{ $nilai->deskripsi_tertinggi ?? '-' }}</div>
-                    <div>{{ $nilai->deskripsi_terendah ?? '-' }}</div>
-                @else
-                    -
-                @endif
+            <td rowspan="2">
+                {{ $mapel->kategori === 'Muatan Lokal'
+                    ? chr(96 + ($loop->iteration - $mapelList->where('kategori', '!=', 'Muatan Lokal')->count()))
+                    : $i + 1 }}
             </td>
+            <td rowspan="2">{{ $mapel->nama }}</td>
+            <td rowspan="2" align="center">{{ $nilai?->nilai_akhir ?? '-' }}</td>
+            <td> {{ $nilai?->deskripsi_tertinggi ?? '-' }}</td>
+        </tr>
+        {{-- baris kedua untuk deskripsi terendah --}}
+        <tr>
+            <td> {{ $nilai?->deskripsi_terendah ?? '-' }}</td>
         </tr>
     @endforeach
     </table>
@@ -107,7 +168,7 @@
             <th>Ekstrakurikuler</th>
             <th>Keterangan</th>
         </tr>
-        @foreach($ekstraList as $i => $ekstra)
+        @foreach ($ekstraList as $i => $ekstra)
             <tr>
                 <td>{{ $i + 1 }}</td>
                 <td>{{ $ekstra->nama }}</td>
@@ -137,7 +198,7 @@
             <td width="50%" style="text-align:center;">
                 Mengetahui,<br>Orang Tua/Wali
                 <br><br><br><br>
-                ...............................
+                {{ $siswa->nama_ayah ?? $siswa->nama_ibu ?? $siswa->nama_wali ?? '-' }}<br>
             </td>
             <td width="50%" style="text-align:center;">
                 {{ $pengaturan->tempat ?? ($sekolah->kabupaten ?? '-') }},
@@ -156,4 +217,5 @@
         </tr>
     </table>
 </body>
+
 </html>

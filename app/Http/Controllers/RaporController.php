@@ -170,18 +170,24 @@ class RaporController extends Controller
 
         // Ambil kelas_siswa_id aktif untuk semester ini
         $kelasSiswaAktif = $siswa->kelasSiswa()
-            ->where('tahun_ajaran_id', $kelas?->tahun_ajaran_id)
+            ->where('kelas_id', $kelas?->id)
+            ->where('tahun_ajaran_id', $tahunSemester?->tahun_ajaran_id)
             ->first();
 
         // Ambil semua mapel di kelas, urutkan sesuai urutan di tabel mapel
         $mapelList = $kelas?->mapel->sortBy('urutan')->values() ?? collect();
 
         // Ambil nilai mapel periode tengah (UTS) untuk semester ini
-        $nilaiMapel = \App\Models\NilaiMapel::with('mapel')
-            ->where('kelas_siswa_id', $kelasSiswaAktif?->id)
+        $nilaiMapel = \App\Models\NilaiMapel::where('kelas_siswa_id', $kelasSiswaAktif?->id)
             ->where('tahun_semester_id', $tahunSemesterId)
-            ->where('periode', 'tengah') // hanya nilai UTS
+            ->where('periode', 'tengah')
             ->get();
+
+        $nilaiMapelById = [];
+        foreach ($nilaiMapel as $nilai) {
+            $nilaiMapelById[$nilai->mapel_id] = $nilai;
+        }
+
 
         return view('rapor.uts', compact(
             'siswa',
@@ -194,7 +200,8 @@ class RaporController extends Controller
             'fase',
             'semester',
             'tahunAjaran',
-            'mapelList'
+            'mapelList',
+            'nilaiMapelById',  // <- pakai ini
         ));
     }
 
@@ -216,7 +223,8 @@ class RaporController extends Controller
 
         // Ambil kelas_siswa_id aktif untuk semester ini
         $kelasSiswaAktif = $siswa->kelasSiswa()
-            ->where('tahun_ajaran_id', $kelas?->tahun_ajaran_id)
+            ->where('kelas_id', $kelas?->id)
+            ->where('tahun_ajaran_id', $tahunSemester?->tahun_ajaran_id)
             ->first();
 
         // Ambil semua mapel di kelas, urutkan sesuai urutan di tabel mapel
@@ -245,19 +253,40 @@ class RaporController extends Controller
                 ];
             });
 
+
         // Ambil data absensi
+        // default absensi kosong
         $absensi = [
-            'sakit' => \App\Models\PresensiDetail::where('kelas_siswa_id', $kelasSiswaAktif?->id)
-                ->whereHas('presensiHarian', fn($q) => $q->where('tahun_semester_id', request('tahun_semester_id')))
-                ->where('status', 'Sakit')->count(),
-            'izin' => \App\Models\PresensiDetail::where('kelas_siswa_id', $kelasSiswaAktif?->id)
-                ->whereHas('presensiHarian', fn($q) => $q->where('tahun_semester_id', request('tahun_semester_id')))
-                ->where('status', 'Izin')->count(),
-            'alfa' => \App\Models\PresensiDetail::where('kelas_siswa_id', $kelasSiswaAktif?->id)
-                ->whereHas('presensiHarian', fn($q) => $q->where('tahun_semester_id', request('tahun_semester_id')))
-                ->where('status', 'Alpha')->count(),
+            'sakit' => 0,
+            'izin'  => 0,
+            'alfa'  => 0,
         ];
 
+        if ($kelasSiswaAktif) {
+            $presensiDetail = \App\Models\PresensiDetail::where('kelas_siswa_id', $kelasSiswaAktif->id)
+                ->whereHas('presensiHarian', fn($q) => $q->where('tahun_semester_id', $tahunSemesterId)
+                    ->where('periode', 'akhir'))
+                ->get();
+
+            if ($presensiDetail->isNotEmpty()) {
+                $absensi = [
+                    'sakit' => $presensiDetail->where('status', 'Sakit')->count(),
+                    'izin'  => $presensiDetail->where('status', 'Izin')->count(),
+                    'alfa'  => $presensiDetail->where('status', 'Alpha')->count(),
+                ];
+            } else {
+                $rekap = \App\Models\RekapAbsensi::where('kelas_siswa_id', $kelasSiswaAktif->id)
+                    ->where('tahun_semester_id', $tahunSemesterId)
+                    ->where('periode', 'akhir') 
+                    ->first();
+
+                $absensi = [
+                    'sakit' => $rekap?->total_sakit ?? 0,
+                    'izin'  => $rekap?->total_izin ?? 0,
+                    'alfa'  => $rekap?->total_alfa ?? 0,
+                ];
+            }
+        }
 
 
         $view = 'rapor.uas';

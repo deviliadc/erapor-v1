@@ -97,9 +97,9 @@
 
     {{-- filepath: d:\DEVI\DRAFT\erapor-v1\resources\views\rapor\uts.blade.php --}}
     @php
-    $nilaiMapelById = $nilaiMapelById ?? [];
-    $kategoriSebelumnya = null;
-@endphp
+        $nilaiMapelById = $nilaiMapelById ?? [];
+        $kategoriSebelumnya = null;
+    @endphp
     <table class="nilai">
         <tr>
             <th>No</th>
@@ -108,36 +108,37 @@
             <th>Capaian Kompetensi</th>
         </tr>
         @foreach ($mapelList as $i => $mapel)
-        @php
-            $nilai = $nilaiMapelById[$mapel->id] ?? null;
-            // Baris batas Muatan Lokal
-            $isBatasMuatanLokal = $kategoriSebelumnya !== 'Muatan Lokal' && $mapel->kategori === 'Muatan Lokal';
-            $kategoriSebelumnya = $mapel->kategori;
-        @endphp
+            @php
+                $nilai = $nilaiMapelById[$mapel->id] ?? null;
+                $isBatasMuatanLokal = $kategoriSebelumnya !== 'Muatan Lokal' && $mapel->kategori === 'Muatan Lokal';
+                $kategoriSebelumnya = $mapel->kategori;
+            @endphp
 
-        {{-- Baris batas Muatan Lokal --}}
-        @if($isBatasMuatanLokal)
+            {{-- Baris batas Muatan Lokal --}}
+            @if ($isBatasMuatanLokal)
+                <tr>
+                    <td colspan="4" style="border-top:2px solid #000; background:#f2f2f2; font-weight:bold;">
+                        {{ $i + 1 }} Muatan Lokal
+                    </td>
+                </tr>
+            @endif
+
+            {{-- baris utama --}}
             <tr>
-                <td colspan="4" style="border-top:2px solid #000; background:#f2f2f2; font-weight:bold;">
-                    {{ $i + 1 }} Muatan Lokal
+                <td rowspan="2">
+                    {{ $mapel->kategori === 'Muatan Lokal'
+                        ? chr(96 + ($loop->iteration - $mapelList->where('kategori', '!=', 'Muatan Lokal')->count()))
+                        : $i + 1 }}
                 </td>
+                <td rowspan="2">{{ $mapel->nama }}</td>
+                <td rowspan="2" align="center">{{ $nilai?->nilai_akhir ?? '-' }}</td>
+                <td>{{ $nilai?->deskripsi_tertinggi ?? '-' }}</td>
             </tr>
-        @endif
-
-        <tr>
-            <td>{{ $mapel->kategori === 'Muatan Lokal' ? chr(96 + ($loop->iteration - $mapelList->where('kategori', '!=', 'Muatan Lokal')->count())) : $i + 1 }}</td>
-            <td>{{ $mapel->nama }}</td>
-            <td align="center">{{ $nilai?->nilai_akhir ?? '-' }}</td>
-            <td>
-                @if ($nilai)
-                    <div>{{ $nilai->deskripsi_tertinggi ?? '-' }}</div>
-                    <div>{{ $nilai->deskripsi_terendah ?? '-' }}</div>
-                @else
-                    -
-                @endif
-            </td>
-        </tr>
-    @endforeach
+            {{-- baris kedua untuk deskripsi terendah --}}
+            <tr>
+                <td>{{ $nilai?->deskripsi_terendah ?? '-' }}</td>
+            </tr>
+        @endforeach
     </table>
 
     <table class="ttd" width="100%" style="margin-top:32px;">
@@ -145,16 +146,16 @@
             <td width="50%" style="text-align:center;">
                 Mengetahui,<br>Orang Tua
                 <br><br><br><br>
-                ............
+                {{ $siswa->nama_ayah ?? $siswa->nama_ibu ?? $siswa->nama_wali ?? '-' }}<br>
             </td>
             <td width="50%" style="text-align:center;">
                 {{-- {{ $pengaturan->tempat ?? '-' }}, --}}
                 {{-- {{ $pengaturan->tanggal_cetak
                     ? \Carbon\Carbon::parse($pengaturan->tanggal_cetak)->translatedFormat('d F Y')
                     : now()->translatedFormat('d F Y') }}<br> --}}
-                    {{ $pengaturan->tempat ?? ($sekolah->kabupaten ?? '-') }}
-                    {{ \Carbon\Carbon::parse($pengaturan->tanggal_cetak ?? now())->translatedFormat('d F Y') }}
-                    <br>
+                {{ $pengaturan->tempat ?? ($sekolah->kabupaten ?? '-') }}
+                {{ \Carbon\Carbon::parse($pengaturan->tanggal_cetak ?? now())->translatedFormat('d F Y') }}
+                <br>
                 Wali Kelas<br><br><br><br>
                 <span class="nama">{{ $waliKelas->nama ?? '-' }}</span><br>
                 NIP: {{ $waliKelas->nip ?? '-' }}

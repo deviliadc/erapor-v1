@@ -103,73 +103,81 @@ class TahunAjaranController extends Controller
      * Display the specified resource.
      */
 
-    public function show(string $id)
-    {
-        // Ambil tahun ajaran
-        $tahunAjaran = TahunAjaran::findOrFail($id);
-        $kelasList = Kelas::all();
+  public function show(string $id)
+{
+    // Ambil tahun ajaran
+    $tahunAjaran = TahunAjaran::findOrFail($id);
+    $kelasList = Kelas::all();
 
-        // Ambil semua kelas_siswa pada tahun ajaran ini dengan paging
-        $perPage = request()->input('per_page', 10);
-        $kelasSiswaQuery = KelasSiswa::with('siswa', 'kelas')
+    // Ambil semua kelas_siswa pada tahun ajaran ini dengan paging
+    $perPage = request()->input('per_page', 10);
+    $kelasSiswaQuery = KelasSiswa::with('siswa', 'kelas')
+        ->where('tahun_ajaran_id', $tahunAjaran->id)
+        ->where('status', 'Aktif');
+
+    $totalCount = $kelasSiswaQuery->count();
+    $kelasSiswaPaginator = $kelasSiswaQuery->paginate($perPage)->withQueryString();
+
+    // ✅ Hitung jumlah siswa aktif di tahun ajaran ini (bukan dari paginator)
+    $siswaAktifQuery = KelasSiswa::with('siswa')
+        ->where('tahun_ajaran_id', $tahunAjaran->id)
+        ->where('status', 'Aktif');
+
+    $siswa_count = $siswaAktifQuery->count();
+    $l_count = (clone $siswaAktifQuery)->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Laki-laki'))->count();
+    $p_count = (clone $siswaAktifQuery)->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Perempuan'))->count();
+
+    // Data chart per kelas
+    $kelasGenderChart = [
+        'labels' => [],
+        'laki' => [],
+        'perempuan' => [],
+    ];
+    foreach ($kelasList as $kelas) {
+        $laki = KelasSiswa::where('kelas_id', $kelas->id)
             ->where('tahun_ajaran_id', $tahunAjaran->id)
-            ->where('status', 'Aktif');
-        $totalCount = $kelasSiswaQuery->count();
-        $kelasSiswaPaginator = $kelasSiswaQuery->paginate($perPage)->withQueryString();
+            ->where('status', 'Aktif')
+            ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Laki-laki'))->count();
+        $perempuan = KelasSiswa::where('kelas_id', $kelas->id)
+            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->where('status', 'Aktif')
+            ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Perempuan'))->count();
 
-        // Hitung jumlah siswa, laki-laki, perempuan dari paginator
-        $siswa_count = $kelasSiswaPaginator->total();
-        $l_count = $kelasSiswaPaginator->getCollection()->where('siswa.jenis_kelamin', 'Laki-laki')->count();
-        $p_count = $kelasSiswaPaginator->getCollection()->where('siswa.jenis_kelamin', 'Perempuan')->count();
-
-        // Data chart per kelas
-        $kelasGenderChart = [
-            'labels' => [],
-            'laki' => [],
-            'perempuan' => [],
-        ];
-        foreach ($kelasList as $kelas) {
-            $laki = KelasSiswa::where('kelas_id', $kelas->id)
-                ->where('tahun_ajaran_id', $tahunAjaran->id)
-                ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Laki-laki'))->count();
-            $perempuan = KelasSiswa::where('kelas_id', $kelas->id)
-                ->where('tahun_ajaran_id', $tahunAjaran->id)
-                ->whereHas('siswa', fn($q) => $q->where('jenis_kelamin', 'Perempuan'))->count();
-            $kelasGenderChart['labels'][] = $kelas->nama;
-            $kelasGenderChart['laki'][] = $laki;
-            $kelasGenderChart['perempuan'][] = $perempuan;
-        }
-
-        $tahun_ajaran_detail = $kelasSiswaPaginator->through(function ($item) {
-            return [
-                'id' => $item->id,
-                'nama' => $item->siswa->nama ?? '-',
-                'kelas' => $item->kelas->nama ?? '-',
-                'nipd' => $item->siswa->nipd ?? '-',
-                'nisn' => $item->siswa->nisn ?? '-',
-                'jenis_kelamin' => $item->siswa->jenis_kelamin ?? '-',
-            ];
-        });
-
-        $breadcrumbs = [
-            ['label' => 'Manage Tahun Ajaran & Semester', 'url' => role_route('tahun-semester.index')],
-            ['label' => $tahunAjaran->tahun],
-        ];
-
-        $title = 'Detail Tahun Ajaran';
-
-        return view('tahun-ajaran.show', compact(
-            'tahunAjaran',
-            'tahun_ajaran_detail',
-            'totalCount',
-            'breadcrumbs',
-            'title',
-            'siswa_count',
-            'l_count',
-            'p_count',
-            'kelasGenderChart',
-        ));
+        $kelasGenderChart['labels'][] = $kelas->nama;
+        $kelasGenderChart['laki'][] = $laki;
+        $kelasGenderChart['perempuan'][] = $perempuan;
     }
+
+    $tahun_ajaran_detail = $kelasSiswaPaginator->through(function ($item) {
+        return [
+            'id' => $item->id,
+            'nama' => $item->siswa->nama ?? '-',
+            'kelas' => $item->kelas->nama ?? '-',
+            'nipd' => $item->siswa->nipd ?? '-',
+            'nisn' => $item->siswa->nisn ?? '-',
+            'jenis_kelamin' => $item->siswa->jenis_kelamin ?? '-',
+        ];
+    });
+
+    $breadcrumbs = [
+        ['label' => 'Manage Tahun Ajaran & Semester', 'url' => role_route('tahun-semester.index')],
+        ['label' => $tahunAjaran->tahun],
+    ];
+
+    $title = 'Detail Tahun Ajaran';
+
+    return view('tahun-ajaran.show', compact(
+        'tahunAjaran',
+        'tahun_ajaran_detail',
+        'totalCount',
+        'breadcrumbs',
+        'title',
+        'siswa_count',
+        'l_count',
+        'p_count',
+        'kelasGenderChart',
+    ));
+}
 
     // public function show(string $id)
     // {
