@@ -66,7 +66,7 @@
                 'dimensi' => ['label' => 'Dimensi', 'sortable' => true],
                 'elemen' => ['label' => 'Elemen', 'sortable' => true],
                 'sub_elemen' => ['label' => 'Sub Elemen', 'sortable' => true],
-                'fase' => ['label' => 'Capaian Fase', 'sortable' => true],
+                'fase' => ['label' => 'Capaian', 'sortable' => true],
                 // 'capaian' => ['label' => 'Capaian', 'sortable' => true],
             ]" :data="$proyek_detail" :total-count="$totalCount" row-view="p5-proyek.partials.row-detail"
                 :actions="[

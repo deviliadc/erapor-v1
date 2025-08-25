@@ -230,7 +230,7 @@ class KelasSiswaController extends Controller
 
         $title = 'Siswa Kelas ' . $kelas->nama;
         $breadcrumbs = [
-            ['label' => 'Manage Kelas', 'url' => role_route('kelas-siswa.index')],
+            ['label' => 'Kelas Siswa', 'url' => role_route('kelas-siswa.index')],
             ['label' => 'Siswa'],
         ];
 

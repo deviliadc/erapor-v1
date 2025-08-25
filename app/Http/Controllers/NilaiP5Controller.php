@@ -21,7 +21,7 @@ class NilaiP5Controller extends Controller
     /**
      * Display a listing of the resource.
      */
-    
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -95,7 +95,7 @@ class NilaiP5Controller extends Controller
 
             $dimensiList = P5Dimensi::whereIn('id', $dimensiIds)->get();
             $elemenList = P5Elemen::whereIn('id', $elemenIds)->get();
-            $subelemenList = P5SubElemen::with('capaianFase')->whereIn('id', $subelemenIds)->get();
+            $subelemenList = P5SubElemen::with('capaian')->whereIn('id', $subelemenIds)->get();
 
             foreach ($dimensiList as $dimensi) {
                 $elemenByDimensi[$dimensi->id] = $elemenList->where('p5_dimensi_id', $dimensi->id)->values();
@@ -260,14 +260,14 @@ class NilaiP5Controller extends Controller
 
                 // Simpan detail per subelemen
                 foreach ($predikatFiltered as $subelemenId => $predikat) {
-                    $subelemen = P5SubElemen::with(['elemen', 'capaianFase'])->find($subelemenId);
+                    $subelemen = P5SubElemen::with(['elemen', 'capaian'])->find($subelemenId);
                     if (!$subelemen || !$subelemen->elemen) continue;
 
                     $dimensiId = $subelemen->elemen->p5_dimensi_id;
-                    // $capaian = $subelemen->capaianFase->firstWhere('fase_id', $faseId)?->capaian ?? '';
+                    // $capaian = $subelemen->capaian->firstWhere('fase_id', $faseId)?->capaian ?? '';
                     // $deskripsi = trim($subelemen->nama_sub_elemen . ' - ' . $capaian);
 $faseIdSiswa = $kelasSiswa->kelas->fase_id ?? $faseId;
-    $capaian = $subelemen->capaianFase->firstWhere('fase_id', $faseIdSiswa)?->capaian ?? '';
+    $capaian = $subelemen->capaian->firstWhere('fase_id', $faseIdSiswa)?->capaian ?? '';
     $deskripsi = trim($subelemen->nama_sub_elemen . ' - ' . $capaian);
 
                     NilaiP5Detail::updateOrCreate(

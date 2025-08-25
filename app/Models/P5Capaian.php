@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class P5CapaianFase extends Model
+class P5Capaian extends Model
 {
-    protected $table = 'p5_capaian_fase';
+    protected $table = 'p5_capaian';
     protected $fillable = [
         'fase_id',
         'p5_sub_elemen_id',

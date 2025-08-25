@@ -148,14 +148,47 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $siswa = $user->siswa;
-        // $waliMurid = $siswa->waliMurid;
         $breadcrumbs = [['label' => 'Dashboard']];
         $title = 'Dashboard Siswa';
+
+        // Ambil kelas siswa aktif
+        $kelasSiswaAktif = $siswa->kelasSiswa()->where('status', 'Aktif')->latest()->first();
+        $tahunSemesterAktif = null;
+        $nilaiMapel = collect();
+
+        if ($kelasSiswaAktif) {
+            // Ambil tahun semester aktif dari kelas siswa
+            $tahunSemesterAktif = \App\Models\TahunSemester::where('tahun_ajaran_id', $kelasSiswaAktif->tahun_ajaran_id)
+                ->where('is_active', true)->first();
+
+            // Ambil semua mapel di kelas
+            $mapelList = $kelasSiswaAktif->kelas->mapel ?? collect();
+
+            // Ambil nilai mapel akhir semester
+            $nilaiMapel = \App\Models\NilaiMapel::where('kelas_siswa_id', $kelasSiswaAktif->id)
+                ->where('tahun_semester_id', $tahunSemesterAktif?->id)
+                ->where('periode', 'akhir')
+                ->get();
+
+            // Siapkan data chart
+            $chartLabels = [];
+            $chartData = [];
+            foreach ($mapelList as $mapel) {
+                $chartLabels[] = $mapel->nama;
+                $nilai = $nilaiMapel->firstWhere('mapel_id', $mapel->id);
+                $chartData[] = $nilai?->nilai_akhir ?? 0;
+            }
+        } else {
+            $chartLabels = [];
+            $chartData = [];
+        }
+
         return view('dashboard.siswa', compact(
             'breadcrumbs',
             'title',
             'siswa',
-            // 'waliMurid'
+            'chartLabels',
+            'chartData'
         ));
     }
 

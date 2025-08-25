@@ -56,7 +56,7 @@
 
         {{-- Chart Nilai Siswa --}}
         <div class="bg-white rounded-xl shadow p-6">
-            <h2 class="text-lg font-semibold mb-4 text-brand-500">Grafik Nilai Siswa</h2>
+            <h2 class="text-lg font-semibold mb-4 text-brand-500">Nilai Siswa</h2>
             <canvas id="chartNilai" height="100"></canvas>
         </div>
     </div>
@@ -65,8 +65,8 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             // Contoh data, ganti dengan data dari controller
-            const labels = {!! json_encode($chartLabels ?? ['Matematika', 'IPA', 'IPS', 'B. Indonesia', 'B. Inggris']) !!};
-            const dataNilai = {!! json_encode($chartData ?? [85, 90, 78, 88, 92]) !!};
+            const labels = {!! json_encode($chartLabels ?? []) !!};
+            const dataNilai = {!! json_encode($chartData ?? []) !!};
 
             const ctx = document.getElementById('chartNilai').getContext('2d');
             new Chart(ctx, {

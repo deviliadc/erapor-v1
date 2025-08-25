@@ -17,8 +17,8 @@ class Fase extends Model
         return $this->hasMany(Kelas::class, 'fase_id');
     }
 
-    public function capaianFase()
+    public function capaian()
     {
-        return $this->hasMany(P5CapaianFase::class, 'fase_id');
+        return $this->hasMany(P5Capaian::class, 'fase_id');
     }
 }

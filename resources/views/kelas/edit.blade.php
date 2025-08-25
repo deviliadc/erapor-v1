@@ -23,7 +23,7 @@
                 required />
 
             {{-- Wali Kelas --}}
-            <x-form.select
+            {{-- <x-form.select
                 name="wali_kelas_id"
                 label="Wali Kelas"
                 :options="$guru"
@@ -31,7 +31,7 @@
                 :selected="$item['wali_kelas_id']"
                 :searchable="true"
                 required
-            />
+            /> --}}
 
             <div class="flex justify-end">
                 <button type="submit"

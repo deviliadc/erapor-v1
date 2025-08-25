@@ -18,9 +18,9 @@ class P5SubElemen extends Model
         return $this->belongsTo(P5Elemen::class, 'p5_elemen_id');
     }
 
-    public function capaianFase()
+    public function capaian()
     {
-        return $this->hasMany(P5CapaianFase::class, 'p5_sub_elemen_id');
+        return $this->hasMany(P5Capaian::class, 'p5_sub_elemen_id');
     }
 
     public function proyekDetail()

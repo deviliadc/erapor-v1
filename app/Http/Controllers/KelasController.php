@@ -340,7 +340,7 @@ class KelasController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:50|unique:kelas,nama,' . $id,
-            'wali_kelas_id' => 'required|exists:guru,id',
+            // 'wali_kelas_id' => 'required|exists:guru,id',
             'fase_id' => 'required|exists:fase,id',
         ]);
 
@@ -348,7 +348,7 @@ class KelasController extends Controller
 
         $kelas->update([
             'nama' => $request->nama,
-            'guru_id' => $request->wali_kelas_id,
+            // 'guru_id' => $request->wali_kelas_id,
             'fase_id' => $request->fase_id,
         ]);
 
@@ -358,18 +358,18 @@ class KelasController extends Controller
         $tahunAktif = TahunAjaran::where('is_active', true)->first();
         $tahunAjaranId = $request->input('tahun_ajaran_filter', $tahunAktif ? $tahunAktif->id : null);
 
-        GuruKelas::updateOrCreate(
-            [
-                'kelas_id' => $kelas->id,
-                // 'tahun_semester_id' => $tahunSemesterId,
-                'tahun_ajaran_id' => $tahunAjaranId,
-                'peran' => 'wali',
-            ],
-            [
-                'guru_id' => $request->wali_kelas_id,
-                'mapel_id' => null,
-            ]
-        );
+        // GuruKelas::updateOrCreate(
+        //     [
+        //         'kelas_id' => $kelas->id,
+        //         // 'tahun_semester_id' => $tahunSemesterId,
+        //         'tahun_ajaran_id' => $tahunAjaranId,
+        //         'peran' => 'wali',
+        //     ],
+        //     [
+        //         'guru_id' => $request->wali_kelas_id,
+        //         'mapel_id' => null,
+        //     ]
+        // );
 
         // return redirect()->to(role_route('kelas.index', ['tahun_semester_filter' => $tahunSemesterId]))
         return redirect()->to(role_route('kelas.index', ['tahun_ajaran_filter' => $tahunAjaranId]))

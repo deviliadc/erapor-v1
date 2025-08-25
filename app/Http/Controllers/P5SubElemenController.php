@@ -102,8 +102,8 @@ class P5SubElemenController extends Controller
         try {
             $p5_subelemen = P5SubElemen::findOrFail($id);
 
-            // Cek apakah masih digunakan di tabel p5_capaian_fase
-            if ($p5_subelemen->capaianFase()->exists()) {
+            // Cek apakah masih digunakan di tabel p5_capaian
+            if ($p5_subelemen->capaian()->exists()) {
                 return redirect()->to(role_route('p5.index', ['tab' => $request->tab ?? 'subelemen']))
                     ->with('error', 'Sub Elemen tidak dapat dihapus karena masih digunakan pada capaian fase.');
             }

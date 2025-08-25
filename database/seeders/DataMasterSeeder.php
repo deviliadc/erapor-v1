@@ -640,7 +640,7 @@ class DataMasterSeeder extends Seeder
             [3, 42, 'Berupaya mencari solusi alternatif saat pendekatan yang diambil tidak berhasil berdasarkan identifikasi terhadap situasi.'],
         ];
         foreach ($capaian as [$faseId, $subElemenId, $nama]) {
-            DB::table('p5_capaian_fase')->insert([
+            DB::table('p5_capaian')->insert([
                 'fase_id' => $faseId,
                 'p5_sub_elemen_id' => $subElemenId,
                 'capaian' => $nama,

@@ -100,7 +100,7 @@
                                                     @php
                                                         $faseIdKelas = $faseIdByKelas[$kls->id] ?? $faseId;
                                                         $capaian =
-                                                            $subelemen->capaianFase->firstWhere('fase_id', $faseIdKelas)
+                                                            $subelemen->capaian->firstWhere('fase_id', $faseIdKelas)
                                                                 ?->capaian ?? '-';
                                                     @endphp
                                                     <th

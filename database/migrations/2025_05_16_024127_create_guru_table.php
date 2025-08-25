@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('no_hp')->nullable();
             // $table->text('alamat')->nullable();
             // $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan']);
-            $table->enum('status', ['Aktif', 'Pensiun', 'Mutasi', 'Resign'])->default('Aktif');
+            // $table->enum('status', ['Aktif', 'Pensiun', 'Mutasi', 'Resign'])->default('Aktif');
+            $table->enum('status', ['Aktif', 'Tidak Aktif'])->default('Aktif');
 
             $table->timestamps();
         });

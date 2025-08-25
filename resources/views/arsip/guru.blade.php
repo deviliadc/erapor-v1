@@ -16,8 +16,10 @@
         <x-table :columns="[
             'no' => ['label' => 'No', 'sortable' => false],
             'name' => ['label' => 'Nama', 'sortable' => true],
-            'nip' => ['label' => 'NIP', 'sortable' => true],
             'nuptk' => ['label' => 'NUPTK', 'sortable' => true],
+            'nip' => ['label' => 'NIP', 'sortable' => true],
+            'email' => ['label' => 'Email', 'sortable' => true],
+            'no_hp' => ['label' => 'No HP', 'sortable' => true],
             'status' => ['label' => 'Status', 'sortable' => true],
         ]"
         :data="$guru"

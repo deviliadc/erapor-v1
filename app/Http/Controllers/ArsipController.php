@@ -35,8 +35,8 @@ class ArsipController extends Controller
             ->leftJoin('kelas', 'kelas.id', '=', 'kelas_siswa.kelas_id')
             ->select('siswa.*', 'kelas.nama as kelas', 'kelas_siswa.status as status')
             ->where('kelas_siswa.status', '!=', 'Aktif');
-        
-            // Filter pencarian
+
+        // Filter pencarian
         if ($search) {
             $query->where('siswa.nama', 'like', "%{$search}%")
                 ->orWhere('siswa.nipd', 'like', "%{$search}%")
@@ -114,6 +114,8 @@ class ArsipController extends Controller
                 'nip' => $item->nip ?? '-',
                 'nuptk' => $item->nuptk ?? '-',
                 'status' => $item->status,
+                'email' => $item->user->email ?? '-',
+                'no_hp' => $item->no_hp ?? '-'
             ];
         });
 
@@ -125,7 +127,12 @@ class ArsipController extends Controller
 
     public function exportSiswa(Request $request)
     {
-        $data = Siswa::with(['kelasSiswa.kelas'])->get();
+        // $data = Siswa::with(['kelasSiswa.kelas'])->get();
+        $data = Siswa::with(['kelasSiswa.kelas'])
+            ->whereHas('kelasSiswa', function ($q) {
+                $q->where('status', '!=', 'Aktif');
+            })
+            ->get();
 
         $headings = [
             'Nama',
@@ -166,7 +173,8 @@ class ArsipController extends Controller
 
     public function exportGuru(Request $request)
     {
-        $data = Guru::all();
+        // $data = Guru::all();
+        $data = Guru::where('status', '!=', 'Aktif')->get();
 
         $headings = [
             'Nama',

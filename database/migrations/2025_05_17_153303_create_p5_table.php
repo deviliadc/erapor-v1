@@ -38,7 +38,7 @@ return new class extends Migration
             $table->foreignId('p5_elemen_id')->constrained('p5_elemen')->cascadeOnDelete();
             $table->string('nama_sub_elemen');
             // $table->text('deskripsi')->nullable();
-            // $table->text('capaian_fase')->nullable();
+            // $table->text('capaian')->nullable();
             $table->timestamps();
         });
 
@@ -55,7 +55,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('p5_capaian_fase', function (Blueprint $table) {
+        Schema::create('p5_capaian', function (Blueprint $table) {
             $table->id();
             $table->foreignId('fase_id')->constrained('fase')->cascadeOnDelete();
             $table->foreignId('p5_sub_elemen_id')->constrained('p5_sub_elemen')->cascadeOnDelete();
@@ -112,7 +112,7 @@ return new class extends Migration
         // Schema::dropIfExists('p5_proyek_sub_elemen');
         // Schema::dropIfExists('p5_proyek_elemen');
         // Schema::dropIfExists('p5_proyek_dimensi');
-        Schema::dropIfExists('p5_capaian_fase');
+        Schema::dropIfExists('p5_capaian');
         Schema::dropIfExists('p5_proyek');
         Schema::dropIfExists('p5_sub_elemen');
         Schema::dropIfExists('p5_elemen');

@@ -118,7 +118,7 @@ class P5ProyekController extends Controller
         // Ambil detail proyek dari relasi
         $proyek_detail = $paginator->through(function ($item) use ($faseList) {
             $faseData = collect($faseList)->map(function ($namaFase, $faseId) use ($item) {
-                $capaian = $item->subElemen->capaianFase
+                $capaian = $item->subElemen->capaian
                     ->where('fase_id', $faseId)
                     ->first();
                 return [

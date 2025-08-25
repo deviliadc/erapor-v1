@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Fase;
 use App\Models\Guru;
 use App\Models\Kelas;
-use App\Models\P5CapaianFase;
+use App\Models\P5Capaian;
 use App\Models\P5Dimensi;
 use App\Models\P5Elemen;
 use App\Models\P5Proyek;
@@ -191,7 +191,7 @@ class P5MasterController extends Controller
         $faseList = Fase::pluck('nama', 'id')->toArray();
         $subElemenList = P5SubElemen::pluck('nama_sub_elemen', 'id')->toArray();
         $searchCapaian = $request->input('search_capaian');
-        $capaianQuery = P5CapaianFase::with('fase', 'subElemen.elemen');
+        $capaianQuery = P5Capaian::with('fase', 'subElemen.elemen');
 
         if ($searchCapaian) {
             $capaianQuery->where('capaian', 'like', "%$searchCapaian%");
