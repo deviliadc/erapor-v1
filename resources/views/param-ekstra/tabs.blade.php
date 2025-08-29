@@ -14,6 +14,7 @@
     :enable-import="false"
     :enable-export="false"
     :enable-search="true"
+    searchName="search_parameter_ekstra"
     tabName="parameter"
     :route="role_route('ekstra.index')">
     <x-slot name="addButton">

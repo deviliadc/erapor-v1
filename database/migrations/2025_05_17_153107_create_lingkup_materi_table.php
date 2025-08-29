@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('bab_id')->nullable()->constrained('bab')->nullOnDelete();
             $table->string('nama');
             $table->enum('periode', ['tengah', 'akhir'])->default('tengah');
+            $table->enum('semester', ['ganjil', 'genap'])->default('ganjil');
             $table->timestamps();
         });
     }

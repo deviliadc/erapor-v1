@@ -602,44 +602,20 @@ class SiswaController extends Controller
         $tanggal = now()->format('Ymd_His');
         $filename = $request->input('filename', "data_siswa_{$tanggal}");
         $tahunAktif = TahunSemester::where('is_active', 1)->first();
-
-        // $data = Siswa::with(['kelas', 'waliMurid'])->get();
         $data = Siswa::all();
-        // data siswa Aktif pada tahun ajaran ini dengan status aktif
-        // $data = Siswa::where('status', 'Aktif')->get();
-        // Siswa::whereHas('kelasSiswa', function ($q) use ($tahunAktif) {
-        //     $q->where('tahun_semester_id', $tahunSemesterId);
-        // })
-        //     ->where('status', 'aktif')
-        //     ->get();
-
         $headings = [
-            'Nama',
-            'NIPD',
-            'NISN',
-            'Jenis Kelamin',
-            'Tempat Lahir',
-            'Tanggal Lahir',
-            'Pendidikan Sebelumnya',
-            'Agama',
-            'Kelas',
-            'Status',
-            'Alamat',
-            'No HP',
-            'Email',
-            'Nama Ayah',
-            'Pekerjaan Ayah',
-            'Nama Ibu',
-            'Pekerjaan Ibu',
-            'Nama Wali',
-            'Pekerjaan Wali',
-            'No HP Wali',
-            'Alamat Wali'
+            'Nama', 'NIPD', 'NISN',
+            'Jenis Kelamin', 'Tempat Lahir',
+            'Tanggal Lahir', 'Pendidikan Sebelumnya',
+            'Agama', 'Kelas',  'Status',
+            'Alamat', 'No HP', 'Email',
+            'Nama Ayah', 'Pekerjaan Ayah',
+            'Nama Ibu', 'Pekerjaan Ibu',
+            'Nama Wali', 'Pekerjaan Wali',
+            'No HP Wali', 'Alamat Wali'
         ];
         $enumInfo = [
-            '',
-            '',
-            '',
+            '', '', '',
             'Laki-laki/Perempuan',
             '',
             'yyyy-mm-dd',
@@ -647,16 +623,8 @@ class SiswaController extends Controller
             'Islam/Kristen/Katolik/Hindu/Buddha/Konghucu',
             '',
             'Aktif/Lulus/Keluar/Mutasi',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
+            '',  '',  '',  '', '',
+            '', '', '', '', '',
             '',
             ''
         ];
@@ -671,7 +639,6 @@ class SiswaController extends Controller
                     $kelasNama = $kelasSiswa->kelas->nama;
                 }
             }
-
             return [
                 $siswa->nama,
                 $siswa->nipd,
@@ -696,29 +663,6 @@ class SiswaController extends Controller
                 $siswa->alamat_wali ?? '-',
             ];
         })->toArray();
-
-        // if ($type === 'pdf') {
-        //     $pdf = Pdf::loadView('siswa.export-pdf', [
-        //         'headings' => $headings,
-        //         'rows' => $formatted,
-        //     ]);
-        //     return $pdf->download("{$filename}.pdf");
-        // }
-        // if ($type === 'pdf') {
-        //     $pdf = Pdf::loadView('exports.reusable-pdf', [
-        //         'headings' => $headings,
-        //         'rows' => $formatted,
-        //         'title' => 'Data Siswa',
-        //     ]);
-
-        //     // Pilih orientasi: 'landscape' atau 'portrait'
-        //     $orientation = $request->input('orientation', 'landscape'); // default landscape
-        //     $pdf->setPaper('a4', $orientation);
-
-        //     return $pdf->download("{$filename}.pdf");
-        // }
-
-        // Default: Excel
         return Excel::download(
             new ReusableExport($headings, $enumInfo, $formatted),
             "{$filename}.xlsx"

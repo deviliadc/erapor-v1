@@ -34,6 +34,7 @@ $filters = [
         :enable-import="false"
         :enable-export="false"
         :enable-search="true"
+        searchName="search_ekstrakurikuler"
         tabName="ekstra"
         :route="role_route('ekstrakurikuler.index')">
         <x-slot name="addButton">
@@ -52,8 +53,8 @@ $filters = [
     {{-- Table --}}
     <x-table :columns="[
         'no' => ['label' => 'No', 'sortable' => false],
-        // 'id' => ['label' => 'ID', 'sortable' => true],
-        'nama' => ['label' => 'Nama', 'sortable' => true],
+        // 'id' => ['label' => 'ID', 'sortable' => false],
+        'nama' => ['label' => 'Nama', 'sortable' => false],
         'jumlah_parameter' => ['label' => 'Jumlah Parameter', 'sortable' => false],
         // 'kelas' => ['label' => 'Kelas', 'sortable' => false],
         // 'action' => ['label' => 'Aksi', 'sortable' => false],

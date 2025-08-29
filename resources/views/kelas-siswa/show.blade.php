@@ -76,11 +76,11 @@
         {{-- Table --}}
         <x-table :columns="[
             // 'no' => ['label' => 'No', 'sortable' => false],
-            'no_absen' => ['label' => 'No. Absen', 'sortable' => true],
-            'nama' => ['label' => 'Nama Siswa', 'sortable' => true],
-            // 'nis' => ['label' => 'NIS', 'sortable' => true],
-            'nipd' => ['label' => 'NIPD', 'sortable' => true],
-            'nisn' => ['label' => 'NISN', 'sortable' => true],
+            'no_absen' => ['label' => 'No. Absen', 'sortable' => false],
+            'nama' => ['label' => 'Nama Siswa', 'sortable' => false],
+            // 'nis' => ['label' => 'NIS', 'sortable' => false],
+            'nipd' => ['label' => 'NIPD', 'sortable' => false],
+            'nisn' => ['label' => 'NISN', 'sortable' => false],
         ]"
             :data="$query" {{-- :data="$siswaList" --}}
             :total-count="$totalCount"

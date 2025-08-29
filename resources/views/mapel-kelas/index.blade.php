@@ -44,9 +44,9 @@
             // 'no' => ['label' => 'No', 'sortable' => false],
             // 'id' => ['label' => 'ID', 'sortable' => true],
             // 'nama' => ['label' => 'Nama Kelas', 'sortable' => true],
-            'kelas' => ['label' => 'Kelas', 'sortable' => true],
+            'kelas' => ['label' => 'Kelas', 'sortable' => false],
             // 'wali_kelas' => ['label' => 'Wali Kelas', 'sortable' => true],
-            'jumlah_mapel' => ['label' => 'Jumlah Mapel', 'sortable' => true],
+            'jumlah_mapel' => ['label' => 'Jumlah Mapel', 'sortable' => false],
             // 'action' => ['label' => 'Aksi', 'sortable' => false],
         ]" 
             :data="$kelasList" 

@@ -146,34 +146,22 @@ class EkstraController extends Controller
     {
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
-
-        // Ambil data ekstra sekaligus eager load paramEkstra
         $ekstra = Ekstra::findOrFail($id);
-
-        // Query builder untuk parameter ekstra yang berelasi
         $query = $ekstra->paramEkstra();
-
-        // Filter berdasarkan search jika ada
         if ($search) {
             $query->where('parameter', 'like', "%$search%");
         }
-
-        // Hitung total & paginasi
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
-
-        // Ubah hasil menjadi array untuk digunakan di tampilan
         $param_ekstra = $paginator->through(fn($item) => [
             'id' => $item->id,
             'parameter' => $item->parameter,
         ]);
-
         $breadcrumbs = [
             ['label' => 'Manage Ekstrakurikuler', 'url' => role_route('ekstra.index')],
             ['label' => 'Detail Ekstrakurikuler']
         ];
         $title = 'Detail Ekstrakurikuler';
-
         return view('ekstrakurikuler.show', compact(
             'ekstra',
             'param_ekstra',

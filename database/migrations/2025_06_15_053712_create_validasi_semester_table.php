@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('tahun_semester_id')->constrained('tahun_semester');
             // $table->foreignId('tahun_semester_id')->constrained();
             $table->enum('tipe', ['UTS', 'UAS', 'P5', 'Ekstra', 'Presensi']);
+            // $table->unsignedBigInteger('kelas_id')->nullable();
             $table->boolean('is_validated')->default(false);
             $table->timestamp('validated_at')->nullable();
             $table->foreignId('validated_by')->nullable()->constrained('users');

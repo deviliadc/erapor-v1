@@ -11,6 +11,7 @@
     :enable-import="false"
     :enable-export="false"
     :enable-search="true"
+    searchName="search_lingkup_materi"
     :route-create="role_route('mapel.index')">
     <x-slot name="addButton">
         <button type="button"
@@ -28,13 +29,14 @@
 {{-- Table --}}
 <x-table :columns="[
     'no' => ['label' => 'No', 'sortable' => false],
-    // 'id' => ['label' => 'ID', 'sortable' => true],
-    'kelas' => ['label' => 'Kelas', 'sortable' => true],
-    'mapel' => ['label' => 'Mapel', 'sortable' => true],
-    'bab' => ['label' => 'Bab', 'sortable' => true],
-    'nama' => ['label' => 'Lingkup Materi', 'sortable' => true],
+    // 'id' => ['label' => 'ID', 'sortable' => false],
+    'kelas' => ['label' => 'Kelas', 'sortable' => false],
+    'mapel' => ['label' => 'Mapel', 'sortable' => false],
+    'bab' => ['label' => 'Bab', 'sortable' => false],
+    'nama' => ['label' => 'Lingkup Materi', 'sortable' => false],
     'tujuan_pembelajaran_count' => ['label' => 'Jumlah Tujuan', 'sortable' => false],
-    'periode' => ['label' => 'Periode', 'sortable' => true],
+    'periode' => ['label' => 'Periode', 'sortable' => false],
+    'semester' => ['label' => 'Semester', 'sortable' => false],
     // 'action' => ['label' => 'Aksi', 'sortable' => false],
 ]"
 :data="$lingkupMateri"

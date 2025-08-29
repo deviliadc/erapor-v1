@@ -24,7 +24,6 @@ class GuruController extends Controller
         $perPage = $request->input('per_page', 10);
         $sortBy = $request->input('sortBy', 'id');
         $sortDirection = $request->input('sortDirection', 'asc');
-
         $columnMap = [
             'id' => 'guru.id',
             'name' => 'guru.nama',
@@ -32,36 +31,28 @@ class GuruController extends Controller
             'nip' => 'guru.nip',
             'email' => 'users.email', // jika sorting berdasarkan relasi
             'no_hp' => 'guru.no_hp',
-            // 'alamat' => 'guru.alamat',
-            // 'jenis_kelamin' => 'guru.jenis_kelamin',
             'status' => 'guru.status',
         ];
-
-
         $query = Guru::query()
             ->leftJoin('users', 'users.id', '=', 'guru.user_id')
             ->select(
                 'guru.*',
                 'users.email'
             );
-
         // Filter pencarian
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where('nama', 'like', "%{$search}%")
                 ->orWhere('nip', 'like', "%{$search}%");
         }
-
         // Sorting aman berdasarkan kolom yang dimapping
         if (isset($columnMap[$sortBy])) {
             $query->orderBy($columnMap[$sortBy], $sortDirection);
         } else {
             $query->orderBy('guru.id', 'asc'); // default sorting
         }
-
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
-
         $guru = $paginator->through(function ($item) {
             return [
                 'id' => $item->id,
@@ -70,8 +61,6 @@ class GuruController extends Controller
                 'nip' => $item->nip ?? '-',
                 'email' => $item->user?->email ?? '-',
                 'no_hp' => $item->no_hp ?? '-',
-                // 'alamat' => $item->alamat ?? '-',
-                // 'jenis_kelamin' => $item->jenis_kelamin,
                 'status' => $item->status,
             ];
         });
@@ -114,7 +103,7 @@ class GuruController extends Controller
             ],
             // 'alamat' => 'nullable|string|max:500',
             // 'jenis_kelamin' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
-            'status' => ['required', Rule::in(['Aktif', 'Pensiun', 'Mutasi', 'Resign'])],
+            'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
         ]);
 
         // Normalisasi no_hp
@@ -226,7 +215,7 @@ class GuruController extends Controller
             ],
             // 'alamat' => 'nullable|string|max:500',
             // 'jenis_kelamin' => ['required', Rule::in(['Laki-laki', 'Perempuan'])],
-            'status' => ['required', Rule::in(['Aktif', 'Pensiun', 'Mutasi', 'Resign'])],
+            'status' => ['required', Rule::in(['Aktif', 'Tidak Aktif'])],
         ]);
 
         // Normalisasi dan simpan no_hp
@@ -285,7 +274,7 @@ class GuruController extends Controller
             '',
             '',
             '',
-            'Aktif/Pensiun/Mutasi/Resign'
+            'Aktif/Tidak Aktif'
         ];
 
         $formatted = $data->map(function ($guru) {
@@ -321,7 +310,7 @@ class GuruController extends Controller
             '',
             '',
             '',
-            'Aktif/Pensiun/Mutasi/Resign'
+            'Aktif/Tidak Aktif'
         ];
 
         return Excel::download(
@@ -428,7 +417,7 @@ if ($data['NUPTK'] && str_starts_with($data['NUPTK'], "'")) {
                     'nuptk' => 'nullable|string|max:20',
                     'email' => 'nullable|email',
                     'no_hp' => 'nullable|string|max:20',
-                    'status' => 'required|in:Aktif,Pensiun,Mutasi,Resign',
+                    'status' => 'required|in:Aktif,Tidak Aktif',
                 ]);
 
                 if ($validator->fails()) {

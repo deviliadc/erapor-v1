@@ -15,6 +15,8 @@
         {{-- Toolbar Table --}}
         <x-table.toolbar
             :enable-add-button="!$isKepalaSekolah"
+            {{-- :enable-import='false'
+            :enable-export='false' --}}
             :enable-import="!$isKepalaSekolah"
             importModalName="import-siswa"
             :enable-export="!$isKepalaSekolah"

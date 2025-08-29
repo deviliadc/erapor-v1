@@ -33,9 +33,9 @@
 {{-- Table Sub Elemen --}}
 <x-table :columns="[
     'no' => ['label' => 'No', 'sortable' => false],
-    'fase' => ['label' => 'Fase', 'sortable' => true],
-    'nama_sub_elemen' => ['label' => 'Nama Sub Elemen', 'sortable' => true],
-    'capaian' => ['label' => 'Capaian', 'sortable' => true],
+    'fase' => ['label' => 'Fase', 'sortable' => false],
+    'nama_sub_elemen' => ['label' => 'Nama Sub Elemen', 'sortable' => false],
+    'capaian' => ['label' => 'Capaian', 'sortable' => false],
 ]"
     :data="$capaian"
     :total-count="$capaianTotal"

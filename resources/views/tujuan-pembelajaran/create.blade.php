@@ -3,7 +3,6 @@
         class="space-y-6 sm:p-6">
         @csrf
         <input type="hidden" name="tab" value="tujuan-pembelajaran">
-
         {{-- Pilih Lingkup Materi --}}
         <x-form.select
             label="Lingkup Materi"
@@ -13,7 +12,6 @@
             required
             placeholder="-- Pilih Lingkup Materi --"
         />
-
         {{-- Subbab --}}
         <x-form.input
             label="Subbab"
@@ -22,7 +20,6 @@
             required
             placeholder="Masukkan subbab. Contoh: '1.1.1'"
         />
-
         {{-- Tujuan Pembelajaran --}}
         <x-form.textarea
             label="Tujuan Pembelajaran"
@@ -32,7 +29,6 @@
             placeholder="Masukkan tujuan pembelajaran"
             rows="3"
         />
-
         {{-- Tombol Submit --}}
         <div class="flex justify-end">
             <button type="submit"

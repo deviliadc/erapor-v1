@@ -46,20 +46,13 @@ class PengaturanRaporController extends Controller
         $request->validate([
             'nama_kepala_sekolah' => 'required|string|max:255',
             'nip_kepala_sekolah' => 'nullable|string|max:50',
-            // 'jabatan' => 'required|string|max:100',
             'tempat' => 'required|string|max:100',
             'tanggal_cetak' => 'nullable|date',
-            'ttd' => 'nullable|image|max:2048', // max 2MB
         ]);
 
         $tahunAktif = TahunSemester::where('is_active', true)->first();
 
         $data = PengaturanRapor::firstOrNew(['tahun_semester_id' => $tahunAktif?->id]);
-
-        if ($request->hasFile('ttd')) {
-            $ttdPath = $request->file('ttd')->store('ttd', 'public');
-            $data->ttd = $ttdPath;
-        }
 
         $data->fill($request->except('ttd'));
         $data->tahun_semester_id = $tahunAktif?->id;
@@ -69,24 +62,24 @@ class PengaturanRaporController extends Controller
     }
 
     public function hapusTtd(Request $request)
-{
-    $tahunAktif = TahunSemester::where('is_active', true)->first();
+    {
+        $tahunAktif = TahunSemester::where('is_active', true)->first();
 
-    $data = PengaturanRapor::where('tahun_semester_id', $tahunAktif?->id)->first();
+        $data = PengaturanRapor::where('tahun_semester_id', $tahunAktif?->id)->first();
 
-    if (!$data || !$data->ttd) {
-        return back()->with('error', 'Tanda tangan tidak ditemukan.');
+        if (!$data || !$data->ttd) {
+            return back()->with('error', 'Tanda tangan tidak ditemukan.');
+        }
+
+        // Hapus file dari storage
+        Storage::disk('public')->delete($data->ttd);
+
+        // Kosongkan kolom di database
+        $data->ttd = null;
+        $data->save();
+
+        return back()->with('success', 'Tanda tangan berhasil dihapus.');
     }
-
-    // Hapus file dari storage
-    Storage::disk('public')->delete($data->ttd);
-
-    // Kosongkan kolom di database
-    $data->ttd = null;
-    $data->save();
-
-    return back()->with('success', 'Tanda tangan berhasil dihapus.');
-}
 
     /**
      * Display the specified resource.

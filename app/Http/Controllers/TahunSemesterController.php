@@ -124,23 +124,8 @@ class TahunSemesterController extends Controller
         $validated = $request->validate([
             'tahun_ajaran_id' => 'required|exists:tahun_ajaran,id',
             'semester' => 'required|in:Ganjil,Genap',
-            // 'mulai' => 'required|date',
-            // 'selesai' => 'required|date|after:mulai',
             'is_active' => 'nullable|boolean',
         ]);
-        // $isActive = $request->has('is_active');
-        // if ($isActive) {
-        //     TahunSemester::where('is_active', true)->update(['is_active' => false]);
-        // }
-        // TahunSemester::create([
-        //     'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
-        //     'semester' => $validated['semester'],
-        //     'mulai' => $validated['mulai'],
-        //     'selesai' => $validated['selesai'],
-        //     'is_active' => $isActive,
-        // ]);
-
-        // Cek duplikat tahun ajaran dan semester
         $duplikat = TahunSemester::where('tahun_ajaran_id', $validated['tahun_ajaran_id'])
             ->where('semester', $validated['semester'])
             ->exists();
@@ -149,34 +134,24 @@ class TahunSemesterController extends Controller
                 ->withInput()
                 ->withErrors(['semester' => 'Tahun ajaran dan semester sudah ada.']);
         }
-
         $isActive = $request->has('is_active');
         if ($isActive) {
-            // Nonaktifkan semua tahun semester lain
             TahunSemester::where('is_active', true)->update(['is_active' => false]);
-
-            // Nonaktifkan semua tahun ajaran lain
             TahunAjaran::where('is_active', true)->update(['is_active' => false]);
-
-            // Aktifkan tahun ajaran terkait
             TahunAjaran::where('id', $validated['tahun_ajaran_id'])->update(['is_active' => true]);
         }
-
         $semester = TahunSemester::create([
             'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
             'semester' => $validated['semester'],
             'is_active' => $isActive,
         ]);
-
         $tipe = ['UTS', 'UAS', 'P5', 'Ekstra', 'Presensi'];
-
         foreach ($tipe as $t) {
             ValidasiSemester::firstOrCreate([
                 'tahun_semester_id' => $semester->id,
                 'tipe' => $t,
             ]);
         }
-
         return redirect()->to(role_route('tahun-semester.index', ['tab' => $request->tab ?? 'semester']))->with('success', 'Data berhasil ditambahkan.');
     }
 

@@ -10,6 +10,7 @@
     :enable-import="false"
     :enable-export="false"
     :enable-search="true"
+    searchName="search_tujuan_pembelajaran"
     :route="role_route('mapel.index')">
     <x-slot name="addButton">
         <button type="button"

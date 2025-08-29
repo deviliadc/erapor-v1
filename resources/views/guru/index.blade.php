@@ -17,10 +17,12 @@
         {{-- Toolbar Table --}}
         <x-table.toolbar
             {{-- :filters="$filters" --}}
-            :enable-add-button="!$isKepalaSekolah"
-            :enable-import="!$isKepalaSekolah"
+            :enable-add-button="true"
+            :enable-import="true"
+            {{-- :enable-import="false"
+            :enable-export="false" --}}
             importModalName="import-guru"
-            :enable-export="!$isKepalaSekolah"
+            :enable-export="true"
             :enable-search="true"
             {{-- :route-create="role_route('guru.create')" --}}
             {{-- :route="role_route('guru.index')" --}}

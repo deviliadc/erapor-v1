@@ -23,11 +23,11 @@ class BabController extends Controller
      */
     public function create()
     {
-        $bab = new Bab();
+        // $bab = new Bab();
 
-        return view('bab.create', [
-            'bab' => $bab,
-        ]);
+        // return view('bab.create', [
+        //     'bab' => $bab,
+        // ]);
     }
 
     /**
@@ -69,14 +69,14 @@ class BabController extends Controller
      */
     public function edit(string $id)
     {
-        $bab = Bab::findOrFail($id);
+        // $bab = Bab::findOrFail($id);
 
-        $item = [
-            'id' => $bab->id,
-            'nama' => $bab->nama,
-        ];
+        // $item = [
+        //     'id' => $bab->id,
+        //     'nama' => $bab->nama,
+        // ];
 
-        return view('bab.edit', compact('bab', 'item'));
+        // return view('bab.edit', compact('bab', 'item'));
     }
 
     /**
@@ -85,13 +85,10 @@ class BabController extends Controller
     public function update(Request $request, string $id)
     {
         $bab = Bab::findOrFail($id);
-
         $validated = $request->validate([
             'nama' => 'required|string|max:100|unique:bab,nama,' . $bab->id,
         ]);
-
         $bab->update($validated);
-
         return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'bab']))->with('success', 'Bab berhasil diperbarui.');
     }
 

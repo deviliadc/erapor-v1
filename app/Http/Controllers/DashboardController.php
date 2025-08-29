@@ -33,16 +33,10 @@ class DashboardController extends Controller
 
     protected function adminDashboard()
     {
-        // $totalSiswa = Siswa::count();
         $totalGuru = Guru::count();
         $totalMapel = Mapel::count();
         $totalEkstrakurikuler = Ekstra::count();
         $totalP5 = P5Proyek::count();
-        // $totalLulusan = Siswa::whereHas('kelasSiswa', function ($query) {
-        //     $query->where('status', 'Lulus');
-        // })->count();
-
-        // Tahun ajaran aktif
         $tahunAjaranAktif = TahunAjaran::where('is_active', 1)->first();
         $totalSiswaAktif = 0;
         if ($tahunAjaranAktif) {
@@ -51,7 +45,6 @@ class DashboardController extends Controller
                     ->where('status', 'Aktif');
             })->count();
         }
-
         $totalLulusan = 0;
         if ($tahunAjaranAktif) {
             $totalLulusan = Siswa::whereHas('kelasSiswa', function ($query) use ($tahunAjaranAktif) {
@@ -61,22 +54,11 @@ class DashboardController extends Controller
                     });
             })->count();
         }
-
-        // Ambil tahun ajaran terbaru
         $jumlahTahun = 5;
         $tahunAjaranTerbaru = TahunAjaran::orderByDesc('tahun')
             ->limit($jumlahTahun)
             ->get();
         $tahunAjaranTerbaru = $tahunAjaranTerbaru->sortBy('tahun')->values();
-
-        // $tahunAjaranIds = $tahunAjaranTerbaru->pluck('id')->toArray();
-
-        // // Ambil semua tahun semester yang termasuk tahun ajaran terbaru
-        // $tahunSemester = TahunSemester::with('tahunAjaran')
-        //     ->whereIn('tahun_ajaran_id', $tahunAjaranIds)
-        //     ->get();
-
-        // Kelompokkan dan jumlahkan siswa aktif per tahun ajaran
         $chartSiswa = collect($tahunAjaranTerbaru)->map(function ($ta) {
             $total = Siswa::whereHas('kelasSiswa', function ($q) use ($ta) {
                 $q->where('tahun_ajaran_id', $ta->id)
@@ -87,12 +69,9 @@ class DashboardController extends Controller
                 'total' => $total
             ];
         });
-
         $breadcrumbs = [['label' => 'Dashboard']];
         $title = 'Dashboard Admin';
-
         return view('dashboard.admin', compact(
-            // 'totalSiswa',
             'totalGuru',
             'totalMapel',
             'totalEkstrakurikuler',
@@ -110,39 +89,49 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $guru = $user->guru;
-
+        $tahunAjaranAktif = TahunAjaran::where('is_active', 1)->first();
+        $totalSiswaAktif = 0;
+        if ($tahunAjaranAktif) {
+            $totalSiswaAktif = Siswa::whereHas('kelasSiswa', function ($q) use ($tahunAjaranAktif) {
+                $q->where('tahun_ajaran_id', $tahunAjaranAktif->id)
+                    ->where('status', 'Aktif');
+            })->count();
+        }
         if (!$guru) {
             abort(403, 'Data guru tidak ditemukan.');
         }
-
-        // Ambil semua data kelas & mapel yang dia ajar
         $guruKelas = GuruKelas::with(['kelas', 'mapel'])
             ->where('guru_id', $guru->id)
+            ->whereHas('tahunAjaran', function ($query) {
+                $query->where('is_active', true);
+            })
             ->get();
-
         $isGuruAktif = $guruKelas->isNotEmpty();
-
-        // Statistik sederhana (opsional bisa difilter berdasarkan guru)
         $totalSiswa = Siswa::count();
         $totalMapel = Mapel::count();
-        $totalEkstra = Ekstra::count();
+        $totalEkstrakurikuler = Ekstra::count();
         $totalP5 = P5Proyek::count();
-
+        $totalMapelAjar = $guruKelas->where('peran', 'pengajar')->count();
+        $totalWaliKelas = $guruKelas->where('peran', 'wali')->count();
         $breadcrumbs = [['label' => 'Dashboard']];
         $title = 'Dashboard Guru';
-
         return view('dashboard.guru', compact(
             'breadcrumbs',
             'title',
             'guru',
             'guruKelas',
             'isGuruAktif',
+            'totalSiswaAktif',
             'totalSiswa',
             'totalMapel',
-            'totalEkstra',
-            'totalP5'
+            'totalEkstrakurikuler',
+            'totalP5',
+            'tahunAjaranAktif',
+            'totalMapelAjar',
+            'totalWaliKelas'
         ));
     }
+
 
     protected function siswaDashboard()
     {
@@ -150,27 +139,17 @@ class DashboardController extends Controller
         $siswa = $user->siswa;
         $breadcrumbs = [['label' => 'Dashboard']];
         $title = 'Dashboard Siswa';
-
-        // Ambil kelas siswa aktif
         $kelasSiswaAktif = $siswa->kelasSiswa()->where('status', 'Aktif')->latest()->first();
         $tahunSemesterAktif = null;
         $nilaiMapel = collect();
-
         if ($kelasSiswaAktif) {
-            // Ambil tahun semester aktif dari kelas siswa
             $tahunSemesterAktif = \App\Models\TahunSemester::where('tahun_ajaran_id', $kelasSiswaAktif->tahun_ajaran_id)
                 ->where('is_active', true)->first();
-
-            // Ambil semua mapel di kelas
             $mapelList = $kelasSiswaAktif->kelas->mapel ?? collect();
-
-            // Ambil nilai mapel akhir semester
             $nilaiMapel = \App\Models\NilaiMapel::where('kelas_siswa_id', $kelasSiswaAktif->id)
                 ->where('tahun_semester_id', $tahunSemesterAktif?->id)
                 ->where('periode', 'akhir')
                 ->get();
-
-            // Siapkan data chart
             $chartLabels = [];
             $chartData = [];
             foreach ($mapelList as $mapel) {
@@ -182,7 +161,6 @@ class DashboardController extends Controller
             $chartLabels = [];
             $chartData = [];
         }
-
         return view('dashboard.siswa', compact(
             'breadcrumbs',
             'title',
@@ -194,16 +172,10 @@ class DashboardController extends Controller
 
     protected function kepsekDashboard()
     {
-        // $totalSiswa = Siswa::count();
         $totalGuru = Guru::count();
         $totalMapel = Mapel::count();
         $totalEkstrakurikuler = Ekstra::count();
         $totalP5 = P5Proyek::count();
-        // $totalLulusan = Siswa::whereHas('kelasSiswa', function ($query) {
-        //     $query->where('status', 'Lulus');
-        // })->count();
-
-        // Tahun ajaran aktif
         $tahunAjaranAktif = TahunAjaran::where('is_active', 1)->first();
         $totalSiswaAktif = 0;
         if ($tahunAjaranAktif) {
@@ -212,7 +184,6 @@ class DashboardController extends Controller
                     ->where('status', 'Aktif');
             })->count();
         }
-
         $totalLulusan = 0;
         if ($tahunAjaranAktif) {
             $totalLulusan = Siswa::whereHas('kelasSiswa', function ($query) use ($tahunAjaranAktif) {
@@ -222,22 +193,11 @@ class DashboardController extends Controller
                     });
             })->count();
         }
-
-        // Ambil tahun ajaran terbaru
         $jumlahTahun = 5;
         $tahunAjaranTerbaru = TahunAjaran::orderByDesc('tahun')
             ->limit($jumlahTahun)
             ->get();
         $tahunAjaranTerbaru = $tahunAjaranTerbaru->sortBy('tahun')->values();
-
-        // $tahunAjaranIds = $tahunAjaranTerbaru->pluck('id')->toArray();
-
-        // // Ambil semua tahun semester yang termasuk tahun ajaran terbaru
-        // $tahunSemester = TahunSemester::with('tahunAjaran')
-        //     ->whereIn('tahun_ajaran_id', $tahunAjaranIds)
-        //     ->get();
-
-        // Kelompokkan dan jumlahkan siswa aktif per tahun ajaran
         $chartSiswa = collect($tahunAjaranTerbaru)->map(function ($ta) {
             $total = Siswa::whereHas('kelasSiswa', function ($q) use ($ta) {
                 $q->where('tahun_ajaran_id', $ta->id)
@@ -248,11 +208,9 @@ class DashboardController extends Controller
                 'total' => $total
             ];
         });
-
         $breadcrumbs = [['label' => 'Dashboard']];
         $title = 'Dashboard Kepala Sekolah';
         return view('dashboard.kepala-sekolah', compact(
-            // 'totalSiswa',
             'totalGuru',
             'totalMapel',
             'totalEkstrakurikuler',

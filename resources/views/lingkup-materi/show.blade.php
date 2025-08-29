@@ -25,6 +25,18 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Lingkup Materi</p>
                     <p class="text-base font-medium text-gray-800 dark:text-white">{{ $lingkupMateri->nama }}</p>
                 </div>
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Periode</p>
+                    <p class="text-base font-medium text-gray-800 dark:text-white">
+                        {{ $lingkupMateri->periode === 'tengah' ? 'Tengah Semester' : 'Akhir Semester' }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Semester</p>
+                    <p class="text-base font-medium text-gray-800 dark:text-white">
+                        {{ $lingkupMateri->semester === 'genap' ? 'Genap' : 'Ganjil' }}
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -38,7 +50,7 @@
                 :enable-add-button="true"
                 :enable-import="false"
                 :enable-export="false"
-                :enable-search="true"
+                :enable-search="false"
                 :route="role_route('tujuan-pembelajaran.create')">
                 <x-slot name="addButton">
                     <button type="button"

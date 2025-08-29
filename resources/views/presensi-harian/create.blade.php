@@ -96,6 +96,7 @@
                                                                 value="{{ $value }}"
                                                                 required
                                                                 class="text-brand-500 dark:bg-gray-900 dark:border-gray-600"
+                                                                {{ $value == 'Hadir' ? 'checked' : '' }}
                                                             >
                                                             <span>{{ $value }}</span>
                                                         </label>

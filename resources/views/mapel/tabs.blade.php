@@ -33,10 +33,10 @@
 {{-- Table --}}
 <x-table :columns="[
     'no' => ['label' => 'No', 'sortable' => false],
-    'kode_mapel' => ['label' => 'Kode Mapel', 'sortable' => true],
-    'nama' => ['label' => 'Nama', 'sortable' => true],
-    'kategori' => ['label' => 'Kategori', 'sortable' => true],
-    'urutan' => ['label' => 'Urutan', 'sortable' => true],
+    'kode_mapel' => ['label' => 'Kode Mapel', 'sortable' => false],
+    'nama' => ['label' => 'Nama', 'sortable' => false],
+    'kategori' => ['label' => 'Kategori', 'sortable' => false],
+    'urutan' => ['label' => 'Urutan', 'sortable' => false],
 ]"
     :data="$mapel"
     :total-count="$mapelTotal"

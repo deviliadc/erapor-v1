@@ -17,7 +17,6 @@ class SiswaMenuController extends Controller
     {
         $user = Auth::user();
         $siswa = $user->siswa;
-
         // $daftarTahunSemester = TahunSemester::orderByDesc('tahun')->orderByDesc('semester')->get();
         $daftarTahunSemester = TahunSemester::with('tahunAjaran')
             ->get()
@@ -111,7 +110,7 @@ class SiswaMenuController extends Controller
         ));
     }
 
-    
+
     public function nilaiMapel(Request $request)
     {
         $user = Auth::user();

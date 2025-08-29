@@ -38,9 +38,10 @@
             name="status"
             :options="[
                 'Aktif' => 'Aktif',
-                'Pensiun' => 'Pensiun',
-                'Mutasi' => 'Mutasi',
-                'Resign' => 'Resign'
+                'Tidak Aktif' => 'Tidak Aktif',
+                // 'Pensiun' => 'Pensiun',
+                // 'Mutasi' => 'Mutasi',
+                // 'Resign' => 'Resign'
             ]"
             placeholder="Pilih status"
             :selected="old('status')"

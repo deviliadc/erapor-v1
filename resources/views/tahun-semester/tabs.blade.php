@@ -4,7 +4,13 @@
 @include('tahun-semester.edit')
 
 {{-- Toolbar Table --}}
-<x-table.toolbar {{-- :filters="$filters" --}} :enable-add-button="true" :enable-import="false" :enable-export="false" :enable-search="true"
+<x-table.toolbar
+    {{-- :filters="$filters" --}} 
+    :enable-add-button="true" 
+    :enable-import="false" 
+    :enable-export="false" 
+    :enable-search="true"
+    searchName="search_tahun_semester"
     :route="role_route('tahun-semester.index')">
     <x-slot name="addButton">
         <button type="button"

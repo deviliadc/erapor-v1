@@ -77,6 +77,15 @@
                 required
             />
 
+            {{-- Semester --}}
+            <x-form.select
+                name="semester"
+                label="Semester"
+                :options="['genap' => 'Genap', 'ganjil' => 'Ganjil']"
+                :selected="$item['semester'] ?? 'genap'"
+                required
+            />
+
             <div class="flex justify-end">
                 <button type="submit"
                     class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">

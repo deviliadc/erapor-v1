@@ -152,11 +152,11 @@
             </td>
             <td rowspan="2">{{ $mapel->nama }}</td>
             <td rowspan="2" align="center">{{ $nilai?->nilai_akhir ?? '-' }}</td>
-            <td> {{ $nilai?->deskripsi_tertinggi ?? '-' }}</td>
+            <td>Menunjukkan Penguasaan dalam {{ $nilai?->deskripsi_tertinggi ?? '-' }}</td>
         </tr>
         {{-- baris kedua untuk deskripsi terendah --}}
         <tr>
-            <td> {{ $nilai?->deskripsi_terendah ?? '-' }}</td>
+            <td>Perlu Peningkatan dalam {{ $nilai?->deskripsi_terendah ?? '-' }}</td>
         </tr>
     @endforeach
     </table>

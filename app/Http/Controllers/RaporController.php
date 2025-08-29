@@ -48,39 +48,60 @@ class RaporController extends Controller
         return PengaturanRapor::where('tahun_semester_id', $tahunSemesterId)->first();
     }
 
+    private function authorizeRaporAccess($tahunSemesterId)
+{
+    $user = auth()->user();
+
+    // Admin boleh selalu
+    if ($user->hasRole('admin')) {
+        return true;
+    }
+
+    // Cek kalau guru wali kelas
+    if ($user->hasRole('guru')) {
+        $guruId = $user->guru?->id;
+        $tahunAjaranId = TahunSemester::where('id', $tahunSemesterId)->value('tahun_ajaran_id');
+
+        $isWali = \App\Models\GuruKelas::where('guru_id', $guruId)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->where('peran', 'wali')
+            ->exists();
+
+        if ($isWali) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
     public function index(Request $request)
     {
         $breadcrumbs = [['label' => 'Rapor']];
         $title = 'Rapor';
-
         $user = Auth::user();
         $guru = $user->guru ?? null;
-
         // Ambil daftar Tahun Semester
         $daftarTahunSemester = TahunSemester::with('tahunAjaran')
             ->orderByDesc('id')
             ->get();
-
         // Pilih Tahun Semester aktif atau dari request
         $tahunSemesterId = $request->input('tahun_semester_id');
         $tahunAktif = $tahunSemesterId
             ? TahunSemester::find($tahunSemesterId)
             : $daftarTahunSemester->firstWhere('is_active', true)
             ?? $daftarTahunSemester->first();
-
         $tahunSemesterId = $tahunAktif?->id;
         $tahunAjaranId = $tahunAktif?->tahun_ajaran_id;
-
         // Ambil daftar kelas
         $kelasList = Kelas::orderBy('nama')->get();
         if ($user->hasRole('guru') && $guru) {
             $kelasIds = $user->guru?->kelasDiampuIds() ?? [];
             $kelasList = $kelasList->whereIn('id', $kelasIds);
         }
-
         $kelas_id = $request->input('kelas_id');
         $kelasDipilih = $kelas_id ? Kelas::find($kelas_id) : null;
-
         // Query siswa sesuai Tahun Ajaran dan Kelas
         $siswaList = Siswa::with(['kelasSiswa.kelas'])
             ->whereHas('kelasSiswa', function ($q) use ($tahunAjaranId, $kelas_id) {
@@ -89,24 +110,20 @@ class RaporController extends Controller
             })
             ->get()
             ->sortBy('nama');
-
         $isValidUAS = ValidasiSemester::where('tahun_semester_id', $tahunSemesterId)
             ->whereIn('tipe', ['UAS', 'Ekstra', 'Presensi'])
             ->where('is_validated', true)
             ->pluck('tipe')
             ->unique()
             ->count() === 3;
-
         $isValidUTS = ValidasiSemester::where('tahun_semester_id', $tahunSemesterId)
             ->where('tipe', 'UTS')
             ->where('is_validated', true)
             ->exists();
-
         $isValidP5 = ValidasiSemester::where('tahun_semester_id', $tahunSemesterId)
             ->where('tipe', 'P5')
             ->where('is_validated', true)
             ->exists();
-
         return view('rapor.index', compact(
             'breadcrumbs',
             'title',
@@ -127,6 +144,11 @@ class RaporController extends Controller
     public function cetakKelengkapan(Request $request, Siswa $siswa)
     {
         $tahunSemesterId = $request->input('tahun_semester_id');
+        // 🔒 Batasi akses
+    if (!$this->authorizeRaporAccess($tahunSemesterId)) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
+    }
+
         $pengaturan = $this->getPengaturanRapor($tahunSemesterId);
 
         $kelas = $siswa->kelasSiswa->first()?->kelas;
@@ -156,6 +178,11 @@ class RaporController extends Controller
     public function cetakTengah(Request $request, Siswa $siswa)
     {
         $tahunSemesterId = $request->input('tahun_semester_id');
+        // 🔒 Batasi akses
+    if (!$this->authorizeRaporAccess($tahunSemesterId)) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
+    }
+
         $pengaturan = $this->getPengaturanRapor($tahunSemesterId);
 
         $tahunSemester = TahunSemester::find($tahunSemesterId);
@@ -209,6 +236,11 @@ class RaporController extends Controller
     public function cetakAkhir(Request $request, Siswa $siswa)
     {
         $tahunSemesterId = $request->input('tahun_semester_id');
+        // 🔒 Batasi akses
+    if (!$this->authorizeRaporAccess($tahunSemesterId)) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
+    }
+
         $pengaturan = $this->getPengaturanRapor($tahunSemesterId);
 
         $tahunSemester = TahunSemester::find($tahunSemesterId);
@@ -310,6 +342,11 @@ class RaporController extends Controller
     public function cetakP5(Request $request, Siswa $siswa)
     {
         $tahunSemesterId = $request->input('tahun_semester_id');
+        // 🔒 Batasi akses
+    if (!$this->authorizeRaporAccess($tahunSemesterId)) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
+    }
+
         $pengaturan = $this->getPengaturanRapor($tahunSemesterId);
 
         $tahunSemester = TahunSemester::find($tahunSemesterId);
@@ -337,19 +374,27 @@ class RaporController extends Controller
         $p5Data = [];
         foreach ($nilaiP5 as $np5) {
             $proyek = $proyekList->firstWhere('id', $np5->p5_proyek_id);
-            $capaian = [];
+            // Group detail by dimensi
+            $dimensiArr = [];
             foreach ($np5->detailP5 ?? [] as $detail) {
-                $capaian[] = [
-                    'dimensi' => $detail->p5Dimensi->nama_dimensi ?? '-',
-                    'sub_elemen' => $detail->p5SubElemen->nama_sub_elemen ?? '-',
-                    'predikat' => $detail->predikat,
-                    'deskripsi' => $detail->deskripsi,
+                $dimensiNama = $detail->p5Dimensi->nama_dimensi ?? '-';
+                $subelemen = [
+                    'nama' => $detail->p5SubElemen->nama_sub_elemen ?? '-',
+                    'capaian' => $detail->deskripsi ?? '-',
+                    'predikat' => $detail->predikat ?? '',
                 ];
+                if (!isset($dimensiArr[$dimensiNama])) {
+                    $dimensiArr[$dimensiNama] = [
+                        'nama' => $dimensiNama,
+                        'subelemen' => [],
+                    ];
+                }
+                $dimensiArr[$dimensiNama]['subelemen'][] = $subelemen;
             }
             $p5Data[] = [
                 'proyek' => $proyek,
                 'catatan' => $np5->catatan,
-                'capaian' => $capaian,
+                'dimensi' => array_values($dimensiArr),
             ];
         }
 

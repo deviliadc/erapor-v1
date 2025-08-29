@@ -34,8 +34,8 @@
 <x-table
 :columns="[
     'no' => ['label' => 'No', 'sortable' => false],
-    'nama_dimensi' => ['label' => 'Nama Dimensi', 'sortable' => true],
-    'deskripsi_dimensi' => ['label' => 'Deskripsi', 'sortable' => true],
+    'nama_dimensi' => ['label' => 'Nama Dimensi', 'sortable' => false],
+    'deskripsi_dimensi' => ['label' => 'Deskripsi', 'sortable' => false],
 ]" :data="$dimensi"
 :total-count="$dimensiTotal"
 row-view="p5-dimensi.partials.row"

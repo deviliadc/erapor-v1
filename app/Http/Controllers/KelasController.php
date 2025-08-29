@@ -287,26 +287,11 @@ class KelasController extends Controller
         $request->validate([
             'nama' => 'required|string|max:50|unique:kelas,nama',
             'fase_id' => 'required|exists:fase,id',
-            // 'wali_kelas_id' => 'required|exists:guru,id',
         ]);
-
         Kelas::create([
             'nama' => $request->nama,
             'fase_id' => $request->fase_id,
         ]);
-
-        // Ambil tahun semester aktif
-        // $tahunAktif = TahunSemester::where('is_active', true)->first();
-
-        // Simpan wali kelas ke tabel guru_kelas
-        // GuruKelas::create([
-        //     'guru_id' => $request->wali_kelas_id,
-        //     'kelas_id' => $kelas->id,
-        //     'tahun_semester_id' => $tahunAktif ? $tahunAktif->id : null,
-        //     'peran' => 'wali',
-        //     'mapel_id' => null,
-        // ]);
-
         return redirect()->to(role_route('kelas.index'))->with('success', 'Data kelas berhasil ditambahkan.');
     }
 

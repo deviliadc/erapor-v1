@@ -80,18 +80,11 @@ class ParamEkstraController extends Controller
     public function update(Request $request, string $id)
     {
         $param_ekstra = ParamEkstra::findOrFail($id);
-
         $validated = $request->validate([
             'ekstra_id' => 'required|exists:ekstra,id',
             'parameter'            => 'required|string|max:100',
-
         ]);
-
         $param_ekstra->update($validated);
-
-        // return redirect()->to(role_route('ekstra.index', ['tab' => request('tab', 'parameter')]))->with('success', 'Parameter Ekstrakurikuler berhasil diperbarui.');
-        $param_ekstra->update($validated);
-
         $redirect = $request->input('redirect_to') ?? role_route('param-ekstra.index');
         return redirect()->to($redirect)->with('success', 'Parameter Ekstrakurikuler berhasil diperbarui.');
     }

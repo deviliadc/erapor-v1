@@ -18,7 +18,7 @@ class DataMasterSeeder extends Seeder
 
         DB::table('roles')->insert([
             ['id' => 1, 'name' => 'admin', 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 2, 'name' => 'kepala_sekolah', 'created_at' => $now, 'updated_at' => $now],
+            // ['id' => 2, 'name' => 'kepala_sekolah', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'name' => 'guru', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 4, 'name' => 'siswa', 'created_at' => $now, 'updated_at' => $now],
         ]);

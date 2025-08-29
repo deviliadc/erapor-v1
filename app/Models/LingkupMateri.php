@@ -15,13 +15,14 @@ class LingkupMateri extends Model
         'bab_id',
         'nama',
         'periode',
+        'semester',
     ];
 
     // public function guruKelas()
     // {
     //     return $this->belongsTo(GuruKelas::class);
     // }
-    
+
     public function mapel()
     {
         return $this->belongsTo(Mapel::class);

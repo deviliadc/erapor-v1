@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('lingkup_materi_id')->constrained('lingkup_materi')->cascadeOnDelete();
             // $table->foreignId('tahun_semester_id')->nullable()->constrained('tahun_semester')->nullOnDelete();
-            $table->string('subbab')->unique();
+            $table->string('subbab');
             $table->text('tujuan');
             // $table->enum('periode', ['tengah', 'akhir']);
             $table->timestamps();

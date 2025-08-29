@@ -386,12 +386,10 @@ class NilaiEkstraController extends Controller
             ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
             ->sortByDesc('semester')
             ->values();
-
         // Tahun semester aktif
         $tahunSemesterAktif = $daftarTahunSemester->firstWhere('is_active', true);
         $tahunSemesterId = $request->tahun_semester_id ?? $tahunSemesterAktif?->id;
         $selectedTahunSemester = $daftarTahunSemester->firstWhere('id', $tahunSemesterId);
-
         // Kelas sesuai tahun ajaran dari tahun semester terpilih
         $daftarKelas = collect();
         if ($selectedTahunSemester) {
@@ -403,14 +401,11 @@ class NilaiEkstraController extends Controller
                 ->sortBy('nama')
                 ->values();
         }
-
         // Kelas belum dipilih di awal
         $kelasId = $request->kelas_id;
-
         // Daftar ekstra dan parameter
         $daftarEkstra = \App\Models\Ekstra::all();
         $ekstraId = $request->ekstra_id ?? $daftarEkstra->first()?->id;
-
         // Siswa per kelas di tahun ajaran aktif (hanya jika kelas dipilih)
         $siswaKelas = collect();
         if ($kelasId && $selectedTahunSemester) {
@@ -421,26 +416,22 @@ class NilaiEkstraController extends Controller
                 ->orderBy('no_absen')
                 ->get();
         }
-
         // Siapkan parameter dan nilai per ekstra
         $daftarParameter = [];
         $nilaiMap = [];
         foreach ($daftarEkstra as $ekstra) {
             $daftarParameter[$ekstra->id] = \App\Models\ParamEkstra::where('ekstra_id', $ekstra->id)->get();
-
             foreach ($siswaKelas as $ks) {
                 $nilaiEkstra = \App\Models\NilaiEkstra::where('ekstra_id', $ekstra->id)
                     ->where('kelas_siswa_id', $ks->id)
                     ->where('tahun_semester_id', $tahunSemesterId)
                     ->where('periode', 'akhir')
                     ->first();
-
                 if ($nilaiEkstra) {
                     $detail = \App\Models\NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
                         // ->where('periode', 'akhir')
                         ->pluck('nilai', 'param_ekstra_id')
                         ->toArray();
-
                     $nilaiMap[$ekstra->id][$ks->id] = [
                         'predikat_param' => $detail,
                         'deskripsi' => $nilaiEkstra->deskripsi ?? null,
@@ -453,12 +444,10 @@ class NilaiEkstraController extends Controller
                 }
             }
         }
-
         $breadcrumbs = [
             ['label' => 'Nilai Ekstrakurikuler'],
         ];
         $title = 'Nilai Ekstrakurikuler';
-
         return view('nilai-ekstra.index', compact(
             'daftarTahunSemester',
             'tahunSemesterId',
@@ -474,6 +463,7 @@ class NilaiEkstraController extends Controller
             'title'
         ));
     }
+    
     /**
      * Update multiple Nilai Ekstra records in batch.
      */

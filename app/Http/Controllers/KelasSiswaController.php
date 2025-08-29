@@ -20,34 +20,24 @@ class KelasSiswaController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-
-        // Ambil tahun ajaran dari filter, jika tidak ada pakai tahun ajaran aktif
         $tahunAjaranId = $request->input('tahun_ajaran_filter');
         $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
         if (!$tahunAjaranId) {
             $tahunAjaranId = $tahunAjaranAktif?->id;
         }
-
-        // Query kelas
         $query = Kelas::orderBy('nama');
         $totalCount = $query->count();
-
-        // Paging
         $paginator = $query->paginate($perPage)->withQueryString();
-
-        // Data untuk tampilan
         $kelas = $paginator->through(function ($item) use ($tahunAjaranId) {
             $waliKelas = GuruKelas::where('kelas_id', $item->id)
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->where('peran', 'wali')
                 ->with('guru')
                 ->first();
-
             $jumlahSiswa = KelasSiswa::where('kelas_id', $item->id)
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->where('status', 'Aktif')
                 ->count();
-
             return [
                 'id' => $item->id,
                 'kelas' => $item->nama,
@@ -55,9 +45,7 @@ class KelasSiswaController extends Controller
                 'jumlah_siswa' => $jumlahSiswa . ' Siswa',
             ];
         });
-
         $kelasList = Kelas::orderBy('nama')->get();
-        // $guruList = Guru::orderBy('nama')->pluck('nama', 'id')->toArray();
         $guruList = ['' => ''] + Guru::orderBy('nama')->pluck('nama', 'id')->toArray();
         $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
         $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
@@ -66,16 +54,14 @@ class KelasSiswaController extends Controller
                 'name' => $item->tahun . ($item->id == $tahunAjaranAktif?->id ? ' (Aktif)' : ''),
             ];
         });
-
         $title = 'Daftar Kelas Siswa';
         $breadcrumbs = [
             ['label' => 'Manage Kelas Siswa'],
         ];
-
         return view('kelas-siswa.index', compact(
             'title',
             'breadcrumbs',
-            'kelas',        // paginator hasil mapping
+            'kelas',
             'totalCount',
             'tahunAjaranId',
             'tahunAjaranAktif',

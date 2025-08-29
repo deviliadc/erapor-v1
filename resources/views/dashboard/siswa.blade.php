@@ -1,8 +1,6 @@
-{{-- filepath: d:\DEVI\DRAFT\erapor-v1\resources\views\dashboard\siswa.blade.php --}}
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
     <div class="container mx-auto py-8">
-        {{-- Data Diri Siswa --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow p-6">
                 <h2 class="text-lg font-semibold mb-4 text-brand-500">Data Diri Siswa</h2>
@@ -16,58 +14,44 @@
                     <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
                 </div>
             </div>
-
-            {{-- Data Orang Tua & Wali --}}
             <div class="bg-white rounded-xl shadow p-6">
                 <h2 class="text-lg font-semibold mb-4 text-brand-500">Data Orang Tua & Wali</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {{-- Ayah --}}
                     <div>
                         <h3 class="font-semibold text-brand-400 mb-2">Ayah</h3>
-                            <div class="space-y-1 text-sm">
-                                <div><span class="font-medium">Nama:</span> {{ $siswa->nama_ayah }}</div>
-                                <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_ayah }}</div>
-                                {{-- <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div> --}}
-                            </div>
+                        <div class="space-y-1 text-sm">
+                            <div><span class="font-medium">Nama:</span> {{ $siswa->nama_ayah }}</div>
+                            <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_ayah }}</div>
+                        </div>
                     </div>
-                    {{-- Ibu --}}
                     <div>
                         <h3 class="font-semibold text-brand-400 mb-2">Ibu</h3>
-                            <div class="space-y-1 text-sm">
-                                <div><span class="font-medium">Nama:</span> {{ $siswa->nama_ibu }}</div>
-                                <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_ibu }}</div>
-                                {{-- <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div> --}}
-                            </div>
+                        <div class="space-y-1 text-sm">
+                            <div><span class="font-medium">Nama:</span> {{ $siswa->nama_ibu }}</div>
+                            <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_ibu }}</div>
+                        </div>
                     </div>
-                    {{-- Wali --}}
                     <div>
                         <h3 class="font-semibold text-brand-400 mb-2">Wali</h3>
-                            <div class="space-y-1 text-sm">
-                                <div><span class="font-medium">Nama:</span> {{ $siswa->nama_wali }}</div>
-                                <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_wali }}</div>
-
-                            </div>
+                        <div class="space-y-1 text-sm">
+                            <div><span class="font-medium">Nama:</span> {{ $siswa->nama_wali }}</div>
+                            <div><span class="font-medium">Pekerjaan:</span> {{ $siswa->pekerjaan_wali }}</div>
+                        </div>
                     </div>
-
-                    <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat }}</div>
+                    <div><span class="font-medium">Alamat:</span> {{ $siswa->alamat_wali ?? $siswa->alamat }}</div>
                 </div>
             </div>
         </div>
-
-        {{-- Chart Nilai Siswa --}}
         <div class="bg-white rounded-xl shadow p-6">
             <h2 class="text-lg font-semibold mb-4 text-brand-500">Nilai Siswa</h2>
             <canvas id="chartNilai" height="100"></canvas>
         </div>
     </div>
-
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
-            // Contoh data, ganti dengan data dari controller
             const labels = {!! json_encode($chartLabels ?? []) !!};
             const dataNilai = {!! json_encode($chartData ?? []) !!};
-
             const ctx = document.getElementById('chartNilai').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',

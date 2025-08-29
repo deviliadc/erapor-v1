@@ -56,7 +56,7 @@ $filters = [
         {{-- Table --}}
         <x-table :columns="[
             // 'no' => ['label' => 'No', 'sortable' => false],
-            // 'id' => ['label' => 'ID', 'sortable' => true],
+            // 'id' => ['label' => 'ID', 'sortable' => false],
             'nama' => ['label' => 'Nama Kelas', 'sortable' => false],
             'fase' => ['label' => 'Fase', 'sortable' => false],
             // 'wali' => ['label' => 'Wali Kelas', 'sortable' => false],

@@ -43,11 +43,6 @@ class P5ProyekController extends Controller
             'nama_proyek' => 'required|string|max:255',
             'deskripsi_proyek' => 'nullable|string|max:1000',
             'tahun_semester_id' => 'required|exists:tahun_semester,id',
-            // 'dimensi_id' => 'required|array',
-            // 'dimensi_id.*' => 'exists:p5_dimensi,id',
-            // 'sub_elemen_id' => 'required|array',
-            // 'sub_elemen_id.*' => 'exists:p5_sub_elemen,id',
-            // 'guru_id' => 'required|exists:guru,id',
         ]);
 
         // Ambil guru_id dari sesi jika diperlukan, atau sesuaikan
@@ -190,18 +185,12 @@ class P5ProyekController extends Controller
         $p5_proyek = P5Proyek::findOrFail($id);
 
         $validated = $request->validate([
-            // 'kelas_id' => 'required|exists:kelas,id',
-            // 'guru_id' => 'required|exists:guru,id',
-            // 'p5_tema_id' => 'required|exists:p5_tema,id',
             'nama_proyek' => 'required|string|max:255',
             'deskripsi_proyek' => 'nullable|string|max:1000',
             'tahun_semester_id' => 'required|exists:tahun_semester,id',
         ]);
 
         $p5_proyek->update([
-            // 'p5_tema_id' => $validated['p5_tema_id'],
-            // 'kelas_id' => $validated['kelas_id'],
-            // 'guru_id' => $validated['guru_id'],
             'nama_proyek' => $validated['nama_proyek'],
             'deskripsi' => $validated['deskripsi_proyek'] ?? null,
             'tahun_semester_id' => $validated['tahun_semester_id'],

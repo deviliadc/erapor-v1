@@ -47,7 +47,12 @@
                 </h2>
             </div>
 
-            <x-table.toolbar :enable-add-button="true" :enable-import="false" :enable-export="false" :enable-search="true" :route="role_route('p5-proyek.show', ['p5_proyek' => $proyek->id])">
+            <x-table.toolbar 
+                :enable-add-button="true" 
+                :enable-import="false" 
+                :enable-export="false" 
+                :enable-search="false" 
+                :route="role_route('p5-proyek.show', ['p5_proyek' => $proyek->id])">
                 <x-slot name="addButton">
                     <button type="button"
                         onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-create-proyek-detail' }))"

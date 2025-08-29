@@ -110,24 +110,24 @@
                                                 @endforeach
                                             @else
                                                 <th class="px-3 py-2 text-center">-</th>
-                                            @endif
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($siswaByKelas[$kls->id] ?? [] as $i => $ks)
-                                        <tr>
-                                            <td class="px-3 py-2">{{ $i + 1 }}</td>
-                                            <td class="px-3 py-2">{{ $ks['nama'] }}</td>
-                                            <td class="px-3 py-2">
-                                                <div x-show="editMode" class="block">
-                                                    <input type="text" name="nilai[{{ $ks['id'] }}][catatan]"
-                                                        value="{{ $nilaiMap[$ks['id']]['catatan'] ?? '' }}"
-                                                        class="border rounded w-full px-2 py-1 text-xs"
-                                                        placeholder="Catatan akhir rapor">
-                                                </div>
-                                                <div x-show="!editMode" class="block">
-                                                    <span>{{ $nilaiMap[$ks['id']]['catatan'] ?? '-' }}</span>
+                                                        @php
+                                                            $nilai = isset($nilaiMap[$kls->id][$ks['id']][$subelemen->id]['predikat']) ? $nilaiMap[$kls->id][$ks['id']][$subelemen->id]['predikat'] : '';
+                                                        @endphp
+                                                        <td class="px-3 py-2 text-center">
+                                                            <div x-show="editMode" class="block">
+                                                                <select name="nilai[{{ $ks['id'] }}][{{ $subelemen->id }}][predikat]" class="border rounded w-32 text-center text-xs">
+                                                                    <option value="" {{ ($nilai === '' || $nilai === null) ? 'selected' : '' }}>-</option>
+                                                                    <option value="Belum Berkembang" {{ $nilai === 'Belum Berkembang' ? 'selected' : '' }}>Belum Berkembang</option>
+                                                                    <option value="Mulai Berkembang" {{ $nilai === 'Mulai Berkembang' ? 'selected' : '' }}>Mulai Berkembang</option>
+                                                                    <option value="Berkembang Sesuai Harapan" {{ $nilai === 'Berkembang Sesuai Harapan' ? 'selected' : '' }}>Berkembang Sesuai Harapan</option>
+                                                                    <option value="Sangat Berkembang" {{ $nilai === 'Sangat Berkembang' ? 'selected' : '' }}>Sangat Berkembang</option>
+                                                                </select>
+                                                            </div>
+                                                            <div x-show="!editMode" class="block">
+                                                                <span>{{ $nilai !== '' && $nilai !== null ? $nilai : '-' }}</span>
+                                                            </div>
+                                                        </td>
+                                                    <span>{{ $nilaiMap[$kls->id][$ks['id']]['catatan'] ?? '-' }}</span>
                                                 </div>
                                             </td>
                                             {{-- Hidden Input --}}
@@ -137,29 +137,16 @@
                                                 @if ($subelemenByDimensi[$dimensi->id]->isNotEmpty())
                                                     @foreach ($subelemenByDimensi[$dimensi->id] as $subelemen)
                                                         @php
-                                                            $nilai =
-                                                                $nilaiMap[$ks['id']][$subelemen->id]['predikat'] ?? '';
+                                                            $nilai = $nilaiMap[$kls->id][$ks['id']][$subelemen->id]['predikat'] ?? '';
                                                         @endphp
                                                         <td class="px-3 py-2 text-center">
                                                             <div x-show="editMode" class="block">
-                                                                <select
-                                                                    name="nilai[{{ $ks['id'] }}][{{ $subelemen->id }}][predikat]"
-                                                                    class="border rounded w-32 text-center text-xs">
-                                                                    <option value=""
-                                                                        {{ $nilai === '' ? 'selected' : '' }}>-
-                                                                    </option>
-                                                                    <option value="Belum Berkembang"
-                                                                        {{ $nilai === 'Belum Berkembang' ? 'selected' : '' }}>
-                                                                        Belum Berkembang</option>
-                                                                    <option value="Mulai Berkembang"
-                                                                        {{ $nilai === 'Mulai Berkembang' ? 'selected' : '' }}>
-                                                                        Mulai Berkembang</option>
-                                                                    <option value="Berkembang Sesuai Harapan"
-                                                                        {{ $nilai === 'Berkembang Sesuai Harapan' ? 'selected' : '' }}>
-                                                                        Berkembang Sesuai Harapan</option>
-                                                                    <option value="Sangat Berkembang"
-                                                                        {{ $nilai === 'Sangat Berkembang' ? 'selected' : '' }}>
-                                                                        Sangat Berkembang</option>
+                                                                <select name="nilai[{{ $ks['id'] }}][{{ $subelemen->id }}][predikat]" class="border rounded w-32 text-center text-xs">
+                                                                    <option value="" {{ $nilai === '' ? 'selected' : '' }}>-</option>
+                                                                    <option value="Belum Berkembang" {{ $nilai === 'Belum Berkembang' ? 'selected' : '' }}>Belum Berkembang</option>
+                                                                    <option value="Mulai Berkembang" {{ $nilai === 'Mulai Berkembang' ? 'selected' : '' }}>Mulai Berkembang</option>
+                                                                    <option value="Berkembang Sesuai Harapan" {{ $nilai === 'Berkembang Sesuai Harapan' ? 'selected' : '' }}>Berkembang Sesuai Harapan</option>
+                                                                    <option value="Sangat Berkembang" {{ $nilai === 'Sangat Berkembang' ? 'selected' : '' }}>Sangat Berkembang</option>
                                                                 </select>
                                                             </div>
                                                             <div x-show="!editMode" class="block">

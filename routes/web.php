@@ -72,7 +72,7 @@ Route::middleware(['auth', 'checkrole:admin'])->prefix('admin')->name('admin.')-
     Route::get('siswa/template', [SiswaController::class, 'template'])->name('siswa.template');
     Route::post('siswa/import', [SiswaController::class, 'import'])->name('siswa.import');
     Route::resource('siswa', SiswaController::class);
-    Route::resource('wali-murid', WaliMuridController::class);
+    // Route::resource('wali-murid', WaliMuridController::class);
     Route::resource('fase', FaseController::class);
     Route::resource('kelas', KelasController::class);
     Route::resource('kelas-siswa', KelasSiswaController::class);
@@ -122,8 +122,8 @@ Route::middleware(['auth', 'checkrole:admin'])->prefix('admin')->name('admin.')-
     Route::post('nilai-ekstra/update-batch', [NilaiEkstraController::class, 'updateBatch'])->name('nilai-ekstra.update-batch');
     Route::resource('nilai-p5',  NilaiP5Controller::class);
     Route::post('nilai-p5/update-batch', [NilaiP5Controller::class, 'updateBatch'])->name('nilai-p5.update-batch');
-    Route::resource('leger-rapor', LegerRaporController::class);
-    Route::get('leger-rapor/export', [LegerRaporController::class, 'export'])->name('leger-rapor.export');
+    // Route::resource('leger-rapor', LegerRaporController::class);
+    // Route::get('leger-rapor/export', [LegerRaporController::class, 'export'])->name('leger-rapor.export');
     Route::resource('rapor',  RaporController::class);
     Route::get('rapor/{siswa}/cetak-kelengkapan', [RaporController::class, 'cetakKelengkapan'])->name('rapor.cetakKelengkapan');
     Route::get('rapor/{siswa}/cetak-tengah', [RaporController::class, 'cetakTengah'])->name('rapor.cetakTengah');
@@ -152,8 +152,8 @@ Route::middleware(['auth', 'checkrole:guru'])->prefix('guru')->name('guru.')->gr
     Route::post('siswa/import', [SiswaController::class, 'import'])->name('siswa.import');
     Route::resource('siswa', SiswaController::class);
     Route::resource('wali-murid', WaliMuridController::class);
-    Route::resource('fase', FaseController::class);
-    Route::resource('kelas', KelasController::class);
+    // Route::resource('fase', FaseController::class);
+    // Route::resource('kelas', KelasController::class);
     Route::resource('kelas-siswa', KelasSiswaController::class);
     Route::get('kelas-siswa/{kelas}/detail', [KelasSiswaController::class, 'show'])
         ->name('kelas-siswa.detail');
@@ -168,8 +168,8 @@ Route::middleware(['auth', 'checkrole:guru'])->prefix('guru')->name('guru.')->gr
     Route::resource('mapel-kelas', MapelKelasController::class);
     Route::get('mapel-kelas/{kelas}/detail', [MapelKelasController::class, 'show'])
         ->name('mapel-kelas.detail');
-    Route::resource('tahun-ajaran', TahunAjaranController::class);
-    Route::resource('tahun-semester', TahunSemesterController::class);
+    // Route::resource('tahun-ajaran', TahunAjaranController::class);
+    // Route::resource('tahun-semester', TahunSemesterController::class);
     Route::resource('mapel', MapelController::class);
     Route::resource('bab', BabController::class);
     Route::resource('lingkup-materi', LingkupMateriController::class);
@@ -201,16 +201,16 @@ Route::middleware(['auth', 'checkrole:guru'])->prefix('guru')->name('guru.')->gr
     Route::post('nilai-ekstra/update-batch', [NilaiEkstraController::class, 'updateBatch'])->name('nilai-ekstra.update-batch');
     Route::resource('nilai-p5',  NilaiP5Controller::class);
     Route::post('nilai-p5/update-batch', [NilaiP5Controller::class, 'updateBatch'])->name('nilai-p5.update-batch');
-    Route::resource('leger-rapor', LegerRaporController::class);
-    Route::get('leger-rapor/export', [LegerRaporController::class, 'export'])->name('leger-rapor.export');
+    // Route::resource('leger-rapor', LegerRaporController::class);
+    // Route::get('leger-rapor/export', [LegerRaporController::class, 'export'])->name('leger-rapor.export');
     Route::resource('rapor',  RaporController::class);
     Route::get('rapor/{siswa}/cetak-kelengkapan', [RaporController::class, 'cetakKelengkapan'])->name('rapor.cetakKelengkapan');
     Route::get('rapor/{siswa}/cetak-tengah', [RaporController::class, 'cetakTengah'])->name('rapor.cetakTengah');
     Route::get('rapor/{siswa}/cetak-akhir', [RaporController::class, 'cetakAkhir'])->name('rapor.cetakAkhir');
     Route::get('rapor/{siswa}/cetak-p5', [RaporController::class, 'cetakP5'])->name('rapor.cetakP5');
     Route::resource('pengaturan-rapor',  PengaturanRaporController::class);
-    Route::delete('/pengaturan-rapor/hapus-ttd', [PengaturanRaporController::class, 'hapusTtd'])
-    ->name('pengaturan-rapor.hapus-ttd');
+    // Route::delete('/pengaturan-rapor/hapus-ttd', [PengaturanRaporController::class, 'hapusTtd'])
+    // ->name('pengaturan-rapor.hapus-ttd');
 
     Route::resource('validasi-semester', ValidasiSemesterController::class);
     Route::post('validasi-semester/validate/{validasiSemester}', [ValidasiSemesterController::class, 'validateType'])->name('validasi-semester.validate');

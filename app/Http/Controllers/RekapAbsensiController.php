@@ -156,21 +156,6 @@ class RekapAbsensiController extends Controller
             'periode' => 'required|in:tengah,akhir',
             'rekap' => 'required|array',
         ]);
-
-        // foreach ($request->rekap as $siswaId => $data) {
-        //     RekapAbsensi::updateOrCreate(
-        //         [
-        //             'siswa_id' => $siswaId,
-        //             'tahun_semester_id' => $request->tahun_semester_id,
-        //             'periode' => $request->periode,
-        //         ],
-        //         [
-        //             'total_sakit' => $data['sakit'] ?? 0,
-        //             'total_izin' => $data['izin'] ?? 0,
-        //             'total_alfa' => $data['alfa'] ?? 0,
-        //         ]
-        //     );
-        // }
         foreach ($request->rekap as $kelasSiswaId => $data) {
             RekapAbsensi::updateOrCreate(
                 [
@@ -185,7 +170,6 @@ class RekapAbsensiController extends Controller
                 ]
             );
         }
-
         return redirect()->to(role_route('rekap-absensi.index', [
             'tahun_semester_id' => $request->tahun_semester_id,
             'periode' => $request->periode,

@@ -63,6 +63,15 @@
             required
         />
 
+        {{-- Semester --}}
+        <x-form.select
+            name="semester"
+            label="Semester"
+            :options="['genap' => 'Genap', 'ganjil' => 'Ganjil']"
+            :selected="old('semester', 'genap')"
+            required
+        />
+
         {{-- Tombol Submit --}}
         <div class="flex justify-end">
             <button type="submit"

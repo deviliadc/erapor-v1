@@ -21,7 +21,6 @@ class LegerRaporController extends Controller
             ['label' => 'Leger Rapor', 'url' => role_route('leger-rapor.index')],
         ];
         $title = 'Leger Rapor';
-
         $allTahunSemester = TahunSemester::with('tahunAjaran')
             ->orderByDesc('tahun_ajaran_id')
             ->orderBy('semester')
@@ -29,85 +28,52 @@ class LegerRaporController extends Controller
             ->mapWithKeys(function ($ts) {
                 return [$ts->id => $ts->tahunAjaran->tahun . ' - ' . ucfirst($ts->semester)];
             });
-
         $allKelas = Kelas::orderBy('nama')->get()
             ->mapWithKeys(fn($kls) => [$kls->id => $kls->nama]);
-
         $tahunAktif = $request->tahun_semester_id
             ? TahunSemester::find($request->tahun_semester_id)
             : TahunSemester::where('is_active', true)->first();
-
         $kelasDipilih = $request->kelas_id
             ? Kelas::with('mapel')->find($request->kelas_id)
             : Kelas::with('mapel')->first();
-
         if (!$kelasDipilih || !$tahunAktif) {
             return redirect()->back()->with('error', 'Kelas atau Tahun Semester tidak valid.');
         }
-
         $periode = $request->input('periode', 'akhir');
-
         $siswaList = KelasSiswa::with('siswa')
             ->where('kelas_id', $kelasDipilih->id)
             ->where('tahun_ajaran_id', $tahunAktif->tahun_ajaran_id)
             ->get();
-
         $siswaIds = $siswaList->pluck('id');
-
         $nilaiMapel = NilaiMapel::with('mapel')
             ->whereIn('kelas_siswa_id', $siswaIds)
             ->where('tahun_semester_id', $tahunAktif->id)
             ->where('periode', $periode)
             ->get()
             ->groupBy('kelas_siswa_id');
-
         $mapelList = $kelasDipilih->mapel ?? collect();
-
         // Ambil nama mapel untuk header kolom
         $mapelColumns = $mapelList->map(fn($m) => [
             'id' => $m->id,
             'nama' => $m->nama,
         ])->values();
-
         // Susun data leger per siswa
         $leger = $siswaList->map(function ($ks) use ($nilaiMapel, $mapelColumns) {
-            // $nilaiSiswa = $nilaiMapel->get($ks->id) ?? collect();
-            // $nilaiMapelArr = $nilaiSiswa->mapWithKeys(fn($nm) => [$nm->mapel->id => $nm->nilai_akhir]);
-
-            // // Ambil nilai tiap mapel sesuai urutan kolom
-            // $nilaiPerMapel = [];
-            // $total = 0;
-            // $count = 0;
-            // foreach ($mapelColumns as $mapel) {
-            //     $nilai = $nilaiMapelArr[$mapel['id']] ?? '-';
-            //     $nilaiPerMapel[$mapel['id']] = $nilai;
-            //     if (is_numeric($nilai)) {
-            //         $total += $nilai;
-            //         $count++;
-            //     }
-            // }
-            // $rataRata = $count > 0 ? round($total / $count, 2) : '-';
             $nilaiSiswa = $nilaiMapel->get($ks->id) ?? collect();
-
             $nilaiPerMapel = [];
             $total = 0;
             $count = 0;
-
             foreach ($mapelColumns as $mapel) {
                 $nilaiTengah = $nilaiSiswa->where('mapel_id', $mapel['id'])->where('periode', 'tengah')->first()?->nilai_akhir;
                 $nilaiAkhir  = $nilaiSiswa->where('mapel_id', $mapel['id'])->where('periode', 'akhir')->first()?->nilai_akhir;
-
                 $nilai = $nilaiAkhir ?? $nilaiTengah ?? '-';
                 $nilaiPerMapel[$mapel['id']] = $nilai;
-
                 if (is_numeric($nilai)) {
                     $total += $nilai;
                     $count++;
                 }
             }
-
             $rataRata = $count > 0 ? round($total / $count, 2) : '-';
-
             return [
                 'nama' => $ks->siswa->nama,
                 'nipd' => $ks->siswa->nipd ?? '-',
@@ -117,8 +83,6 @@ class LegerRaporController extends Controller
                 'rata_rata' => $rataRata,
             ];
         });
-
-
         return view('leger-rapor.index', compact(
             'breadcrumbs',
             'title',

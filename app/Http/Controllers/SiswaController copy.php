@@ -130,7 +130,6 @@ class SiswaController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi dasar siswa
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'nis' => 'required|string|unique:siswa,nis',
@@ -148,10 +147,8 @@ class SiswaController extends Controller
             ],
             'email' => 'nullable|email|unique:users,email',
             'status' => ['required', Rule::in(['Aktif', 'Lulus', 'Keluar', 'Mutasi'])],
-            'wali_murid_id' => 'nullable|string', // bisa 'baru' atau ID numerik
+            'wali_murid_id' => 'nullable|string',
         ]);
-
-        // Format no_hp siswa ke internasional (awalan 62)
         $noHpSiswa = null;
         if (!empty($validated['no_hp'])) {
             $noHpSiswa = preg_replace('/[^0-9]/', '', $validated['no_hp']);
@@ -159,12 +156,8 @@ class SiswaController extends Controller
                 $noHpSiswa = '62' . substr($noHpSiswa, 1);
             }
         }
-
-        // Tangani data wali murid
         $wali_murid_id = null;
-
         if ($request->wali_murid_id === 'baru') {
-            // Validasi data wali baru
             $request->validate([
                 'nama_ayah' => 'required|string|max:255',
                 'nama_ibu' => 'required|string|max:255',
@@ -180,14 +173,10 @@ class SiswaController extends Controller
                 'pekerjaan_wali' => 'nullable|string|max:255',
                 'alamat_wali' => 'nullable|string|max:500',
             ]);
-
-            // Format no_hp wali
             $noHpWali = preg_replace('/[^0-9]/', '', $request->no_hp_wali);
             if ($noHpWali && str_starts_with($noHpWali, '0')) {
                 $noHpWali = '62' . substr($noHpWali, 1);
             }
-
-            // Simpan wali baru
             $waliMurid = WaliMurid::create([
                 'nama_ayah' => $request->nama_ayah,
                 'nama_ibu' => $request->nama_ibu,
@@ -198,7 +187,6 @@ class SiswaController extends Controller
                 'pekerjaan_wali' => $request->pekerjaan_wali,
                 'alamat' => $request->alamat_wali,
             ]);
-
             $wali_murid_id = $waliMurid->id;
         } elseif (is_numeric($request->wali_murid_id)) {
             $exists = WaliMurid::where('id', $request->wali_murid_id)->exists();
@@ -207,21 +195,15 @@ class SiswaController extends Controller
             }
             $wali_murid_id = $request->wali_murid_id;
         }
-
-        // Format password siswa dari tanggal lahir (ddmmyyyy)
         $tanggal = Carbon::parse($validated['tanggal_lahir']);
         $passwordPlain = $tanggal->format('dmY');
         $username = $validated['nisn'];
-
-        // Buat user
         $user = User::create([
             'name' => $validated['nama'],
             'email' => $validated['email'] ?? null,
             'username' => $username,
             'password' => Hash::make($passwordPlain),
         ]);
-
-        // Cek email/role tabrakan
         if (
             $user->roles()->whereIn('name', ['guru', 'wali_kelas'])->exists() ||
             User::where('email', $validated['email'])
@@ -231,12 +213,8 @@ class SiswaController extends Controller
             $user->delete(); // rollback
             return back()->withErrors('Email sudah digunakan oleh guru atau wali kelas.');
         }
-
-        // Pasang role siswa
         $roleSiswa = Role::where('name', 'siswa')->first();
         $user->roles()->attach($roleSiswa);
-
-        // Simpan data siswa
         Siswa::create([
             'user_id' => $user->id,
             'wali_murid_id' => $wali_murid_id,
@@ -251,7 +229,6 @@ class SiswaController extends Controller
             'no_hp' => $noHpSiswa,
             'status' => $validated['status'],
         ]);
-
         return redirect()->to(role_route('siswa.index'))
             ->with('success', "Siswa berhasil ditambahkan. Username: <b>{$username}</b>, password: <b>{$passwordPlain}</b>");
     }

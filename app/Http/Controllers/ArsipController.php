@@ -19,7 +19,6 @@ class ArsipController extends Controller
         $sortBy = $request->input('sortBy', 'id');
         $sortDirection = $request->input('sortDirection', 'asc');
         $search = $request->input('search');
-
         $columnMap = [
             'id' => 'siswa.id',
             'name' => 'siswa.nama',
@@ -29,30 +28,25 @@ class ArsipController extends Controller
             'kelas' => 'kelas.nama',
             'status' => 'kelas_siswa.status',
         ];
-
         $query = Siswa::query()
             ->leftJoin('kelas_siswa', 'kelas_siswa.siswa_id', '=', 'siswa.id')
             ->leftJoin('kelas', 'kelas.id', '=', 'kelas_siswa.kelas_id')
             ->select('siswa.*', 'kelas.nama as kelas', 'kelas_siswa.status as status')
             ->where('kelas_siswa.status', '!=', 'Aktif');
-
         // Filter pencarian
         if ($search) {
             $query->where('siswa.nama', 'like', "%{$search}%")
                 ->orWhere('siswa.nipd', 'like', "%{$search}%")
                 ->orWhere('siswa.nisn', 'like', "%{$search}%");
         }
-
         // Sorting
         if (isset($columnMap[$sortBy])) {
             $query->orderBy($columnMap[$sortBy], $sortDirection);
         } else {
             $query->orderBy('siswa.id', 'asc');
         }
-
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
-
         $siswa = $paginator->through(function ($item) {
             return [
                 'id' => $item->id,
@@ -64,10 +58,8 @@ class ArsipController extends Controller
                 'status' => $item->status ?? '-',
             ];
         });
-
         $breadcrumbs = [['label' => 'Arsip Siswa']];
         $title = 'Arsip Siswa';
-
         return view('arsip.siswa', compact('siswa', 'totalCount', 'breadcrumbs', 'title'));
     }
 
@@ -80,7 +72,6 @@ class ArsipController extends Controller
         $sortBy = $request->input('sortBy', 'id');
         $sortDirection = $request->input('sortDirection', 'asc');
         $search = $request->input('search');
-
         $columnMap = [
             'id' => 'guru.id',
             'name' => 'guru.nama',
@@ -88,25 +79,19 @@ class ArsipController extends Controller
             'nuptk' => 'guru.nuptk',
             'status' => 'guru.status',
         ];
-
         $query = Guru::query()
             ->where('status', '!=', 'Aktif'); // hanya guru non-aktif
-
-
         if ($search) {
             $query->where('nama', 'like', "%{$search}%")
                 ->orWhere('nip', 'like', "%{$search}%");
         }
-
         if (isset($columnMap[$sortBy])) {
             $query->orderBy($columnMap[$sortBy], $sortDirection);
         } else {
             $query->orderBy('guru.id', 'asc');
         }
-
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
-
         $guru = $paginator->through(function ($item) {
             return [
                 'id' => $item->id,
@@ -118,10 +103,8 @@ class ArsipController extends Controller
                 'no_hp' => $item->no_hp ?? '-'
             ];
         });
-
         $breadcrumbs = [['label' => 'Arsip Guru']];
         $title = 'Arsip Guru';
-
         return view('arsip.guru', compact('guru', 'totalCount', 'breadcrumbs', 'title'));
     }
 

@@ -41,8 +41,13 @@ class GuruKelas extends Model
         return $this->hasMany(LingkupMateri::class);
     }
 
-    public function tahunSemester()
+    // public function tahunSemester()
+    // {
+    //     return $this->belongsTo(TahunSemester::class);
+    // }
+
+    public function tahunAjaran()
     {
-        return $this->belongsTo(TahunSemester::class);
+        return $this->belongsTo(TahunAjaran::class);
     }
 }

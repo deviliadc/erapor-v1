@@ -25,14 +25,19 @@ class TahunSemester extends Model
         return $this->belongsTo(TahunAjaran::class);
     }
 
-    public function kelas()
-    {
-        return $this->hasMany(Kelas::class);
-    }
+    // public function kelas()
+    // {
+    //     return $this->hasMany(Kelas::class);
+    // }
 
     public function kelasSiswa()
     {
         return $this->hasMany(KelasSiswa::class);
+    }
+
+    public function nilaiMapel()
+    {
+        return $this->hasMany(NilaiMapel::class);
     }
 
     public function isValidated()

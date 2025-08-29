@@ -33,3 +33,6 @@
 <td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap">
     {{ $item['periode'] === 'tengah' ? 'Tengah Semester' : 'Akhir Semester' }}
 </td>
+<td class="px-4 py-3 text-gray-700 dark:text-gray-400 whitespace-nowrap">
+    {{ ucfirst($item['semester'] ?? '-') }}
+</td>

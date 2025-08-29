@@ -16,16 +16,13 @@ class ValidasiSemesterController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-
         // Ambil semua semester dengan relasi tahun ajaran
         $semester = TahunSemester::with('tahunAjaran')
             ->orderByDesc('tahun_ajaran_id')
             ->orderBy('semester')
             ->get();
-
         // Ambil semester aktif
         $semesterAktif = TahunSemester::aktif()->first();
-
         // Tambahkan label untuk dropdown + tandai aktif
         $semester = $semester->map(function ($s) use ($semesterAktif) {
             $label = $s->tahunAjaran->tahun . ' - ' . $s->semester;
@@ -35,17 +32,13 @@ class ValidasiSemesterController extends Controller
             $s->label = $label;
             return $s;
         });
-
         // Default filter ke semester aktif
         $semesterId = $request->input('tahun_semester', $semesterAktif?->id);
-
         // Query validasi sesuai filter semester
         $query = ValidasiSemester::with('tahunSemester.tahunAjaran', 'validator')
             ->where('tahun_semester_id', $semesterId);
-
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
-
         $validasi = $paginator->through(fn($item) => [
             'id' => $item->id,
             'tipe' => $item->tipe,
@@ -57,7 +50,6 @@ class ValidasiSemesterController extends Controller
                 ? $item->tahunSemester->tahunAjaran->tahun . ' - ' . $item->tahunSemester->semester
                 : '-',
         ]);
-
         return view('validasi-semester.index', compact(
             'validasi',
             'totalCount',

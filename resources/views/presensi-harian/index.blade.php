@@ -56,8 +56,8 @@ $filters = [
 
         <x-table
             :columns="[
-                'tanggal' => ['label' => 'Tanggal', 'sortable' => true],
-                'kelas' => ['label' => 'Kelas', 'sortable' => true],
+                'tanggal' => ['label' => 'Tanggal', 'sortable' => false],
+                'kelas' => ['label' => 'Kelas', 'sortable' => false],
                 'catatan' => ['label' => 'Catatan', 'sortable' => false],
             ]"
             :data="$paginator"

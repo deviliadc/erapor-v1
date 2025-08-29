@@ -32,8 +32,8 @@
 {{-- Table Tema --}}
 <x-table :columns="[
     'no' => ['label' => 'No', 'sortable' => false],
-    'nama_tema' => ['label' => 'Nama Tema', 'sortable' => true],
-    'deskripsi_tema' => ['label' => 'Deskripsi', 'sortable' => true],
+    'nama_tema' => ['label' => 'Nama Tema', 'sortable' => false],
+    'deskripsi_tema' => ['label' => 'Deskripsi', 'sortable' => false],
 ]" :data="$tema" :total-count="$temaTotal" row-view="p5-tema.partials.row" :actions="[
     'edit' => true,
     'delete' => true,

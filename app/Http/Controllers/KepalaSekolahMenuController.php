@@ -28,25 +28,20 @@ class KepalaSekolahMenuController extends Controller
     {
         $tahunSemesterId = $request->input('tahun_semester_filter')
             ?? TahunSemester::where('is_active', 1)->first()?->id;
-
         $tahunSemesterAktif = TahunSemester::with('tahunAjaran')->find($tahunSemesterId);
         $tahunAjaranId = $tahunSemesterAktif?->tahun_ajaran_id;
-
         $kelasList = Kelas::orderBy('nama')->get();
-
         // Ambil jumlah siswa per kelas
         $kelasData = [];
         foreach ($kelasList as $kelas) {
             $jumlahSiswa = KelasSiswa::where('kelas_id', $kelas->id)
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->count();
-
             $waliKelas = GuruKelas::where('kelas_id', $kelas->id)
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->where('peran', 'wali')
                 ->with('guru')
                 ->first()?->guru?->nama ?? '-';
-
             $kelasData[] = [
                 'id' => $kelas->id,
                 'kelas' => $kelas->nama,
@@ -54,7 +49,6 @@ class KepalaSekolahMenuController extends Controller
                 'jumlah_siswa' => $jumlahSiswa,
             ];
         }
-
         return view('menu-kepsek.rekap-presensi', [
             'kelas' => collect($kelasData),
             'totalCount' => count($kelasData),
@@ -80,25 +74,20 @@ class KepalaSekolahMenuController extends Controller
     {
         $tahunSemesterId = $request->input('tahun_semester_filter')
             ?? TahunSemester::where('is_active', 1)->first()?->id;
-
         $tahunSemester = TahunSemester::with('tahunAjaran')->findOrFail($tahunSemesterId);
         $tahunAjaranId = $tahunSemester->tahun_ajaran_id;
-
         $kelas = Kelas::findOrFail($kelas_id);
-
         // Cari wali kelas sesuai tahun ajaran
         $waliKelas = GuruKelas::where('kelas_id', $kelas_id)
             ->where('tahun_ajaran_id', $tahunAjaranId)
             ->where('peran', 'wali')
             ->with('guru')
             ->first()?->guru?->nama ?? '-';
-
         // Ambil semua siswa di kelas ini pada tahun ajaran
         $kelasSiswaList = KelasSiswa::with('siswa')
             ->where('kelas_id', $kelas_id)
             ->where('tahun_ajaran_id', $tahunAjaranId)
             ->get();
-
         $presensiData = [];
         foreach ($kelasSiswaList as $ks) {
             $presensi = PresensiDetail::where('kelas_siswa_id', $ks->id)
@@ -106,7 +95,6 @@ class KepalaSekolahMenuController extends Controller
                     $q->where('tahun_semester_id', $tahunSemesterId);
                 })
                 ->get();
-
             $presensiData[] = [
                 'id' => $ks->id,
                 'no_absen' => $ks->no_absen,
@@ -117,9 +105,7 @@ class KepalaSekolahMenuController extends Controller
                 'alfa'  => $presensi->where('status', 'Alpha')->count(),
             ];
         }
-
         $presensiData = collect($presensiData);
-
         return view('menu-kepsek.rekap-presensi-detail', [
             'presensiData' => collect($presensiData),
             'totalCount' => $kelasSiswaList->count(),
@@ -196,91 +182,81 @@ class KepalaSekolahMenuController extends Controller
         $tahunSemesterId = $request->input('tahun_semester_filter')
             ?? TahunSemester::where('is_active', 1)->first()?->id;
         $mapelId = $request->input('mapel_filter');
-
         $tahunSemester = TahunSemester::with('tahunAjaran')->findOrFail($tahunSemesterId);
         $tahunAjaranId = $tahunSemester->tahun_ajaran_id;
-
         $kelas = Kelas::findOrFail($kelas_id);
-
         $waliKelas = GuruKelas::where('kelas_id', $kelas_id)
             ->where('tahun_ajaran_id', $tahunAjaranId)
             ->where('peran', 'wali')
             ->with('guru')
             ->first()?->guru?->nama ?? '-';
-
-            // Ambil semua mapel yang diajarkan di kelas ini pada tahun ajaran
-            $mapelRaw = GuruKelas::with('mapel')
-                ->where('kelas_id', $kelas_id)
-                ->where('tahun_ajaran_id', $tahunAjaranId)
+        // Ambil semua mapel yang diajarkan di kelas ini pada tahun ajaran
+        $mapelRaw = GuruKelas::with('mapel')
+            ->where('kelas_id', $kelas_id)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->get()
+            ->pluck('mapel')
+            ->unique('id')
+            ->filter(); // pastikan tidak null
+        $mapelOptions = $mapelRaw->map(fn($m) => [
+            'id' => $m->id,
+            'name' => $m->nama,
+        ])->values();
+        // Jika tidak ada mapel, $mapelAktif = null
+        if ($mapelOptions->isEmpty()) {
+            $mapelAktif = null;
+            $mapelFilterEnabled = false;
+        } else {
+            $mapelAktif = $mapelId
+                ? \App\Models\Mapel::find($mapelId)
+                : \App\Models\Mapel::find($mapelOptions->first()['id']);
+            $mapelFilterEnabled = true;
+        }
+        $kelasSiswaList = KelasSiswa::with('siswa')
+            ->where('kelas_id', $kelas_id)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->get();
+        $nilaiMapel = [];
+        foreach ($kelasSiswaList as $ks) {
+            $nilai = $mapelAktif
+                ? \App\Models\NilaiMapel::where('kelas_siswa_id', $ks->id)
+                ->where('tahun_semester_id', $tahunSemesterId)
+                ->where('mapel_id', $mapelAktif->id)
+                ->first()
+                : null;
+            $nilaiMapel[] = [
+                'id' => $ks->id,
+                'no_absen' => $ks->no_absen,
+                'nama' => $ks->siswa->nama ?? '-',
+                'uts' => $nilai?->uts ?? '-',
+                'uas' => $nilai?->uas ?? '-',
+            ];
+        }
+        return view('menu-kepsek.rekap-nilai-mapel-detail', [
+            'nilaiMapel' => collect($nilaiMapel),
+            'totalCount' => count($nilaiMapel),
+            'kelas' => $kelas,
+            'waliKelas' => $waliKelas,
+            'tahunSemesterAktif' => $tahunSemester,
+            'tahunSemesterSelect' => TahunSemester::with('tahunAjaran')
+                ->join('tahun_ajaran', 'tahun_ajaran.id', '=', 'tahun_semester.tahun_ajaran_id')
+                ->orderBy('tahun_ajaran.tahun', 'desc')
+                ->orderByRaw("FIELD(semester, 'ganjil', 'genap')")
+                ->select('tahun_semester.*')
                 ->get()
-                ->pluck('mapel')
-                ->unique('id')
-                ->filter(); // pastikan tidak null
-
-            $mapelOptions = $mapelRaw->map(fn($m) => [
-                'id' => $m->id,
-                'name' => $m->nama,
-            ])->values();
-
-            // Jika tidak ada mapel, $mapelAktif = null
-            if ($mapelOptions->isEmpty()) {
-                $mapelAktif = null;
-                $mapelFilterEnabled = false;
-            } else {
-                $mapelAktif = $mapelId
-                    ? \App\Models\Mapel::find($mapelId)
-                    : \App\Models\Mapel::find($mapelOptions->first()['id']);
-                $mapelFilterEnabled = true;
-            }
-
-            $kelasSiswaList = KelasSiswa::with('siswa')
-                ->where('kelas_id', $kelas_id)
-                ->where('tahun_ajaran_id', $tahunAjaranId)
-                ->get();
-
-            $nilaiMapel = [];
-            foreach ($kelasSiswaList as $ks) {
-                $nilai = $mapelAktif
-                    ? \App\Models\NilaiMapel::where('kelas_siswa_id', $ks->id)
-                        ->where('tahun_semester_id', $tahunSemesterId)
-                        ->where('mapel_id', $mapelAktif->id)
-                        ->first()
-                    : null;
-
-                $nilaiMapel[] = [
-                    'id' => $ks->id,
-                    'no_absen' => $ks->no_absen,
-                    'nama' => $ks->siswa->nama ?? '-',
-                    'uts' => $nilai?->uts ?? '-',
-                    'uas' => $nilai?->uas ?? '-',
-                ];
-            }
-
-            return view('menu-kepsek.rekap-nilai-mapel-detail', [
-                'nilaiMapel' => collect($nilaiMapel),
-                'totalCount' => count($nilaiMapel),
-                'kelas' => $kelas,
-                'waliKelas' => $waliKelas,
-                'tahunSemesterAktif' => $tahunSemester,
-                'tahunSemesterSelect' => TahunSemester::with('tahunAjaran')
-                    ->join('tahun_ajaran', 'tahun_ajaran.id', '=', 'tahun_semester.tahun_ajaran_id')
-                    ->orderBy('tahun_ajaran.tahun', 'desc')
-                    ->orderByRaw("FIELD(semester, 'ganjil', 'genap')")
-                    ->select('tahun_semester.*')
-                    ->get()
-                    ->map(fn($ts) => [
-                        'id' => $ts->id,
-                        'name' => $ts->tahunAjaran->tahun . ' - ' . ucfirst($ts->semester) . ($ts->is_active ? ' (Aktif)' : ''),
-                    ]),
-                'mapelOptions' => $mapelOptions,
-                'mapelAktif' => $mapelAktif,
-                'mapelFilterEnabled' => $mapelFilterEnabled,
-                'breadcrumbs' => [
-                    ['label' => 'Rekap Nilai Mata Pelajaran',  'url' => route('kepala-sekolah.nilai-mapel.index')],
-                    ['label' => 'Detail Nilai Mata Pelajaran']
-                ],
-                'title' => 'Rekap Nilai Mata Pelajaran',
-            ]);
+                ->map(fn($ts) => [
+                    'id' => $ts->id,
+                    'name' => $ts->tahunAjaran->tahun . ' - ' . ucfirst($ts->semester) . ($ts->is_active ? ' (Aktif)' : ''),
+                ]),
+            'mapelOptions' => $mapelOptions,
+            'mapelAktif' => $mapelAktif,
+            'mapelFilterEnabled' => $mapelFilterEnabled,
+            'breadcrumbs' => [
+                ['label' => 'Rekap Nilai Mata Pelajaran',  'url' => route('kepala-sekolah.nilai-mapel.index')],
+                ['label' => 'Detail Nilai Mata Pelajaran']
+            ],
+            'title' => 'Rekap Nilai Mata Pelajaran',
+        ]);
     }
 
     public function nilaiEkstra(Request $request)
@@ -503,9 +479,9 @@ class KepalaSekolahMenuController extends Controller
             // Ambil satu nilai_p5 (proyek) untuk siswa ini di semester ini dan proyek aktif
             $nilaiP5 = $proyekAktif
                 ? \App\Models\NilaiP5::where('kelas_siswa_id', $ks->id)
-                    ->where('tahun_semester_id', $tahunSemesterId)
-                    ->where('p5_proyek_id', $proyekAktif->id)
-                    ->first()
+                ->where('tahun_semester_id', $tahunSemesterId)
+                ->where('p5_proyek_id', $proyekAktif->id)
+                ->first()
                 : null;
 
             foreach ($dimensiList as $dimensi) {

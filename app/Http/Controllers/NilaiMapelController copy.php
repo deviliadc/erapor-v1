@@ -277,7 +277,7 @@ class NilaiMapelController extends Controller
             foreach ($mapel as $gk) {
                 if (!$gk->mapel_id) continue;
                 foreach ($siswaList as $ks) {
-                    // $periodeList = $periode === 'akhir' ? ['tengah', 'akhir'] : [$periode];
+                    // Ambil nilai periode aktif
                     $periodeList = [$periode];
                     $nmList = NilaiMapel::with('detailMapel')
                         ->where('kelas_siswa_id', $ks->id)
@@ -285,6 +285,16 @@ class NilaiMapelController extends Controller
                         ->where('tahun_semester_id', $tahunAktif->id)
                         ->whereIn('periode', $periodeList)
                         ->get();
+                    // Untuk periode akhir, ambil juga nilai UTS dari periode tengah semester yang sama (tahun & semester harus match)
+                    $nmTengah = null;
+                    if ($periode === 'akhir') {
+                        $nmTengah = NilaiMapel::with('detailMapel')
+                            ->where('kelas_siswa_id', $ks->id)
+                            ->where('mapel_id', $gk->mapel_id)
+                            ->where('tahun_semester_id', $tahunAktif->id) // tahun & semester match
+                            ->where('periode', 'tengah')
+                            ->first();
+                    }
                     foreach ($nmList as $nm) {
                         foreach ($nm->detailMapel as $item) {
                             $jenis = $item->jenis_nilai;
@@ -306,22 +316,48 @@ class NilaiMapelController extends Controller
                             }
                         }
                     }
+                    // Inject nilai UTS dari periode tengah ke array nilaiMapel untuk periode akhir (readonly)
+                    if ($periode === 'akhir' && $nmTengah) {
+                        foreach ($nmTengah->detailMapel as $item) {
+                            $jenis = $item->jenis_nilai;
+                            if (str_starts_with($jenis, 'uts')) {
+                                $jenisKey = $jenis === 'uts-nontes' ? 'non_tes' : ($jenis === 'uts-tes' ? 'tes' : $jenis);
+                                $nilaiMapel[$gk->mapel_id]['uts'][$ks->id][$jenisKey] = $item->nilai;
+                            }
+                        }
+                    }
                 }
             }
             // Lingkup materi & tujuan pembelajaran (PERBAIKAN → ikut periodeList)
+            // foreach ($mapel as $gk) {
+            //     $lmList = LingkupMateri::with(['tujuanPembelajaran' => function ($q) use ($tahunAktif, $periode) {
+            //         $q->where('semester', $tahunAktif->semester)->where('periode', $periode);
+            //     }])
+            //         ->where('mapel_id', $gk->mapel_id)
+            //         ->where('kelas_id', $gk->kelas_id)
+            //         ->where('semester', $tahunAktif->semester)
+            //         ->where('periode', $periode)
+            //         ->get();
+            //     $tpList = $lmList->flatMap->tujuanPembelajaran;
+            //     $tujuanPembelajaranList[$gk->mapel_id] = $tpList;
+            //     $lingkupMateriList[$gk->mapel_id]      = $lmList;
+            // }
             foreach ($mapel as $gk) {
-                $lmList = LingkupMateri::with(['tujuanPembelajaran' => function ($q) use ($tahunAktif, $periode) {
-                    $q->where('semester', $tahunAktif->semester)->where('periode', $periode);
+                $lmList = LingkupMateri::with(['tujuanPembelajaran' => function ($q) {
+                    // Tidak perlu filter semester/periode di sini
+                    // karena ikut parent (LingkupMateri)
                 }])
                     ->where('mapel_id', $gk->mapel_id)
                     ->where('kelas_id', $gk->kelas_id)
-                    ->where('semester', $tahunAktif->semester)
-                    ->where('periode', $periode)
+                    ->where('semester', $tahunAktif->semester) // ✅ filter di lingkup materi
+                    ->where('periode', $periode)               // ✅ filter di lingkup materi
                     ->get();
+
                 $tpList = $lmList->flatMap->tujuanPembelajaran;
                 $tujuanPembelajaranList[$gk->mapel_id] = $tpList;
                 $lingkupMateriList[$gk->mapel_id]      = $lmList;
             }
+
             // Rekap nilai (untuk ringkasan per siswa)
             foreach ($mapel as $gk) {
                 foreach ($siswaList as $ks) {
@@ -375,13 +411,13 @@ class NilaiMapelController extends Controller
             $koleksi = collect([$nilaiMapel]);
             // Jika periode akhir, ikutkan data periode tengah agar UTS terbaca
             if ($periode === 'akhir') {
+                // Pastikan UTS diambil dari semester yang sama (tahun & semester match)
                 $nmTengah = \App\Models\NilaiMapel::with('detailMapel')
                     ->where('kelas_siswa_id', $kelasSiswaId)
                     ->where('mapel_id', $mapelId)
                     ->where('periode', 'tengah')
-                    ->where('tahun_semester_id', $nilaiMapel->tahun_semester_id)
+                    ->where('tahun_semester_id', $nilaiMapel->tahun_semester_id) // tahun & semester match
                     ->first();
-
                 if ($nmTengah) {
                     $koleksi->push($nmTengah);
                 }

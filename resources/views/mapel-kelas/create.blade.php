@@ -21,7 +21,7 @@
         <x-form.select
             name="guru_id"
             label="Guru Pengajar"
-            :options="$guruSelect"
+            :options="['' => 'Pilih Guru'] + $guruSelect"
             placeholder="Pilih Guru Pengajar"
             :selected="old('guru_id')"
             :searchable="true"

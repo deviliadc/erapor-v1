@@ -12,6 +12,7 @@
     :enable-import="false"
     :enable-export="false"
     :enable-search="true"
+    searchName="search_tahun_ajaran"
     :route="role_route('tahun-semester.index')">
     <x-slot name="addButton">
         <button type="button"

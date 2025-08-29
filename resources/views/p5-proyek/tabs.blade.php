@@ -29,18 +29,11 @@
         </x-slot>
     </x-table.toolbar>
 
-    {{-- Table Proyek --}}
     <x-table :columns="[
         'no' => ['label' => 'No', 'sortable' => false],
-        // 'kelas' => ['label' => 'Kelas', 'sortable' => true],
-        'nama_proyek' => ['label' => 'Nama Proyek', 'sortable' => true],
-        'deskripsi_proyek' => ['label' => 'Deskripsi', 'sortable' => true],
-        // 'guru' => ['label' => 'Guru', 'sortable' => true],
-        // 'tema' => ['label' => 'Tema', 'sortable' => true],
-        // 'dimensi' => ['label' => 'Dimensi', 'sortable' => true],
-        // 'elemen' => ['label' => 'Elemen', 'sortable' => true],
-        // 'sub_elemen' => ['label' => 'Sub Elemen', 'sortable' => true],
-        'tahun_semester' => ['label' => 'Tahun', 'sortable' => true],
+        'nama_proyek' => ['label' => 'Nama Proyek', 'sortable' => false],
+        'deskripsi_proyek' => ['label' => 'Deskripsi', 'sortable' => false],
+        'tahun_semester' => ['label' => 'Tahun', 'sortable' => false],
     ]"
         :data="$proyek"
         :total-count="$proyekTotal"

@@ -41,7 +41,7 @@
                     $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->format('Y-m-d') : '',
                 )"
                     placeholder="Pilih tanggal" required /> --}}
-                                        <x-form.date-picker
+                    <x-form.date-picker
                         name="tanggal_lahir"
                         label="Tanggal Lahir"
                         :value="old('tanggal_lahir', $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->format('Y-m-d') : '')"

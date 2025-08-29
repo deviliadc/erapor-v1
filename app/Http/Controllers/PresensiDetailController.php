@@ -100,38 +100,19 @@ class PresensiDetailController extends Controller
             'status' => 'required|string',
             'keterangan' => 'nullable|string|max:255',
         ]);
-
         $presensi_detail = PresensiDetail::findOrFail($id);
-        // $presensi_harian_id = $presensi_detail->presensi_harian_id;
-
-        // $presensi_detail->update([
-        //     'status' => $request->status,
-        //     'keterangan' => $request->keterangan,
-        // ]);
-
-        // return redirect()->to(role_route('presensi-harian.show', ['presensi_harian' => $presensi_harian_id]))
-        //     ->with('success', 'Presensi berhasil diperbarui.');
-
         $presensi_harian = $presensi_detail->presensiHarian; // relasi ke presensi_harian
         $tahunSemester = TahunSemester::where('is_active', true)->first();
-
         if (!$tahunSemester) {
             return back()->withErrors(['tahun_semester_id' => 'Tahun semester aktif tidak ditemukan.']);
         }
-
-        // Simpan status lama untuk koreksi rekap
         $statusLama = $presensi_detail->status;
-
-        // Update presensi detail
         $presensi_detail->update([
             'status' => $request->status,
             'keterangan' => $request->keterangan,
         ]);
-
-        // Hitung ulang total sakit, izin, alfa untuk siswa ini di semester dan periode terkait
         $kelasSiswaId = $presensi_detail->kelas_siswa_id;
         $periode = $presensi_harian->periode;
-
         $totalSakit = PresensiDetail::whereHas('presensiHarian', function ($q) use ($tahunSemester, $periode) {
             $q->where('tahun_semester_id', $tahunSemester->id)
                 ->where('periode', $periode);
@@ -139,7 +120,6 @@ class PresensiDetailController extends Controller
             ->where('kelas_siswa_id', $kelasSiswaId)
             ->where('status', 'Sakit')
             ->count();
-
         $totalIzin = PresensiDetail::whereHas('presensiHarian', function ($q) use ($tahunSemester, $periode) {
             $q->where('tahun_semester_id', $tahunSemester->id)
                 ->where('periode', $periode);
@@ -147,7 +127,6 @@ class PresensiDetailController extends Controller
             ->where('kelas_siswa_id', $kelasSiswaId)
             ->where('status', 'Izin')
             ->count();
-
         $totalAlfa = PresensiDetail::whereHas('presensiHarian', function ($q) use ($tahunSemester, $periode) {
             $q->where('tahun_semester_id', $tahunSemester->id)
                 ->where('periode', $periode);
@@ -155,7 +134,6 @@ class PresensiDetailController extends Controller
             ->where('kelas_siswa_id', $kelasSiswaId)
             ->where('status', 'Alpha')
             ->count();
-
         // Update atau create rekap absensi
         RekapAbsensi::updateOrCreate(
             [
@@ -169,11 +147,10 @@ class PresensiDetailController extends Controller
                 'total_alfa' => $totalAlfa,
             ]
         );
-
         return redirect()->to(role_route('presensi-harian.show', ['presensi_harian' => $presensi_harian->id]))
             ->with('success', 'Presensi berhasil diperbarui.');
     }
-    
+
     /**
      * Remove the specified resource from storage.
      */

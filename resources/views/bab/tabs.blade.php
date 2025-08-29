@@ -33,7 +33,7 @@
 {{-- Table --}}
 <x-table :columns="[
     'no' => ['label' => 'No', 'sortable' => false],
-    'nama' => ['label' => 'Nama', 'sortable' => true],
+    'nama' => ['label' => 'Nama', 'sortable' => false],
 ]" :data="$bab"
     :total-count="$babTotal"
     row-view="bab.partials.row"

@@ -7,8 +7,8 @@ use App\Models\Role;
 use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Exports\GenericExport;
 use App\Exports\ReusableExport;
@@ -303,7 +303,7 @@ class UserController extends Controller
             '',
             '',
             '',
-            'admin/guru/siswa/wali_kelas'
+            'admin/guru/siswa'
         ];
 
         // Jika data kosong, beri minimal 1 baris kosong agar file tetap terbuat

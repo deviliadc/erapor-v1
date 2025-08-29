@@ -15,12 +15,9 @@ class FaseController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-
         $query = Fase::query();
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
-
-        // Data untuk tampilan
         $fase = $paginator->through(function ($item) {
             return [
                 'id' => $item->id,
@@ -28,7 +25,6 @@ class FaseController extends Controller
                 'keterangan' => $item->keterangan,
             ];
         });
-
         $breadcrumbs = [
             ['label' => 'Manage Fase'],
         ];

@@ -28,7 +28,7 @@
                 :enable-add-button="!$isGuru"
                 :enable-import="false"
                 :enable-export="false"
-                :enable-search="true"
+                :enable-search="false"
                 :route="role_route('param-ekstra.create')">
                 <x-slot name="addButton">
                     <button type="button"

@@ -33,8 +33,8 @@
 {{-- Table Sub Elemen --}}
 <x-table :columns="[
     'no' => ['label' => 'No', 'sortable' => false],
-    'nama_dimensi' => ['label' => 'Nama Dimensi', 'sortable' => true],
-    'nama_elemen' => ['label' => 'Nama Elemen', 'sortable' => true],
+    'nama_dimensi' => ['label' => 'Nama Dimensi', 'sortable' => false],
+    'nama_elemen' => ['label' => 'Nama Elemen', 'sortable' => false],
     // 'deskripsi_elemen' => ['label' => 'Deskripsi', 'sortable' => true],
 ]" :data="$elemen"
     :total-count="$elemenTotal"

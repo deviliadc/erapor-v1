@@ -44,21 +44,43 @@ class NilaiMapel extends Model
         return $this->hasMany(NilaiMapelDetail::class, 'nilai_mapel_id', 'id');
     }
 
+    /** Accessors & Mutators */
     public function getNilaiAkhirAttribute($value)
     {
         return $value !== null ? round($value) : null;
     }
 
+    public function setNilaiAkhirAttribute($value)
+    {
+        $this->attributes['nilai_akhir'] = $value !== null ? round($value) : null;
+    }
+
+    /** Scopes */
+    public function scopeSemester($query, $semester)
+    {
+        return $query->whereHas('tahunSemester', function ($q) use ($semester) {
+            $q->where('semester', ucfirst(strtolower($semester)));
+        });
+    }
+
+    public function scopePeriode($query, $periode)
+    {
+        return $query->where('periode', $periode);
+    }
+
+    /** Boot */
     protected static function boot()
     {
         parent::boot();
 
-        static::creating(function ($nilai) {
+        static::saving(function ($nilai) {
             $kelasSiswa = $nilai->kelasSiswa;
             $tahunSemester = $nilai->tahunSemester;
 
-            if ($kelasSiswa->tahun_ajaran_id !== $tahunSemester->tahun_ajaran_id) {
-                throw new \Exception("Tahun ajaran tidak konsisten.");
+            if ($kelasSiswa && $tahunSemester) {
+                if ($kelasSiswa->tahun_ajaran_id !== $tahunSemester->tahun_ajaran_id) {
+                    throw new \Exception("Tahun ajaran tidak konsisten.");
+                }
             }
         });
     }

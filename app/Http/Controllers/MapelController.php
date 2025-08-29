@@ -121,7 +121,8 @@ class MapelController extends Controller
             'bab' => $item->bab?->nama ?? '-',
             'nama' => $item->nama,
             'tujuan_pembelajaran_count' => $item->tujuanPembelajaran->count(),
-            'periode' => $item->periode ?? 'tengah', // tambahkan periode jika ada
+            'periode' => $item->periode ?? '-', // tambahkan periode jika ada
+            'semester' => $item->semester ?? '-'
         ]);
 
         // $options = $data->mapWithKeys(fn($l) => [
@@ -303,19 +304,15 @@ class MapelController extends Controller
             'kategori'   => 'required|string|in:Wajib,Muatan Lokal',
             'urutan'     => 'required|integer|min:1',
         ]);
-
-        // urutan ngga boleh sama
         if (Mapel::where('urutan', $validated['urutan'])->exists()) {
             return redirect()->back()->withErrors(['urutan' => 'Urutan sudah digunakan.'])->withInput();
         }
-
         Mapel::create([
             'kode_mapel' => $validated['kode_mapel'],
             'nama'       => $validated['nama'],
             'kategori'   => $validated['kategori'],
             'urutan'     => $validated['urutan'],
         ]);
-
         return redirect()->to(role_route('mapel.index', ['tab' => $request->tab ?? 'mapel']))->with('success', 'Mata pelajaran berhasil ditambahkan.');
     }
 
