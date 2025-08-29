@@ -113,6 +113,12 @@
                                                 </td>
                                             </tr>
                                         @endforeach
+                                    @elseif(isset($rekapListByKelas[$kls->id]) && $rekapListByKelas[$kls->id]->count() === 0)
+                                        <tr>
+                                            <td colspan="5" class="text-center py-6 text-gray-500">
+                                                Tidak ada siswa di tahun ajaran ini.
+                                            </td>
+                                        </tr>
                                     @else
                                         <tr>
                                             <td colspan="5" class="text-center py-6 text-gray-500">

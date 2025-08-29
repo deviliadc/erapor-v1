@@ -1,36 +1,47 @@
-{{-- filepath: resources/views/siswa/nilai-mapel.blade.php --}}
+{{-- filepath: resources/views/menu-siswa/nilai-mapel.blade.php --}}
 <x-app-layout>
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
     <div class="max-w-3xl mx-auto py-8">
+        <div class="rounded-2xl border border-gray-200 bg-white pt-4 dark:border-gray-800 dark:bg-white/[0.03]">
+            @php
+                $optionsTahunSemester = collect($daftarTahunSemester ?? [])->map(function($ts) {
+                    return [
+                        'id' => $ts->id,
+                        'label' => $ts->tahunAjaran->tahun . ' - ' . ucfirst($ts->semester),
+                    ];
+                })->values();
+                $filters = [
+                    [
+                        'name' => 'tahun_semester_id',
+                        'label' => 'Tahun Semester',
+                        'options' => $optionsTahunSemester,
+                        'valueKey' => 'id',
+                        'labelKey' => 'label',
+                        'enabled' => true,
+                        'value' => request('tahun_semester_id', $tahunAktif->id),
+                    ],
+                ];
+            @endphp
+            <x-table.toolbar
+                :filters="$filters"
+                :enable-add-button="false"
+                :enable-import="false"
+                :enable-export="false"
+                :enable-search="false"
+                :route="route('nilai-mapel-siswa')">
+            </x-table.toolbar>
 
-        {{-- Filter Tahun Semester --}}
-        <form method="GET" class="mb-6">
-            <label for="tahun_semester_id" class="mr-2 font-semibold dark:text-gray-200">Tahun Semester:</label>
-            <select name="tahun_semester_id" id="tahun_semester_id" onchange="this.form.submit()" class="border rounded px-2 py-1 dark:bg-gray-800 dark:text-white dark:border-gray-600">
-                @foreach($daftarTahunSemester as $ts)
-                    <option value="{{ $ts->id }}" {{ request('tahun_semester_id', $tahunAktif->id) == $ts->id ? 'selected' : '' }}>
-                        {{ $ts->tahunAjaran->tahun }} - {{ ucfirst($ts->semester) }}
-                    </option>
-                @endforeach
-            </select>
-        </form>
-        <table class="min-w-full bg-white rounded shadow">
-            <thead>
-                <tr>
-                    <th class="px-4 py-2">Mata Pelajaran</th>
-                    <th class="px-4 py-2">UTS</th>
-                    <th class="px-4 py-2">UAS</th>
-                </tr>
-            </thead>
-            <tbody>
-        @foreach($nilaiMapel as $mapel)
-            <tr>
-                <td class="px-4 py-2">{{ $mapel['nama'] }}</td>
-                <td class="px-4 py-2">{{ $mapel['uts'] }}</td>
-                <td class="px-4 py-2">{{ $mapel['uas'] }}</td>
-            </tr>
-        @endforeach
-    </tbody>
-        </table>
+            <x-table.table
+                :columns="[
+                    'nama' => ['label' => 'Mata Pelajaran', 'sortable' => false],
+                    'uts' => ['label' => 'UTS', 'sortable' => false],
+                    'uas' => ['label' => 'UAS', 'sortable' => false],
+                ]"
+                :data="$data"
+                :paginator="$paginator"
+                :selectable="false"
+                :actions="['detail' => false, 'edit' => false, 'delete' => false]"
+            />
+        </div>
     </div>
 </x-app-layout>

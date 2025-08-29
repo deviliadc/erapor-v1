@@ -58,6 +58,10 @@ $watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(valu
         <x-alert type="error" title="Error!" :message="session('error')" />
     @endif
 
+    @if (session('warning'))
+        <x-alert type="warning" title="Perhatian!" :message="session('warning')" />
+    @endif
+
     @if ($errors->any())
         <x-alert type="error" title="Kesalahan Validasi">
             <ul class="list-disc list-inside text-sm text-gray-700">

@@ -9,8 +9,12 @@ use App\Models\NilaiEkstra;
 use App\Models\NilaiEkstraDetail;
 use App\Models\ParamEkstra;
 use App\Models\TahunSemester;
+use App\Models\GuruKelas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use function collect;
+use function view;
+use function abort;
 
 class NilaiEkstraController extends Controller
 {
@@ -379,38 +383,90 @@ class NilaiEkstraController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $guru = null;
+        $daftarTahunSemester = collect();
+        $daftarKelas = collect();
+        if ($user->hasRole('guru')) {
+            $guru = $user->guru;
+            // Tahun semester di mana guru jadi wali
+            $tahunAjaranIds = GuruKelas::where('guru_id', $guru->id)
+                ->where('peran', 'wali')
+                ->pluck('tahun_ajaran_id')
+                ->unique()
+                ->toArray();
+            // Filter tahun semester hanya di tahun ajaran di mana guru jadi wali
+            $daftarTahunSemester = TahunSemester::with('tahunAjaran')
+                ->whereIn('tahun_ajaran_id', $tahunAjaranIds)
+                ->orderByDesc('tahun_ajaran_id')
+                ->orderByDesc('semester')
+                ->get()
+                ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
+                ->sortByDesc('semester')
+                ->values();
+        } else {
+            // Admin: semua tahun semester
+            $daftarTahunSemester = TahunSemester::with('tahunAjaran')
+                ->orderByDesc('tahun_ajaran_id')
+                ->orderByDesc('semester')
+                ->get()
+                ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
+                ->sortByDesc('semester')
+                ->values();
+        }
 
-        // Ambil daftar tahun semester, urut berdasarkan tahun ajaran dan semester
-        $daftarTahunSemester = \App\Models\TahunSemester::with('tahunAjaran')
-            ->get()
-            ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
-            ->sortByDesc('semester')
-            ->values();
         // Tahun semester aktif
         $tahunSemesterAktif = $daftarTahunSemester->firstWhere('is_active', true);
         $tahunSemesterId = $request->tahun_semester_id ?? $tahunSemesterAktif?->id;
         $selectedTahunSemester = $daftarTahunSemester->firstWhere('id', $tahunSemesterId);
-        // Kelas sesuai tahun ajaran dari tahun semester terpilih
-        $daftarKelas = collect();
+
+        // Kelas: hanya jika guru wali di tahun ajaran yang dipilih
         if ($selectedTahunSemester) {
-            $daftarKelas = \App\Models\KelasSiswa::with('kelas')
-                ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
-                ->get()
-                ->pluck('kelas')
-                ->unique('id')
-                ->sortBy('nama')
-                ->values();
+            if ($user->hasRole('guru') && $guru) {
+                // Pastikan guru wali di tahun semester yang dipilih
+                $isWali = GuruKelas::where('guru_id', $guru->id)
+                    ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
+                    ->where('peran', 'wali')
+                    ->exists();
+                if ($isWali) {
+                    $kelasIds = GuruKelas::where('guru_id', $guru->id)
+                        ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
+                        ->where('peran', 'wali')
+                        ->pluck('kelas_id')
+                        ->unique()
+                        ->toArray();
+                    $daftarKelas = KelasSiswa::with('kelas')
+                        ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
+                        ->whereIn('kelas_id', $kelasIds)
+                        ->get()
+                        ->pluck('kelas')
+                        ->unique('id')
+                        ->sortBy('nama')
+                        ->values();
+                } else {
+                    $daftarKelas = collect();
+                }
+            } else {
+                // Admin: semua kelas di tahun ajaran
+                $daftarKelas = KelasSiswa::with('kelas')
+                    ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
+                    ->get()
+                    ->pluck('kelas')
+                    ->unique('id')
+                    ->sortBy('nama')
+                    ->values();
+            }
         }
+
         // Kelas belum dipilih di awal
         $kelasId = $request->kelas_id;
         // Daftar ekstra dan parameter
-        $daftarEkstra = \App\Models\Ekstra::all();
+        $daftarEkstra = Ekstra::all();
         $ekstraId = $request->ekstra_id ?? $daftarEkstra->first()?->id;
         // Siswa per kelas di tahun ajaran aktif (hanya jika kelas dipilih)
         $siswaKelas = collect();
         if ($kelasId && $selectedTahunSemester) {
             $tahunAjaranId = $selectedTahunSemester->tahun_ajaran_id;
-            $siswaKelas = \App\Models\KelasSiswa::with('siswa')
+            $siswaKelas = KelasSiswa::with('siswa')
                 ->where('kelas_id', $kelasId)
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->orderBy('no_absen')
@@ -420,16 +476,15 @@ class NilaiEkstraController extends Controller
         $daftarParameter = [];
         $nilaiMap = [];
         foreach ($daftarEkstra as $ekstra) {
-            $daftarParameter[$ekstra->id] = \App\Models\ParamEkstra::where('ekstra_id', $ekstra->id)->get();
+            $daftarParameter[$ekstra->id] = ParamEkstra::where('ekstra_id', $ekstra->id)->get();
             foreach ($siswaKelas as $ks) {
-                $nilaiEkstra = \App\Models\NilaiEkstra::where('ekstra_id', $ekstra->id)
+                $nilaiEkstra = NilaiEkstra::where('ekstra_id', $ekstra->id)
                     ->where('kelas_siswa_id', $ks->id)
-                    ->where('tahun_semester_id', $tahunSemesterId)
+                    ->where('tahun_ajaran_id', $tahunAjaranId)
                     ->where('periode', 'akhir')
                     ->first();
                 if ($nilaiEkstra) {
-                    $detail = \App\Models\NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
-                        // ->where('periode', 'akhir')
+                    $detail = NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
                         ->pluck('nilai', 'param_ekstra_id')
                         ->toArray();
                     $nilaiMap[$ekstra->id][$ks->id] = [
@@ -510,51 +565,43 @@ class NilaiEkstraController extends Controller
                 }
             }
 
-            // Jika semua nilai kosong/-, hapus data jika ada
-            if (empty($predikatParamFiltered)) {
-                $nilaiEkstra = NilaiEkstra::where([
-                    'kelas_siswa_id' => $item['kelas_siswa_id'],
-                    'ekstra_id' => $item['ekstra_id'],
-                    'periode' => $request->periode,
-                ])->first();
-
-                if ($nilaiEkstra) {
-                    NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
-                        // ->where('periode', $request->periode)
-                        ->delete();
-                    $nilaiEkstra->delete();
-                }
-                continue;
-            }
-
-            $avg = collect($predikatParamFiltered)->avg();
-            $nilaiAkhir = $avg !== null ? ceil($avg) : null;
-
-            // Deskripsi hanya dibuat jika nilai akhir ada
+            // Siapkan deskripsi
             $deskripsi = null;
-            if ($nilaiAkhir !== null) {
-                $paramIds = array_keys($predikatParam);
-                $params = ParamEkstra::whereIn('id', $paramIds)->pluck('parameter', 'id');
+            $paramIds = array_keys($predikatParam);
+            $params = ParamEkstra::whereIn('id', $paramIds)->pluck('parameter', 'id');
+            $namaSiswa = $kelasSiswa && $kelasSiswa->siswa ? $kelasSiswa->siswa->nama : '';
 
-                // $max = collect($predikatParam)->max();
-                // $min = collect($predikatParam)->min();
+            if (!empty($predikatParamFiltered)) {
+                $avg = collect($predikatParamFiltered)->avg();
+                $nilaiAkhir = $avg !== null ? ceil($avg) : null;
 
-                // $tertinggi = collect($predikatParam)->filter(fn($v) => $v == $max)->keys()->first();
-                // $terendah = collect($predikatParam)->filter(fn($v) => $v == $min)->keys()->first();
+                // Ambil parameter tertinggi dan terendah dari nilai yang diisi
+                $max = collect($predikatParamFiltered)->max();
+                $min = collect($predikatParamFiltered)->min();
+                $paramKeys = array_keys($predikatParamFiltered);
 
-                $max = collect($predikatParam)->max();
-                $min = collect($predikatParam)->min();
-
-                $paramKeys = array_keys($predikatParam);
-
-                if ($max === $min && count($paramKeys) > 1) {
-                    // Semua nilai sama, pilih dua parameter berbeda secara acak
-                    shuffle($paramKeys);
+                if (count($paramKeys) === 1) {
+                    // Hanya satu nilai, ambil min dari parameter lain (bukan yang sama)
+                    $tertinggi = $paramKeys[0];
+                    // Cari param lain dari $paramIds yang bukan $tertinggi
+                    $terendah = null;
+                    foreach ($paramIds as $pid) {
+                        if ($pid != $tertinggi) {
+                            $terendah = $pid;
+                            break;
+                        }
+                    }
+                    // Jika tidak ada, fallback ke $tertinggi
+                    if ($terendah === null) {
+                        $terendah = $tertinggi;
+                    }
+                } else if ($max === $min && count($paramKeys) > 1) {
+                    // Semua nilai sama, ambil dua parameter pertama yang berbeda
                     $tertinggi = $paramKeys[0];
                     $terendah = $paramKeys[1];
                 } else {
-                    $tertinggi = collect($predikatParam)->filter(fn($v) => $v == $max)->keys()->first();
-                    $terendah = collect($predikatParam)->filter(fn($v) => $v == $min)->keys()->first();
+                    $tertinggi = collect($predikatParamFiltered)->filter(fn($v) => $v == $max)->keys()->first();
+                    $terendah = collect($predikatParamFiltered)->filter(fn($v) => $v == $min)->keys()->first();
                 }
 
                 $namaTertinggi = $params[$tertinggi] ?? '';
@@ -568,11 +615,38 @@ class NilaiEkstraController extends Controller
                     4 => 'sangat mahir dalam',
                 ];
 
-                $namaSiswa = $kelasSiswa && $kelasSiswa->siswa ? $kelasSiswa->siswa->nama : '';
                 $deskripsi = "Ananda " . $namaSiswa . " " .
                     ($text[$max] ?? '') . " " . $namaTertinggi .
                     " dan " .
                     ($text[$min] ?? '') . " " . $namaTerendah . ".";
+            } else {
+                // Semua nilai kosong, random dua parameter berbeda, ambil dua pertama saja
+                if (count($paramIds) > 1) {
+                    $tertinggi = $paramIds[0];
+                    $terendah = $paramIds[1];
+                } else {
+                    $tertinggi = $paramIds[0] ?? null;
+                    $terendah = $paramIds[0] ?? null;
+                }
+                $namaTertinggi = $params[$tertinggi] ?? '';
+                $namaTerendah = $params[$terendah] ?? '';
+                $deskripsi = "Ananda " . $namaSiswa . " masih perlu bimbingan dalam " . $namaTertinggi . " dan " . $namaTerendah . ".";
+            }
+
+            // Jika semua nilai kosong/-, hapus data jika ada
+            if (empty($predikatParamFiltered)) {
+                $nilaiEkstra = NilaiEkstra::where([
+                    'kelas_siswa_id' => $item['kelas_siswa_id'],
+                    'ekstra_id' => $item['ekstra_id'],
+                    'periode' => $request->periode,
+                ])->first();
+
+                if ($nilaiEkstra) {
+                    NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
+                        ->delete();
+                    $nilaiEkstra->delete();
+                }
+                continue;
             }
 
             $nilaiEkstra = NilaiEkstra::updateOrCreate(
@@ -586,7 +660,7 @@ class NilaiEkstraController extends Controller
                     'siswa_id' => $siswaId,
                     'param_nilai' => [],
                     'predikat_param' => $predikatParamFiltered,
-                    'nilai_akhir' => $nilaiAkhir,
+                    'nilai_akhir' => isset($nilaiAkhir) ? $nilaiAkhir : null,
                     'deskripsi' => $deskripsi,
                 ]
             );
@@ -596,7 +670,6 @@ class NilaiEkstraController extends Controller
                     [
                         'nilai_ekstra_id' => $nilaiEkstra->id,
                         'param_ekstra_id' => $paramId,
-                        // 'periode' => $request->periode,
                     ],
                     [
                         'nilai' => $nilai,
@@ -605,12 +678,10 @@ class NilaiEkstraController extends Controller
             }
 
             // Hapus detail yang tidak diisi
-            $paramIds = array_keys($predikatParam);
             $toDelete = array_diff($paramIds, array_keys($predikatParamFiltered));
             if (!empty($toDelete)) {
                 NilaiEkstraDetail::where('nilai_ekstra_id', $nilaiEkstra->id)
                     ->whereIn('param_ekstra_id', $toDelete)
-                    // ->where('periode', $request->periode)
                     ->delete();
             }
         }

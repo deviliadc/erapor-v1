@@ -65,12 +65,30 @@ class RekapAbsensiController extends Controller
     // }
     public function index(Request $request)
     {
-        // Ambil daftar tahun semester, urut berdasarkan tahun ajaran dan semester
-        $daftarTahunSemester = \App\Models\TahunSemester::with('tahunAjaran')
-            ->get()
-            ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
-            ->sortByDesc('semester')
-            ->values();
+        $user = auth()->user();
+        $isGuru = $user->hasRole('guru');
+        if ($isGuru && $user->guru?->id) {
+            $guruId = $user->guru->id;
+            // Tahun ajaran di mana guru jadi wali
+            $tahunAjaranWaliIds = \App\Models\GuruKelas::where('guru_id', $guruId)
+                ->where('peran', 'wali')
+                ->pluck('tahun_ajaran_id')
+                ->unique()
+                ->toArray();
+            // Tahun semester di tahun ajaran tersebut
+            $daftarTahunSemester = \App\Models\TahunSemester::with('tahunAjaran')
+                ->whereIn('tahun_ajaran_id', $tahunAjaranWaliIds)
+                ->get()
+                ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
+                ->sortByDesc('semester')
+                ->values();
+        } else {
+            $daftarTahunSemester = \App\Models\TahunSemester::with('tahunAjaran')
+                ->get()
+                ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
+                ->sortByDesc('semester')
+                ->values();
+        }
 
         // Tahun semester aktif
         $tahunSemesterAktif = $daftarTahunSemester->firstWhere('is_active', true);
@@ -85,14 +103,11 @@ class RekapAbsensiController extends Controller
         // Buat options tahun semester untuk filter
         $tahunSemesterOptions = $daftarTahunSemester->mapWithKeys(function ($ts) use ($daftarTahunSemester) {
             $label = ($ts->tahunAjaran->tahun ?? '-') . ' - ' . ucfirst($ts->semester);
-
             if ($daftarTahunSemester->firstWhere('is_active', true)?->id === $ts->id) {
                 $label .= ' (Aktif)';
             }
-
             return [$ts->id => $label];
         })->toArray();
-
 
         // Periode absensi (default ke akhir)
         $periode = $request->input('periode', 'akhir');
@@ -100,13 +115,26 @@ class RekapAbsensiController extends Controller
         // Daftar kelas sesuai tahun ajaran dari tahun semester terpilih
         $daftarKelas = collect();
         if ($selectedTahunSemester) {
-            $daftarKelas = \App\Models\KelasSiswa::with('kelas')
-                ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
-                ->get()
-                ->pluck('kelas')
-                ->unique('id')
-                ->sortBy('nama')
-                ->values();
+            if ($isGuru && $user->guru?->id) {
+                // Kelas di mana guru jadi wali di tahun ajaran terpilih
+                $kelasWaliIds = \App\Models\GuruKelas::where('guru_id', $guruId)
+                    ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
+                    ->where('peran', 'wali')
+                    ->pluck('kelas_id')
+                    ->unique()
+                    ->toArray();
+                $daftarKelas = \App\Models\Kelas::whereIn('id', $kelasWaliIds)
+                    ->orderBy('nama')
+                    ->get();
+            } else {
+                $daftarKelas = \App\Models\KelasSiswa::with('kelas')
+                    ->where('tahun_ajaran_id', $selectedTahunSemester->tahun_ajaran_id)
+                    ->get()
+                    ->pluck('kelas')
+                    ->unique('id')
+                    ->sortBy('nama')
+                    ->values();
+            }
         }
 
         // Kelas yang dipilih (default kosong)

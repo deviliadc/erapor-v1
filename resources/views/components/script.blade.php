@@ -72,7 +72,7 @@
                 altFormat: "d-m-Y",
                 dateFormat: "Y-m-d",
                 allowInput: true,
-                defaultDate: (el.value && !isNaN(new Date(el.value))) ? el.value : new Date(),
+                defaultDate: (el.dataset.defaultDate && /^\d{4}-\d{2}-\d{2}$/.test(el.dataset.defaultDate)) ? el.dataset.defaultDate : null,
                 maxDate: null
             });
         });
@@ -86,7 +86,7 @@
                 dateFormat: "Y-m-d",
                 allowInput: true,
                 maxDate: new Date(),
-                defaultDate: el.value && el.value.trim() !== '' ? el.value : new Date(),
+                defaultDate: (el.dataset.defaultDate && /^\d{4}-\d{2}-\d{2}$/.test(el.dataset.defaultDate)) ? el.dataset.defaultDate : null,
                 disable: [
                     function(date) {
                         return date.getDay() === 6 || date.getDay() === 0;

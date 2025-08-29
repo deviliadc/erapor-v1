@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"name": "erapor-v1",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/node_modules": true,
+			"**/vendor": true,
+			"**/storage/logs": true
+		},
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/vendor": true,
+			"**/storage/logs": true
+		},
+		"files.watcherExclude": {
+			"**/node_modules/**": true,
+			"**/vendor/**": true,
+			"**/storage/logs/**": true
+		}
+	}
+}

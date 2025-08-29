@@ -3,11 +3,20 @@ $filters = [
     [
         'name' => 'tahun_semester', // harus sama dengan controller
         'label' => 'Tahun Semester',
-        'options' => $semester, // semua semester, default aktif
+        'options' => $semesterList ?? [],
         'valueKey' => 'id',
         'labelKey' => 'label',
         'enabled' => true,
     ],
+    // [
+    //     'name' => 'kelas', // harus sama dengan controller
+    //     'label' => 'Kelas',
+    //     'options' => $kelasList ?? [],
+    //     'valueKey' => 'id',
+    //     'labelKey' => 'label',
+    //     'enabled' => true,
+    //     // 'Semua Kelas' option ditambahkan dari controller
+    // ]
 ];
 @endphp
 
@@ -27,10 +36,15 @@ $filters = [
                 @if($semesterId) {{-- Button muncul hanya kalau filter semester dipilih --}}
                     <form action="{{ role_route('validasi_semester.validateAll') }}" method="POST" class="inline">
                         @csrf
-                        <input type="hidden" name="semester_id" value="{{ $semesterId }}">
-                        <button type="submit" onclick="return confirm('Yakin ingin memvalidasi semua data?')"
+                        <input type="hidden" name="tahun_semester_id" value="{{ $semesterId }}">
+                        {{-- <input type="hidden" name="kelas_id" value="{{ $kelasId }}"> --}}
+                        {{-- <button type="submit" onclick="return confirm('Yakin ingin memvalidasi semua data?')"
                             class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5
-                            text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
+                            text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600"> --}}
+                               <button type="button"
+                    onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-promote-global' }))"
+                    class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
+                    
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor" class="w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -55,3 +69,20 @@ $filters = [
         </x-table>
     </div>
 </x-app-layout>
+
+<x-modal name="form-promote-global" title="Validasi Semua Data" maxWidth="md">
+    <form action="{{ role_route('validasi_semester.validateAll') }}" method="POST">
+        @csrf
+    <input type="hidden" name="tahun_semester_id" value="{{ $semesterId }}">
+    {{-- <input type="hidden" name="kelas_id" value="{{ $kelasId }}"> --}}
+        <div class="p-6">
+            <p>Apakah Anda yakin ingin memvalidasi semua data di semester ini?</p>
+            <div class="flex justify-center mt-4 p-4">
+                <button type="submit" 
+                    class="px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600">
+                    Ya, Validasi Semua
+                </button>
+            </div>
+        </div>
+    </form>
+</x-modal>

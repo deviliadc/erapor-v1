@@ -40,13 +40,25 @@ class NilaiP5Controller extends Controller
         } elseif ($user->hasRole('guru')) {
             $guru = $user->guru;
             // Tahun semester di mana guru ini jadi wali
-            $tahunIds = \App\Models\GuruKelas::where('guru_id', $guru->id)
+            // $tahunIds = \App\Models\GuruKelas::where('guru_id', $guru->id)
+            //     ->where('peran', 'wali')
+            //     ->pluck('tahun_semester_id')
+            //     ->unique()
+            //     ->values();
+            // $tahunSemesterList = TahunSemester::with('tahunAjaran')
+            //     ->whereIn('id', $tahunIds)
+            //     ->get()
+            //     ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
+            //     ->sortByDesc('semester')
+            //     ->values();
+            $tahunAjaranIds = \App\Models\GuruKelas::where('guru_id', $guru->id)
                 ->where('peran', 'wali')
-                ->pluck('tahun_semester_id')
+                ->pluck('tahun_ajaran_id')
                 ->unique()
                 ->values();
+
             $tahunSemesterList = TahunSemester::with('tahunAjaran')
-                ->whereIn('id', $tahunIds)
+                ->whereIn('tahun_ajaran_id', $tahunAjaranIds)
                 ->get()
                 ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
                 ->sortByDesc('semester')
@@ -62,12 +74,21 @@ class NilaiP5Controller extends Controller
             $kelasList = Kelas::all();
         } elseif ($user->hasRole('guru')) {
             $guru = $user->guru;
+            // $kelasIds = \App\Models\GuruKelas::where('guru_id', $guru->id)
+            //     ->where('tahun_semester_id', $tahunSemesterId)
+            //     ->where('peran', 'wali')
+            //     ->pluck('kelas_id')
+            //     ->unique()
+            //     ->values();
+            // $kelasList = Kelas::whereIn('id', $kelasIds)->get();
+            $tahunAjaranId = \App\Models\TahunSemester::find($tahunSemesterId)?->tahun_ajaran_id;
             $kelasIds = \App\Models\GuruKelas::where('guru_id', $guru->id)
-                ->where('tahun_semester_id', $tahunSemesterId)
+                ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->where('peran', 'wali')
                 ->pluck('kelas_id')
                 ->unique()
                 ->values();
+
             $kelasList = Kelas::whereIn('id', $kelasIds)->get();
         }
 
@@ -76,7 +97,11 @@ class NilaiP5Controller extends Controller
 
         // 4. Proyek P5 sesuai tahun semester yang dipilih
         $proyekList = P5Proyek::where('tahun_semester_id', $tahunSemesterId)->get();
-        $proyekId = $request->proyek_id ?? $proyekList->first()?->id;
+        // Jika tahun semester berubah, proyek harus dipilih ulang
+        $proyekId = $request->proyek_id;
+        if (!$proyekId || !$proyekList->contains('id', $proyekId)) {
+            $proyekId = '';
+        }
 
         $periode = 'akhir';
 
@@ -86,97 +111,80 @@ class NilaiP5Controller extends Controller
         $subelemenByDimensi = [];
         $subelemenList = collect();
 
-        // Query elemen & subelemen strictly by database
         if ($proyekId) {
             $detail = P5ProyekDetail::where('p5_proyek_id', $proyekId)->get();
+
             $dimensiIds = $detail->pluck('p5_dimensi_id')->unique()->values();
             $elemenIds = $detail->pluck('p5_elemen_id')->unique()->values();
-            $subelemenIdsProyek = $detail->pluck('p5_sub_elemen_id')->unique()->values();
-
-            // Ambil subelemen yang benar-benar ada di proyek dan database
-            $nilaiP5DetailSubelemenIds = NilaiP5Detail::whereIn('p5_dimensi_id', $dimensiIds)->pluck('p5_sub_elemen_id')->unique()->values();
-            $allSubelemenIds = $subelemenIdsProyek->merge($nilaiP5DetailSubelemenIds)->unique()->values();
+            $subelemenIds = $detail->pluck('p5_sub_elemen_id')->unique()->values();
 
             $dimensiList = P5Dimensi::whereIn('id', $dimensiIds)->get();
             $elemenList = P5Elemen::whereIn('id', $elemenIds)->get();
-            $subelemenList = P5SubElemen::with('capaian')->whereIn('id', $allSubelemenIds)->get();
+            $subelemenList = P5SubElemen::with('capaian')->whereIn('id', $subelemenIds)->get();
 
             foreach ($dimensiList as $dimensi) {
                 $elemenByDimensi[$dimensi->id] = $elemenList->where('p5_dimensi_id', $dimensi->id)->values();
-                // Subelemen hanya yang benar-benar ada di proyek dan database
-                $subelemenIdsDimensi = $detail->where('p5_dimensi_id', $dimensi->id)->pluck('p5_sub_elemen_id')->unique()->values();
-                $subelemenByDimensi[$dimensi->id] = $subelemenList->whereIn('id', $subelemenIdsDimensi)->values();
+                $subelemenByDimensi[$dimensi->id] = $subelemenList->filter(function ($sub) use ($elemenList, $dimensi) {
+                    $elemen = $elemenList->firstWhere('id', $sub->p5_elemen_id);
+                    return $elemen && $elemen->p5_dimensi_id == $dimensi->id;
+                })->values();
             }
         }
 
-        // 6. Ambil siswa strictly by database
+        // 6. Ambil siswa di kelas dan tahun ajaran dari tahun semester yang dipilih
         $tahunAjaranId = TahunSemester::find($tahunSemesterId)?->tahun_ajaran_id;
         $siswaList = collect();
-        if ($tahunAjaranId) {
+        if ($kelasId && $tahunAjaranId) {
             $siswaList = KelasSiswa::with('siswa')
-                ->whereIn('kelas_id', $kelasList->pluck('id'))
+                ->where('kelas_id', $kelasId)
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->orderBy('no_absen')
                 ->get();
         }
 
-        // 7. Siswa per kelas strictly by database
+        // 7. Siswa per kelas untuk tab
         $siswaByKelas = [];
         foreach ($kelasList as $kls) {
-            $siswaListKelas = $siswaList->where('kelas_id', $kls->id)->values();
-            $siswaByKelas[$kls->id] = $siswaListKelas->map(function ($ks) {
-                return [
-                    'id' => $ks->id,
-                    'nama' => $ks->siswa->nama ?? '-',
-                ];
-            });
+            $siswaByKelas[$kls->id] = KelasSiswa::with('siswa')
+                ->where('kelas_id', $kls->id)
+                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->orderBy('no_absen')
+                ->get()
+                ->map(function ($ks) {
+                    return [
+                        'id' => $ks->id,
+                        'nama' => $ks->siswa->nama ?? '-',
+                    ];
+                });
         }
 
-        // 8. Mapping kelas ke fase strictly by database
+        // 8. Mapping kelas ke fase
         $faseIdByKelas = [];
         foreach ($kelasList as $kls) {
-            $faseIdByKelas[$kls->id] = $kls->fase_id;
+            $faseIdByKelas[$kls->id] = $kls->fase_id ?? $faseId;
         }
 
-        // 9. Mapping nilai: pastikan semua siswa dan subelemen dari proyek diisi
+        // 9. Ambil nilai jika ada siswa dan proyek
         $nilaiMap = [];
-        foreach ($kelasList as $kls) {
-            $siswaListKelas = $siswaList->where('kelas_id', $kls->id)->values();
+        if ($siswaList->isNotEmpty() && $proyekId) {
             $nilaiP5 = NilaiP5::where('periode', $periode)
                 ->where('p5_proyek_id', $proyekId)
-                ->where('tahun_semester_id', $tahunSemesterId)
-                ->whereIn('kelas_siswa_id', $siswaListKelas->pluck('id'))
+                ->whereIn('kelas_siswa_id', $siswaList->pluck('id'))
                 ->get();
+
             $nilaiP5Ids = $nilaiP5->pluck('id');
-            $detail = NilaiP5Detail::whereIn('nilai_p5_id', $nilaiP5Ids)->get();
-            // Index detail by kelas_siswa_id & subelemen_id
-            $detailMap = [];
-            foreach ($detail as $d) {
-                $kelasSiswaId = $d->kelas_siswa_id;
-                if (!$kelasSiswaId && $d->nilaiP5) {
-                    $kelasSiswaId = $d->nilaiP5->kelas_siswa_id;
-                }
-                if ($kelasSiswaId) {
-                    $detailMap[$kelasSiswaId][$d->p5_sub_elemen_id] = [
-                        'predikat' => $d->predikat,
-                        'deskripsi' => $d->deskripsi,
-                    ];
-                }
-            }
-            // Index catatan by kelas_siswa_id
-            $catatanMap = [];
+            // Ambil detail beserta relasi nilaiP5
+            $detail = NilaiP5Detail::with('nilaiP5')->whereIn('nilai_p5_id', $nilaiP5Ids)->get();
+
             foreach ($nilaiP5 as $n) {
-                $catatanMap[$n->kelas_siswa_id] = $n->catatan;
+                $nilaiMap[$n->kelas_siswa_id]['catatan'] = $n->catatan;
             }
-            // Loop semua siswa dan subelemen dari proyek
-            foreach ($siswaListKelas as $ks) {
-                foreach ($dimensiList as $dimensi) {
-                    foreach ($subelemenByDimensi[$dimensi->id] as $subelemen) {
-                        $nilaiMap[$kls->id][$ks->id][$subelemen->id]['predikat'] = isset($detailMap[$ks->id][$subelemen->id]['predikat']) ? $detailMap[$ks->id][$subelemen->id]['predikat'] : '';
-                        $nilaiMap[$kls->id][$ks->id][$subelemen->id]['deskripsi'] = isset($detailMap[$ks->id][$subelemen->id]['deskripsi']) ? $detailMap[$ks->id][$subelemen->id]['deskripsi'] : '';
-                    }
+            foreach ($detail as $d) {
+                // Cek relasi dan kelas_siswa_id valid
+                $kelasSiswaId = $d->nilaiP5 ? $d->nilaiP5->kelas_siswa_id : null;
+                if ($kelasSiswaId) {
+                    $nilaiMap[$kelasSiswaId][$d->p5_sub_elemen_id]['predikat'] = $d->predikat;
                 }
-                $nilaiMap[$kls->id][$ks->id]['catatan'] = isset($catatanMap[$ks->id]) ? $catatanMap[$ks->id] : '';
             }
         }
 
@@ -219,9 +227,7 @@ class NilaiP5Controller extends Controller
             'periode' => 'required|in:tengah,akhir',
             'nilai' => 'required|array',
         ]);
-
         $faseId = $request->fase_id;
-
         DB::beginTransaction();
         try {
             foreach ($request->nilai as $ksId => $item) {
@@ -229,7 +235,6 @@ class NilaiP5Controller extends Controller
                 if (!$kelasSiswaId) continue;
                 $kelasSiswa = KelasSiswa::find($kelasSiswaId);
                 if (!$kelasSiswa || !$kelasSiswa->siswa_id) continue;
-
                 // Filter subelemen yang ada predikat
                 $predikatFiltered = [];
                 foreach ($item as $subelemenId => $data) {
@@ -239,8 +244,7 @@ class NilaiP5Controller extends Controller
                         $predikatFiltered[$subelemenId] = $predikat;
                     }
                 }
-
-                // Jika semua nilai kosong, hapus data utama dan detail
+                // Jika semua nilai kosong, hapus data hanya untuk siswa ini
                 if (empty($predikatFiltered)) {
                     $nilaiP5 = NilaiP5::where([
                         'kelas_siswa_id' => $kelasSiswaId,
@@ -254,7 +258,6 @@ class NilaiP5Controller extends Controller
                     }
                     continue;
                 }
-
                 // Simpan nilai utama
                 $nilaiP5 = NilaiP5::updateOrCreate(
                     [
@@ -267,20 +270,18 @@ class NilaiP5Controller extends Controller
                         'kelas_siswa_id' => $kelasSiswaId,
                         'siswa_id' => $kelasSiswa->siswa_id,
                         'catatan' => $item['catatan'] ?? null,
-                        'is_validated' => false,
+                        // 'is_validated' => false, // kolom ini tidak ada di tabel
                     ]
                 );
-
                 // Simpan detail per subelemen
                 foreach ($predikatFiltered as $subelemenId => $predikat) {
                     $subelemen = P5SubElemen::with(['elemen', 'capaian'])->find($subelemenId);
                     if (!$subelemen || !$subelemen->elemen) continue;
-                    $dimensiId = $subelemen->elemen->p5_dimensi_id ?? null;
+                    $dimensiId = $subelemen->elemen->p5_dimensi_id;
                     $faseIdSiswa = $kelasSiswa->kelas->fase_id ?? $faseId;
-                    $capaian = ($subelemen->capaian && $subelemen->capaian->count()) ? $subelemen->capaian->firstWhere('fase_id', $faseIdSiswa)?->capaian ?? '' : '';
+                    $capaian = $subelemen->capaian->firstWhere('fase_id', $faseIdSiswa)?->capaian ?? '';
                     $deskripsi = trim($subelemen->nama_sub_elemen . ' - ' . $capaian);
 
-                    // Pastikan field kelas_siswa_id selalu diisi
                     NilaiP5Detail::updateOrCreate(
                         [
                             'nilai_p5_id' => $nilaiP5->id,
@@ -288,23 +289,11 @@ class NilaiP5Controller extends Controller
                             'p5_dimensi_id' => $dimensiId,
                         ],
                         [
-                            'kelas_siswa_id' => $kelasSiswaId,
                             'predikat' => $predikat,
                             'deskripsi' => $deskripsi,
-                            'is_validated' => false,
+                            // 'is_validated' => false, // kolom ini tidak ada di tabel
                         ]
                     );
-                }
-
-                // Hapus detail yang dikosongkan
-                $toDelete = array_diff(
-                    array_keys($item),
-                    array_merge(['kelas_siswa_id', 'catatan'], array_keys($predikatFiltered))
-                );
-                if (!empty($toDelete)) {
-                    NilaiP5Detail::where('nilai_p5_id', $nilaiP5->id)
-                        ->whereIn('p5_sub_elemen_id', $toDelete)
-                        ->delete();
                 }
             }
 

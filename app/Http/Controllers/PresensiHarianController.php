@@ -89,11 +89,26 @@ class PresensiHarianController extends Controller
             $selectedTahunAjaranId = $selectedTahunSemester ? $selectedTahunSemester->tahun_ajaran_id : $tahunAjaranAktifId;
         }
 
-        // Query presensi harian, filter berdasarkan tahun ajaran
+        // Search filter
+        $search = $request->input('search');
         $paginator = PresensiHarian::with('kelas')
             ->when($selectedTahunAjaranId, function ($query) use ($selectedTahunAjaranId) {
                 $query->whereHas('detail.kelasSiswa', function ($q) use ($selectedTahunAjaranId) {
                     $q->where('tahun_ajaran_id', $selectedTahunAjaranId);
+                });
+            })
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    // Cari tanggal dengan format Indonesia
+                    $q->orWhereRaw("DATE_FORMAT(tanggal, '%d-%m-%Y') like ?", ["%$search%"])
+                      ->orWhereRaw("DATE_FORMAT(tanggal, '%d %M %Y') like ?", ["%$search%"])
+                      ->orWhereRaw("DATE_FORMAT(tanggal, '%W, %d %M %Y') like ?", ["%$search%"])
+                      ->orWhereRaw("DATE_FORMAT(tanggal, '%W') like ?", ["%$search%"])
+                      ->orWhere('tanggal', 'like', "%$search%")
+                      ->orWhere('catatan', 'like', "%$search%")
+                      ->orWhereHas('kelas', function ($qc) use ($search) {
+                          $qc->where('nama', 'like', "%$search%");
+                      });
                 });
             })
             ->orderByDesc('tanggal')

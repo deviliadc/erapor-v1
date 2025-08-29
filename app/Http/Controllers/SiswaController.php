@@ -84,17 +84,32 @@ class SiswaController extends Controller
                 ->where('peran', 'wali') // pastikan peran wali
                 ->exists();
 
+            // if ($isWali) {
+            //     // Guru wali: akses siswa di kelas yang diampu
+            //     $kelasIds = GuruKelas::where('guru_id', $guru->id)
+            //         ->where('peran', 'wali')
+            //         ->pluck('kelas_id');
+            //     $query->whereExists(function ($q) use ($kelasIds) {
+            //         $q->selectRaw(1)
+            //             ->from('kelas_siswa')
+            //             ->whereRaw('kelas_siswa.siswa_id = siswa.id')
+            //             ->whereIn('kelas_siswa.kelas_id', $kelasIds);
+            //     });
             if ($isWali) {
-                // Guru wali: akses siswa di kelas yang diampu
-                $kelasIds = GuruKelas::where('guru_id', $guru->id)
-                    ->where('peran', 'wali')
-                    ->pluck('kelas_id');
-                $query->whereExists(function ($q) use ($kelasIds) {
-                    $q->selectRaw(1)
-                        ->from('kelas_siswa')
-                        ->whereRaw('kelas_siswa.siswa_id = siswa.id')
-                        ->whereIn('kelas_siswa.kelas_id', $kelasIds);
-                });
+    // Guru wali: akses siswa hanya di kelas yang dia wali pada tahun ajaran yang difilter
+    $kelasIds = GuruKelas::where('guru_id', $guru->id)
+        ->where('peran', 'wali')
+        ->where('tahun_ajaran_id', $tahunAktif->tahun_ajaran_id) // ✅ tambahkan ini
+        ->pluck('kelas_id');
+
+    $query->whereExists(function ($q) use ($kelasIds, $tahunAktif) {
+        $q->selectRaw(1)
+            ->from('kelas_siswa')
+            ->whereRaw('kelas_siswa.siswa_id = siswa.id')
+            ->whereIn('kelas_siswa.kelas_id', $kelasIds)
+            ->where('kelas_siswa.tahun_ajaran_id', $tahunAktif->tahun_ajaran_id); // ✅ filter tahun ajaran
+    });
+
             } else {
                 // Guru pengajar: tidak bisa akses data siswa
                 abort(403, 'Anda tidak memiliki akses ke data siswa.');
@@ -557,9 +572,9 @@ class SiswaController extends Controller
                 ->with('error', 'Siswa tidak dapat dihapus karena masih terdaftar di kelas.');
         }
 
-        if ($siswa->wali && $siswa->wali->siswa()->count() === 1) {
-            $siswa->wali->delete();
-        }
+        // if ($siswa->wali && $siswa->wali->siswa()->count() === 1) {
+        //     $siswa->wali->delete();
+        // }
         if ($siswa->user) {
             $siswa->user->delete();
         }

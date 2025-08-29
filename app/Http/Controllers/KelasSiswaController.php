@@ -11,6 +11,7 @@ use App\Models\TahunAjaran;
 use App\Models\TahunSemester;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+// No explicit imports for collect, view, auth needed in Laravel controller
 
 class KelasSiswaController extends Controller
 {
@@ -22,10 +23,68 @@ class KelasSiswaController extends Controller
         $perPage = $request->input('per_page', 10);
         $tahunAjaranId = $request->input('tahun_ajaran_filter');
         $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
-        if (!$tahunAjaranId) {
-            $tahunAjaranId = $tahunAjaranAktif?->id;
+        $user = auth()->user();
+        if ($user->hasRole('guru')) {
+            $guruId = $user->guru?->id;
+            $tahunAjaranGuruIds = GuruKelas::where('guru_id', $guruId)
+                ->whereIn('peran', ['wali', 'pengajar'])
+                ->pluck('tahun_ajaran_id')
+                ->unique()
+                ->toArray();
+            if (empty($tahunAjaranGuruIds)) {
+                $tahunAjaranCollection = collect();
+                $tahunAjaranSelect = collect();
+                $kelas = collect();
+                $totalCount = 0;
+                $guruList = ['' => ''];
+                $kelasList = collect();
+                $title = 'Daftar Kelas Siswa';
+                $breadcrumbs = [
+                    ['label' => 'Manage Kelas Siswa'],
+                ];
+                return view('kelas-siswa.index', compact(
+                    'title',
+                    'breadcrumbs',
+                    'kelas',
+                    'totalCount',
+                    'tahunAjaranId',
+                    'tahunAjaranAktif',
+                    'tahunAjaranCollection',
+                    'tahunAjaranSelect',
+                    'guruList',
+                    'kelasList'
+                ));
+            }
+            if (!$tahunAjaranId || !in_array($tahunAjaranId, $tahunAjaranGuruIds)) {
+                $tahunAjaranId = $tahunAjaranAktif?->id;
+            }
+            $kelasGuruIds = GuruKelas::where('guru_id', $guruId)
+                ->whereIn('peran', ['wali', 'pengajar'])
+                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->pluck('kelas_id')
+                ->unique()
+                ->toArray();
+            $tahunAjaranCollection = TahunAjaran::whereIn('id', $tahunAjaranGuruIds)->orderByDesc('tahun')->get();
+            $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->tahun . ($item->id == $tahunAjaranAktif?->id ? ' (Aktif)' : ''),
+                ];
+            });
+            $query = Kelas::whereIn('id', $kelasGuruIds)->orderBy('nama');
+        } else {
+            if (!$tahunAjaranId) {
+                $tahunAjaranId = $tahunAjaranAktif?->id;
+            }
+            $query = Kelas::orderBy('nama');
+            $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
+            $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->tahun . ($item->id == $tahunAjaranAktif?->id ? ' (Aktif)' : ''),
+                ];
+            });
         }
-        $query = Kelas::orderBy('nama');
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
         $kelas = $paginator->through(function ($item) use ($tahunAjaranId) {
@@ -45,15 +104,12 @@ class KelasSiswaController extends Controller
                 'jumlah_siswa' => $jumlahSiswa . ' Siswa',
             ];
         });
-        $kelasList = Kelas::orderBy('nama')->get();
+        if ($user->hasRole('guru')) {
+            $kelasList = Kelas::whereIn('id', GuruKelas::where('guru_id', $guruId)->where('peran', 'wali')->pluck('kelas_id'))->orderBy('nama')->get();
+        } else {
+            $kelasList = Kelas::orderBy('nama')->get();
+        }
         $guruList = ['' => ''] + Guru::orderBy('nama')->pluck('nama', 'id')->toArray();
-        $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
-        $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
-            return [
-                'id' => $item->id,
-                'name' => $item->tahun . ($item->id == $tahunAjaranAktif?->id ? ' (Aktif)' : ''),
-            ];
-        });
         $title = 'Daftar Kelas Siswa';
         $breadcrumbs = [
             ['label' => 'Manage Kelas Siswa'],
@@ -71,6 +127,8 @@ class KelasSiswaController extends Controller
             'kelasList'
         ));
     }
+// End of index method
+
 
 
     /**
@@ -200,7 +258,20 @@ class KelasSiswaController extends Controller
             return true;
         })->pluck('nama', 'id')->toArray();
 
-        $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
+        $user = auth()->user();
+        $isGuru = $user->hasRole('guru');
+        if ($isGuru) {
+            $guruId = $user->guru?->id;
+            $tahunAjaranGuruIds = \App\Models\GuruKelas::where('guru_id', $guruId)
+                ->where('kelas_id', $kelas->id)
+                ->where('peran', 'wali')
+                ->pluck('tahun_ajaran_id')
+                ->unique()
+                ->toArray();
+            $tahunAjaranCollection = \App\Models\TahunAjaran::whereIn('id', $tahunAjaranGuruIds)->orderByDesc('tahun')->get();
+        } else {
+            $tahunAjaranCollection = \App\Models\TahunAjaran::orderByDesc('tahun')->get();
+        }
         $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
             return [
                 'id' => $item->id,
@@ -213,6 +284,21 @@ class KelasSiswaController extends Controller
                 $item->id => $item->tahun . ($item->id == $tahunAjaranAktif?->id ? ' (Aktif)' : ''),
             ];
         });
+
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('admin');
+        $isGuru = $user->hasRole('guru');
+        $isWaliKelas = false;
+        if ($isGuru) {
+            $guruId = $user->guru?->id;
+            $isWaliKelas = \App\Models\GuruKelas::where('guru_id', $guruId)
+                ->where('kelas_id', $kelas->id)
+                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->where('peran', 'wali')
+                ->exists();
+        }
+
+        $canAddSiswa = $isAdmin || $isWaliKelas;
 
         $title = 'Siswa Kelas ' . $kelas->nama;
         $breadcrumbs = [
@@ -233,7 +319,8 @@ class KelasSiswaController extends Controller
             'tahunAjaranCollection',
             'tahunAjaranSelect',
             'tahunAjaranId',
-            'tahunAjaranOptions'
+            'tahunAjaranOptions',
+            'canAddSiswa'
         ));
     }
 
@@ -370,8 +457,9 @@ class KelasSiswaController extends Controller
         $kelasTerakhir = Kelas::orderByDesc('id')->first();
         $isKelasTerakhir = $kelasLama->id == $kelasTerakhir->id;
 
-        $promoted = [];
-        $lulus = [];
+    $promoted = [];
+    $lulus = [];
+    $gagalPromote = [];
 
         foreach ($siswaList as $entry) {
             // Cek apakah siswa sudah pernah di kelas tujuan di tahun ajaran manapun
@@ -381,6 +469,7 @@ class KelasSiswaController extends Controller
 
             // Tidak bisa turun kelas
             if ($kelasLama->id < $kelasTerakhir->id && $sudahPernah) {
+                $gagalPromote[] = $entry->siswa->nama;
                 continue;
             }
 
@@ -409,6 +498,8 @@ class KelasSiswaController extends Controller
                         'status' => 'Aktif',
                     ]);
                     $promoted[] = $entry->siswa->nama;
+                } else {
+                    $gagalPromote[] = $entry->siswa->nama;
                 }
             }
         }
@@ -417,9 +508,15 @@ class KelasSiswaController extends Controller
         if ($promoted) $msg[] = 'Siswa dipromosikan: ' . implode(', ', $promoted);
         if ($lulus) $msg[] = 'Siswa diluluskan: ' . implode(', ', $lulus);
 
-        return redirect()->to(role_route('kelas-siswa.index', [
+        $redirect = redirect()->to(role_route('kelas-siswa.index', [
             'tahun_ajaran_filter' => $tahunBaru->id,
-        ]))->with('success', implode(' | ', $msg));
+        ]));
+
+        if ($gagalPromote) {
+            $redirect = $redirect->with('warning', 'Siswa berikut sudah ada di kelas tujuan: ' . implode(', ', $gagalPromote));
+        }
+
+        return $redirect->with('success', implode(' | ', $msg));
     }
 
 

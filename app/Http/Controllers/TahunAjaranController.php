@@ -69,20 +69,31 @@ class TahunAjaranController extends Controller
                 ->withInput()
                 ->withErrors(['tahun' => 'Tahun ajaran sudah ada di database.']);
         }
-        $isActive = $request->has('is_active');
-        if ($isActive) {
-            TahunAjaran::where('is_active', true)->update(['is_active' => false]);
-            TahunSemester::query()->update(['is_active' => false]);
-        }
+        $isActive = $request->input('is_active', '0') == '1';
         $tahunAjaran = TahunAjaran::create([
             'tahun' => $validated['tahun'],
             'is_active' => $isActive,
         ]);
         if ($isActive) {
-            // Aktifkan 1 semester default, misal Ganjil
+            TahunAjaran::where('id', '!=', $tahunAjaran->id)->update(['is_active' => false]);
+            TahunSemester::query()->update(['is_active' => false]);
+            // Aktifkan semester default: Ganjil jika ada, jika tidak Genap, jika tidak ada create keduanya
             $semesterGanjil = $tahunAjaran->tahunSemester()->where('semester', 'Ganjil')->first();
+            $semesterGenap = $tahunAjaran->tahunSemester()->where('semester', 'Genap')->first();
             if ($semesterGanjil) {
                 $semesterGanjil->update(['is_active' => true]);
+            } elseif ($semesterGenap) {
+                $semesterGenap->update(['is_active' => true]);
+            } else {
+                // Buat Ganjil dan Genap
+                $ganjil = $tahunAjaran->tahunSemester()->create([
+                    'semester' => 'Ganjil',
+                    'is_active' => true,
+                ]);
+                $tahunAjaran->tahunSemester()->create([
+                    'semester' => 'Genap',
+                    'is_active' => false,
+                ]);
             }
         }
         return redirect()->to(role_route('tahun-semester.index', ['tab' => $request->tab ?? 'tahun-ajaran']))
@@ -321,7 +332,7 @@ class TahunAjaranController extends Controller
         $item = TahunAjaran::findOrFail($id);
 
         // Cek apakah ada perubahan pada tahun atau is_active
-        $isActive = $request->has('is_active');  // Menentukan apakah checkbox is_active dicentang
+    $isActive = $request->input('is_active', '0') == '1';
         $tahunHasChanged = $item->tahun !== $validated['tahun'];  // Cek apakah tahun berubah
         $isActiveChanged = $item->is_active !== $isActive;  // Cek apakah status is_active berubah
 
@@ -342,17 +353,29 @@ class TahunAjaranController extends Controller
 
         // Jika is_active dicentang, aktifkan tahun ajaran ini
         if ($isActive) {
-            // Nonaktifkan semua tahun ajaran lainnya
-            TahunAjaran::where('is_active', true)->update(['is_active' => false]);
-
-            // Nonaktifkan semua semester lainnya
+            TahunAjaran::where('id', '!=', $id)->update(['is_active' => false]);
             TahunSemester::query()->update(['is_active' => false]);
-
-            // Aktifkan tahun ajaran ini
             TahunAjaran::where('id', $id)->update(['is_active' => true]);
-        } else {
-            // Jika checkbox tidak dicentang, biarkan tahun ajaran tetap non-aktif (jangan diubah)
-            $isActive = false;
+
+            // Aktifkan semester default: Ganjil jika ada, jika tidak Genap, jika tidak ada create keduanya
+            $tahunAjaranModel = TahunAjaran::findOrFail($id);
+            $semesterGanjil = $tahunAjaranModel->tahunSemester()->where('semester', 'Ganjil')->first();
+            $semesterGenap = $tahunAjaranModel->tahunSemester()->where('semester', 'Genap')->first();
+            if ($semesterGanjil) {
+                $semesterGanjil->update(['is_active' => true]);
+            } elseif ($semesterGenap) {
+                $semesterGenap->update(['is_active' => true]);
+            } else {
+                // Buat Ganjil dan Genap
+                $ganjil = $tahunAjaranModel->tahunSemester()->create([
+                    'semester' => 'Ganjil',
+                    'is_active' => true,
+                ]);
+                $tahunAjaranModel->tahunSemester()->create([
+                    'semester' => 'Genap',
+                    'is_active' => false,
+                ]);
+            }
         }
 
         // Update Tahun Ajaran

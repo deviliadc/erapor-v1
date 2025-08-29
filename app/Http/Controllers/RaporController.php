@@ -78,6 +78,20 @@ class RaporController extends Controller
 
     public function index(Request $request)
     {
+        $user = auth()->user();
+        $tahunAjaranId = $request->input('tahun_ajaran_id');
+        if ($user->hasRole('guru')) {
+            $guruId = $user->guru?->id;
+            $kelasList = \App\Models\GuruKelas::where('guru_id', $guruId)
+                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->where('peran', 'wali')
+                ->with('kelas')
+                ->get()
+                ->pluck('kelas');
+        } else {
+            $kelasList = \App\Models\Kelas::orderBy('nama')->get();
+        }
+    
         $breadcrumbs = [['label' => 'Rapor']];
         $title = 'Rapor';
         $user = Auth::user();
@@ -374,27 +388,19 @@ class RaporController extends Controller
         $p5Data = [];
         foreach ($nilaiP5 as $np5) {
             $proyek = $proyekList->firstWhere('id', $np5->p5_proyek_id);
-            // Group detail by dimensi
-            $dimensiArr = [];
+            $capaian = [];
             foreach ($np5->detailP5 ?? [] as $detail) {
-                $dimensiNama = $detail->p5Dimensi->nama_dimensi ?? '-';
-                $subelemen = [
-                    'nama' => $detail->p5SubElemen->nama_sub_elemen ?? '-',
-                    'capaian' => $detail->deskripsi ?? '-',
-                    'predikat' => $detail->predikat ?? '',
+                $capaian[] = [
+                    'dimensi' => $detail->p5Dimensi->nama_dimensi ?? '-',
+                    'sub_elemen' => $detail->p5SubElemen->nama_sub_elemen ?? '-',
+                    'predikat' => $detail->predikat,
+                    'deskripsi' => $detail->deskripsi,
                 ];
-                if (!isset($dimensiArr[$dimensiNama])) {
-                    $dimensiArr[$dimensiNama] = [
-                        'nama' => $dimensiNama,
-                        'subelemen' => [],
-                    ];
-                }
-                $dimensiArr[$dimensiNama]['subelemen'][] = $subelemen;
             }
             $p5Data[] = [
                 'proyek' => $proyek,
                 'catatan' => $np5->catatan,
-                'dimensi' => array_values($dimensiArr),
+                'capaian' => $capaian,
             ];
         }
 

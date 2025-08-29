@@ -55,54 +55,48 @@
 {{-- Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const labels = @json($chartTanggal);
+    // Horizontal bar chart: satu baris per status
+    const labels = ['Hadir', 'Sakit', 'Izin', 'Alfa'];
     const data = {
         labels: labels,
-        datasets: [
-            {
-                label: 'Hadir',
-                data: @json($chartHadir),
-                backgroundColor: '#34d399'
-            },
-            {
-                label: 'Sakit',
-                data: @json($chartSakit),
-                backgroundColor: '#fbbf24'
-            },
-            {
-                label: 'Izin',
-                data: @json($chartIzin),
-                backgroundColor: '#60a5fa'
-            },
-            {
-                label: 'Alfa',
-                data: @json($chartAlfa),
-                backgroundColor: '#ef4444'
-            }
-        ]
+        datasets: [{
+            label: 'Jumlah',
+            data: [
+                @json($chartHadir[0]),
+                @json($chartSakit[0]),
+                @json($chartIzin[0]),
+                @json($chartAlfa[0])
+            ],
+            backgroundColor: [
+                '#34d399', // Hadir
+                '#fbbf24', // Sakit
+                '#60a5fa', // Izin
+                '#ef4444'  // Alfa
+            ]
+        }]
     };
 
     new Chart(document.getElementById('barAbsensi'), {
         type: 'bar',
         data: data,
         options: {
+            indexAxis: 'y', // horizontal bar
             responsive: true,
             plugins: {
+                legend: { display: false },
                 title: {
                     display: true,
-                    text: 'Rekap Absensi Harian',
+                    text: 'Rekap Absensi Siswa',
                     color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
                 }
             },
             scales: {
                 x: {
-                    stacked: true,
-                    ticks: { color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' }
-                },
-                y: {
-                    stacked: true,
                     beginAtZero: true,
                     ticks: { stepSize: 1, color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' }
+                },
+                y: {
+                    ticks: { color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' }
                 }
             }
         }

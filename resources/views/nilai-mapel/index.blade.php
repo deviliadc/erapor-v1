@@ -9,7 +9,9 @@
 <div x-data="{
     activeTab: '{{ old('active_tab', request('active_tab', $mapel->first()?->mapel?->id ?? '')) }}',
     editMode: false,
-    periode: '{{ request('periode', $periode) }}'
+    periode: '{{ request('periode', $periode) }}',
+    kelasId: '{{ request('kelas_id') }}',
+    semester: '{{ request('semester') }}'
 }" class="rounded-2xl bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4">
         {{-- Tahun Ajaran Aktif --}}
         {{-- Filter Form --}}
@@ -154,8 +156,11 @@
                                                 <th class="px-2 py-1 bg-success-50">-</th>
                                             @endforelse
                                             @forelse ($lmList as $bab)
-                                                <th class="px-2 py-1 bg-warning-50">
-                                                    {{ is_object($bab) ? $bab->nama : $bab }}</th>
+                                                    {{-- <th class="px-2 py-1 bg-warning-50">
+                                                        {{ is_object($bab) ? $bab->bab : $bab }}</th> --}}
+                                                        <th class="px-2 py-1 bg-warning-50">
+                                                            {{ is_object($bab) ? $bab->nama : $bab }}
+                                                        </th>
                                             @empty
                                                 <th class="px-2 py-1 bg-warning-50">-</th>
                                             @endforelse

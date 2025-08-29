@@ -59,11 +59,11 @@
         {{-- Table --}}
         <x-table :columns="[
             // 'no' => ['label' => 'No', 'sortable' => false],
-            // 'id' => ['label' => 'ID', 'sortable' => true],
-            // 'nama' => ['label' => 'Nama Kelas', 'sortable' => true],
-            'kelas' => ['label' => 'Kelas', 'sortable' => true],
-            'wali_kelas' => ['label' => 'Wali Kelas', 'sortable' => true],
-            'jumlah_siswa' => ['label' => 'Jumlah Siswa', 'sortable' => true],
+            // 'id' => ['label' => 'ID', 'sortable' => false],
+            // 'nama' => ['label' => 'Nama Kelas', 'sortable' => false],
+            'kelas' => ['label' => 'Kelas', 'sortable' => false],
+            'wali_kelas' => ['label' => 'Wali Kelas', 'sortable' => false],
+            'jumlah_siswa' => ['label' => 'Jumlah Siswa', 'sortable' => false],
             // 'action' => ['label' => 'Aksi', 'sortable' => false],
         ]" :data="$kelas"
             :total-count="$totalCount"
@@ -71,7 +71,7 @@
             :selectable="false"
             :actions="[
                 'detail' => true,
-                'edit' => true,
+                'edit' => !$isGuru,
                 'delete' => false,
                 'routes' => [
                     'detail' => fn($item) => role_route('kelas-siswa.show', [

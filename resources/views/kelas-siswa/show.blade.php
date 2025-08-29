@@ -2,6 +2,8 @@
     // $routePrefix = auth()->user()->hasRole('admin') ? 'admin.' : (auth()->user()->hasRole('guru') ? 'guru.' : '');
     // $canDelete = auth()->user()->hasRole('admin');
     $isGuru = auth()->user()->hasRole('guru');
+    // Ambil tahun ajaran filter dari request, jika tidak ada pakai tahun aktif
+    $tahunAjaranFilter = request('tahun_ajaran_filter') ?? ($tahunAjaranId ?? $tahunAjaranAktif?->id);
     $filters = [
         [
             'name' => 'tahun_ajaran_filter',
@@ -10,8 +12,7 @@
             'valueKey' => 'id',
             'labelKey' => 'name',
             'enabled' => true,
-            // Ambil dari request jika ada, jika tidak pakai tahun yang sedang dibuka, jika tidak pakai tahun aktif
-            'value' => request('tahun_ajaran_filter') ?? ($tahunAjaranId ?? $tahunAktif?->id),
+            'value' => $tahunAjaranFilter,
         ],
     ];
 @endphp
@@ -20,13 +21,23 @@
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
 
     {{-- Form Tambah Siswa --}}
-    @include('kelas-siswa.create')
+    @php
+        // Cek apakah guru adalah wali kelas pada tahun ajaran yang dipilih
+        $isWaliKelas = false;
+        if ($isGuru) {
+            $guruId = auth()->user()->guru?->id;
+            $isWaliKelas = \App\Models\GuruKelas::where('guru_id', $guruId)
+                ->where('kelas_id', $kelas->id)
+                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->where('peran', 'wali')
+                ->exists();
+        }
+    @endphp
 
-    {{-- Form Edit Siswa --}}
-    @include('kelas-siswa.edit')
-
-    {{-- Form Generate Absen --}}
-    @include('kelas-siswa.generate')
+            @include('kelas-siswa.create')
+       
+        @include('kelas-siswa.generate')
+   
 
     {{-- Tahun ajaran aktif --}}
     @if ($tahunAjaranAktif)
@@ -47,17 +58,19 @@
             {{-- :route="role_route('kelas-siswa.index', ['kelas' => $kelas->id])"> --}}
             >
 
-            <x-slot name="addButton">
-                <div class="flex gap-2">  <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-generate-absen' }))"
-                        class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M8.242 5.992h12m-12 6.003H20.24m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 1 1 1.591 1.59l-1.83 1.83h2.16M2.99 15.745h1.125a1.125 1.125 0 0 1 0 2.25H3.74m0-.002h.375a1.125 1.125 0 0 1 0 2.25H2.99" />
-                        </svg>
-                        Generate No. Absen
-                        </a>
+                <x-slot name="addButton">
+                    @if (!$isGuru || $isWaliKelas)
+                    <div class="flex gap-2">
+                        <button type="button"
+                            onclick="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'form-generate-absen' }))"
+                            class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8.242 5.992h12m-12 6.003H20.24m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 1 1 1.591 1.59l-1.83 1.83h2.16M2.99 15.745h1.125a1.125 1.125 0 0 1 0 2.25H3.74m0-.002h.375a1.125 1.125 0 0 1 0 2.25H2.99" />
+                            </svg>
+                            Generate No. Absen
+                        </button>
 
                         {{-- Tombol Tambah --}}
                         <button type="button"
@@ -69,8 +82,9 @@
                                     d="M9.25 5a.75.75 0 011.5 0v4.25H15a.75.75 0 010 1.5h-4.25V15a.75.75 0 01-1.5 0v-4.25H5a.75.75 0 010-1.5h4.25V5z" />
                             </svg>
                         </button>
-                </div>
-            </x-slot>
+                    </div>
+                    @endif
+                </x-slot>
         </x-table.toolbar>
 
         {{-- Table --}}
@@ -82,24 +96,23 @@
             'nipd' => ['label' => 'NIPD', 'sortable' => false],
             'nisn' => ['label' => 'NISN', 'sortable' => false],
         ]"
-            :data="$query" {{-- :data="$siswaList" --}}
-            :total-count="$totalCount"
-            row-view="kelas-siswa.partials.row-detail"
-            :actions="[
-                'detail' => true,
-                'edit' => true,
-                'delete' => true,
-                'routes' => [
-                    'detail' => fn($item) => role_route('siswa.show', [
-                        // 'kelas' => $kelas->id,
-                        'siswa' => $item['siswa_id'],
-                        'tahun_ajaran_filter' => request('tahun_ajaran_filter') ?? ($tahunAjaranId ?? $tahunAjaranAktif?->id),
-                    ]),
-                    'delete' => fn($item) => role_route('kelas-siswa.destroy', [
-                        'kelas_siswa' => $item['id'],
-                    ]),
-                ]
-            ]" :use-modal-edit="true" />
+                :data="$query"
+                :total-count="$totalCount"
+                row-view="kelas-siswa.partials.row-detail"
+                :actions="[
+                    'detail' => true,
+                    'edit' => (auth()->user()->hasRole('admin') || $isWaliKelas),
+                    'delete' => (auth()->user()->hasRole('admin') || $isWaliKelas),
+                    'routes' => [
+                        'detail' => fn($item) => role_route('siswa.show', [
+                            'siswa' => $item['siswa_id'],
+                            'tahun_ajaran_filter' => $tahunAjaranFilter,
+                        ]),
+                        'delete' => fn($item) => role_route('kelas-siswa.destroy', [
+                            'kelas_siswa' => $item['id'],
+                        ]),
+                    ]
+                ]" :use-modal-edit="true" />
     </div>
 
     {{-- <x-modal name="form-generate-absen" title="Generate Nomor Absen" maxWidth="md">

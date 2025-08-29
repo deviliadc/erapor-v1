@@ -2,21 +2,20 @@
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :title="$title" />
     @php
         $guru = auth()->user()->guru;
-        // Filter guru kelas untuk 'pengajar' dan tahun ajaran aktif
-        $guruKelas = $guru
+        // Ambil semua data GuruKelas (tidak hanya tahun ajaran aktif)
+        $guruKelasAll = $guru
             ? \App\Models\GuruKelas::with(['kelas', 'mapel'])
                 ->where('guru_id', $guru->id)
-                ->whereHas('tahunAjaran', function ($query) {
-                    $query->where('is_active', true);
-                })
                 ->get()
             : collect();
-        // Periksa apakah guru aktif
-        $isGuruAktif = $guru && $guruKelas->isNotEmpty();
+        // Jika guru belum pernah mengajar sama sekali
+        $isGuruPernahMengajar = $guru && $guruKelasAll->isNotEmpty();
+        // Filter guru kelas untuk 'pengajar' dan tahun ajaran aktif
+        $guruKelas = $guruKelasAll->where('tahunAjaran.is_active', true);
         // Filter hanya untuk guru dengan peran 'pengajar'
         $isGuruMapel = $guruKelas->where('peran', 'pengajar')->isNotEmpty();
     @endphp
-    @if (!$isGuruAktif)
+    @if (!$isGuruPernahMengajar)
         <div class="mt-10 text-center text-lg text-gray-700 dark:text-white/80">
             Halo, {{ $guru->nama ?? '-' }}.<br>
             Anda belum terdaftar sebagai pengajar maupun wali kelas di kelas manapun.<br>

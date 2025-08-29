@@ -15,7 +15,14 @@ class FaseController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
+        $search = $request->input('search');
         $query = Fase::query();
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%$search%")
+                  ->orWhere('keterangan', 'like', "%$search%");
+            });
+        }
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
         $fase = $paginator->through(function ($item) {

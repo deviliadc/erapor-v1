@@ -139,34 +139,50 @@ class DashboardController extends Controller
         $siswa = $user->siswa;
         $breadcrumbs = [['label' => 'Dashboard']];
         $title = 'Dashboard Siswa';
-        $kelasSiswaAktif = $siswa->kelasSiswa()->where('status', 'Aktif')->latest()->first();
-        $tahunSemesterAktif = null;
-        $nilaiMapel = collect();
-        if ($kelasSiswaAktif) {
-            $tahunSemesterAktif = \App\Models\TahunSemester::where('tahun_ajaran_id', $kelasSiswaAktif->tahun_ajaran_id)
-                ->where('is_active', true)->first();
-            $mapelList = $kelasSiswaAktif->kelas->mapel ?? collect();
-            $nilaiMapel = \App\Models\NilaiMapel::where('kelas_siswa_id', $kelasSiswaAktif->id)
-                ->where('tahun_semester_id', $tahunSemesterAktif?->id)
-                ->where('periode', 'akhir')
+        $chartLabels = [];
+        $chartUts = [];
+        $chartUas = [];
+        $kelasSiswaAktif = $siswa->kelasSiswaAktif();
+        $tahunSemesterAktif = \App\Models\TahunSemester::where('is_active', 1)->first();
+        $tahunSemesterId = $tahunSemesterAktif?->id;
+        if ($kelasSiswaAktif && $tahunSemesterId) {
+            $nilaiMapelRows = \App\Models\NilaiMapel::with('mapel')
+                ->where('kelas_siswa_id', $kelasSiswaAktif->id)
+                ->where('tahun_semester_id', $tahunSemesterId)
+                ->orderBy('mapel_id')
+                ->orderByRaw("FIELD(periode, 'tengah', 'akhir')")
                 ->get();
-            $chartLabels = [];
-            $chartData = [];
-            foreach ($mapelList as $mapel) {
-                $chartLabels[] = $mapel->nama;
-                $nilai = $nilaiMapel->firstWhere('mapel_id', $mapel->id);
-                $chartData[] = $nilai?->nilai_akhir ?? 0;
+            $grouped = [];
+            foreach ($nilaiMapelRows as $row) {
+                $mapelId = $row->mapel_id;
+                $mapelNama = $row->mapel->nama ?? '-';
+                if (!isset($grouped[$mapelId])) {
+                    $grouped[$mapelId] = [
+                        'nama' => $mapelNama,
+                        'uts' => null,
+                        'uas' => null,
+                    ];
+                }
+                if ($row->periode == 'tengah') {
+                    $grouped[$mapelId]['uts'] = $row->nilai_akhir ?? null;
+                }
+                if ($row->periode == 'akhir') {
+                    $grouped[$mapelId]['uas'] = $row->nilai_akhir ?? null;
+                }
             }
-        } else {
-            $chartLabels = [];
-            $chartData = [];
+            foreach ($grouped as $mapel) {
+                $chartLabels[] = $mapel['nama'];
+                $chartUts[] = $mapel['uts'] ?? 0;
+                $chartUas[] = $mapel['uas'] ?? 0;
+            }
         }
         return view('dashboard.siswa', compact(
             'breadcrumbs',
             'title',
             'siswa',
             'chartLabels',
-            'chartData'
+            'chartUts',
+            'chartUas'
         ));
     }
 

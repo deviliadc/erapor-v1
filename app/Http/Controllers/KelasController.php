@@ -192,21 +192,32 @@ class KelasController extends Controller
         $user = Auth::user();
         $guruId = $user->guru?->id; // pastikan relasi `guru()` ada di model User
 
-        $query = Kelas::query()
-            ->orderBy('nama', 'asc')
-            ->orderBy('fase_id', 'asc');
+            $search = $request->input('search');
+            $query = Kelas::query()
+                ->orderBy('nama', 'asc')
+                ->orderBy('fase_id', 'asc');
 
-        // Jika user adalah guru, filter hanya kelas yang dia jadi wali
-        if ($guruId) {
-            $query->whereHas('guruKelas', function ($q) use ($guruId, $tahunAjaranId) {
-                $q->where('guru_id', $guruId)
-                    ->where('peran', 'wali')
-                    ->where('tahun_ajaran_id', $tahunAjaranId);
-            });
-        }
+            // Jika user adalah guru, filter hanya kelas yang dia jadi wali
+            if ($guruId) {
+                $query->whereHas('guruKelas', function ($q) use ($guruId, $tahunAjaranId) {
+                    $q->where('guru_id', $guruId)
+                        ->where('peran', 'wali')
+                        ->where('tahun_ajaran_id', $tahunAjaranId);
+                });
+            }
 
-        $totalCount = $query->count();
-        $paginator = $query->paginate($perPage)->withQueryString();
+            // Search by nama kelas or fase
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama', 'like', "%$search%")
+                      ->orWhereHas('fase', function ($fq) use ($search) {
+                          $fq->where('nama', 'like', "%$search%");
+                      });
+                });
+            }
+
+            $totalCount = $query->count();
+            $paginator = $query->paginate($perPage)->withQueryString();
 
         // Ambil semua tahun ajaran untuk filter
         $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
@@ -260,6 +271,7 @@ class KelasController extends Controller
             'tahunAjaranCollection',
             'tahunAjaranSelect',
             'tahunAjaranId',
+                'search',
         ));
     }
 

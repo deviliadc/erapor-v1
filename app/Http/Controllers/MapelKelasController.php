@@ -148,42 +148,50 @@ class MapelKelasController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $guruId = $user->guru?->id ?? null; // asumsi relasi user->guru ada
-
-        $tahunAjaranId = $request->input('tahun_ajaran_filter');
-        $tahunAjaranAktif = TahunAjaran::where('is_active', true)->first();
-        if (!$tahunAjaranId) {
-            $tahunAjaranId = $tahunAjaranAktif?->id;
-        }
-
-           if ($guruId && $user->hasRole('guru')) {
-        $isWali = GuruKelas::where('guru_id', $guruId)
-            ->where('peran', 'wali')
-            ->where('tahun_ajaran_id', $tahunAjaranId)
-            ->exists();
-
-        if (!$isWali) {
-            return abort(403, 'Anda bukan wali kelas');
-        }
-    }
+        $guruId = $user->guru?->id ?? null;
 
         $perPage = $request->input('per_page', 10);
 
-        // Query semua kelas
-        $query = Kelas::query()->orderBy('nama');
+        if ($user->hasRole('guru') && $guruId) {
+            // Tahun ajaran di mana guru jadi wali
+            $tahunAjaranIds = GuruKelas::where('guru_id', $guruId)
+                ->where('peran', 'wali')
+                ->pluck('tahun_ajaran_id')
+                ->unique()
+                ->toArray();
+            $tahunAjaranCollection = TahunAjaran::whereIn('id', $tahunAjaranIds)->orderByDesc('tahun')->get();
+            $tahunAjaranAktif = $tahunAjaranCollection->firstWhere('is_active', true);
+            $tahunAjaranId = $request->input('tahun_ajaran_filter');
+            if (!$tahunAjaranId || !in_array($tahunAjaranId, $tahunAjaranIds)) {
+                $tahunAjaranId = $tahunAjaranAktif?->id;
+            }
+            // Kelas di mana guru jadi wali di tahun ajaran terpilih
+            $kelasIds = GuruKelas::where('guru_id', $guruId)
+                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->where('peran', 'wali')
+                ->pluck('kelas_id')
+                ->unique()
+                ->toArray();
+            $query = Kelas::whereIn('id', $kelasIds)->orderBy('nama');
+        } else {
+            // Admin: semua tahun ajaran dan kelas
+            $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
+            $tahunAjaranAktif = $tahunAjaranCollection->firstWhere('is_active', true);
+            $tahunAjaranId = $request->input('tahun_ajaran_filter');
+            if (!$tahunAjaranId) {
+                $tahunAjaranId = $tahunAjaranAktif?->id;
+            }
+            $query = Kelas::orderBy('nama');
+        }
 
         $totalCount = $query->count();
-
-        // Paginasi kelas
         $paginator = $query->paginate($perPage)->withQueryString();
 
-        // Transformasi: hanya butuh nama kelas & jumlah mapel
         $kelasList = $paginator->through(function ($kelas) use ($tahunAjaranId) {
             $jumlahMapel = GuruKelas::where('kelas_id', $kelas->id)
                 ->where('tahun_ajaran_id', $tahunAjaranId)
                 ->where('peran', 'pengajar')
                 ->count();
-
             return [
                 'id'           => $kelas->id,
                 'kelas'   => $kelas->nama,
@@ -191,8 +199,6 @@ class MapelKelasController extends Controller
             ];
         });
 
-        // Untuk select filter tahun ajaran
-        $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
         $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
             return [
                 'id'   => $item->id,
@@ -416,7 +422,20 @@ class MapelKelasController extends Controller
 
     $guruSelect = Guru::pluck('nama', 'id')->toArray();
 
-    $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
+    $user = Auth::user();
+    $isGuru = $user->hasRole('guru');
+    if ($isGuru && $user->guru?->id) {
+        $guruId = $user->guru->id;
+        $tahunAjaranGuruIds = GuruKelas::where('guru_id', $guruId)
+            ->where('kelas_id', $kelas->id)
+            ->where('peran', 'wali')
+            ->pluck('tahun_ajaran_id')
+            ->unique()
+            ->toArray();
+        $tahunAjaranCollection = TahunAjaran::whereIn('id', $tahunAjaranGuruIds)->orderByDesc('tahun')->get();
+    } else {
+        $tahunAjaranCollection = TahunAjaran::orderByDesc('tahun')->get();
+    }
     $tahunAjaranSelect = $tahunAjaranCollection->map(function ($item) use ($tahunAjaranAktif) {
         return [
             'id' => $item->id,

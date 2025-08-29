@@ -18,6 +18,20 @@ class EkstraController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
+            $tab = $request->input('tab');
+            // Tab-aware search redirect logic
+            if ($request->has('search_ekstrakurikuler') && $tab !== 'ekstra') {
+                return redirect()->route(role_route('ekstrakurikuler.index'), array_merge($request->except(['search_parameter_ekstra', 'search_ekstrakurikuler', 'tab']), [
+                    'search_ekstrakurikuler' => $request->input('search_ekstrakurikuler'),
+                    'tab' => 'ekstra',
+                ]));
+            }
+            if ($request->has('search_parameter_ekstra') && $tab !== 'parameter') {
+                return redirect()->route(role_route('ekstrakurikuler.index'), array_merge($request->except(['search_parameter_ekstra', 'search_ekstrakurikuler', 'tab']), [
+                    'search_parameter_ekstra' => $request->input('search_parameter_ekstra'),
+                    'tab' => 'parameter',
+                ]));
+            }
         // $tahunSemesterId = $request->input('tahun_semester_id') ?? TahunSemester::where('is_active', true)->value('id');
         // $tahunSemesterList = TahunSemester::orderByDesc('tahun')->orderByDesc('semester')->get();
         // $tahunAjaranId = $request->input('tahun_ajaran_id') ?? TahunAjaran::where('is_active', true)->value('id');
@@ -46,7 +60,7 @@ class EkstraController extends Controller
 
     private function getEkstraData(Request $request, $perPage)
     {
-        $search = $request->input('search');
+        $search = $request->input('search_ekstrakurikuler');
 
         $query = Ekstra::query();
         if ($search) {
@@ -68,14 +82,15 @@ class EkstraController extends Controller
 
     private function getParameterData(Request $request, $perPage)
     {
-        $search = $request->input('search_parameter');
+            $search = $request->input('search_parameter_ekstra');
 
         $query = ParamEkstra::with('ekstra');
-        if ($search) {
-            $query->whereHas('paramEkstra', function ($q) use ($search) {
-                $q->where('parameter', 'like', "%$search%");
-            });
-        }
+            if ($search) {
+                $query->where('parameter', 'like', "%$search%")
+                      ->orWhereHas('ekstra', function($q) use ($search) {
+                          $q->where('nama', 'like', "%$search%");
+                      });
+            }
 
         $ekstraList = Ekstra::pluck('nama', 'id');
 

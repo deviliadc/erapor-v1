@@ -58,33 +58,26 @@ class SiswaMenuController extends Controller
             ];
         });
 
-        // Untuk chart
-        // Untuk chart
-        $allPresensi = $presensiQuery->get();
+        // Untuk chart: hanya presensi detail sesuai tahun semester yang dipilih
+        $allPresensi = PresensiDetail::with(['presensiHarian'])
+            ->where('kelas_siswa_id', $kelasSiswaAktif?->id)
+            ->whereHas('presensiHarian', function($q) use ($tahunSemesterId) {
+                $q->where('tahun_semester_id', $tahunSemesterId);
+            })
+            ->get();
 
-        $chartTanggal = [];
-        $chartHadir = [];
-        $chartSakit = [];
-        $chartIzin = [];
-        $chartAlfa = [];
-
+        // Chart: total Hadir, Sakit, Izin, Alfa (tidak per tanggal)
+        $chartTanggal = ['Total'];
         if ($allPresensi->isEmpty() && $rekapAbsensi) {
-            // Fallback pakai RekapAbsensi
-            $chartTanggal = ['Total']; // pakai label sederhana
             $chartHadir   = [$rekapAbsensi->total_hadir ?? 0];
             $chartSakit   = [$rekapAbsensi->total_sakit ?? 0];
             $chartIzin    = [$rekapAbsensi->total_izin ?? 0];
             $chartAlfa    = [$rekapAbsensi->total_alfa ?? 0];
         } else {
-            // Normal: pakai detail harian
-            $chartTanggal = $allPresensi->pluck('presensiHarian.tanggal')->unique()->values();
-
-            foreach ($chartTanggal as $tgl) {
-                $chartHadir[] = $allPresensi->where('presensiHarian.tanggal', $tgl)->where('status', 'hadir')->count();
-                $chartSakit[] = $allPresensi->where('presensiHarian.tanggal', $tgl)->where('status', 'sakit')->count();
-                $chartIzin[]  = $allPresensi->where('presensiHarian.tanggal', $tgl)->where('status', 'izin')->count();
-                $chartAlfa[]  = $allPresensi->where('presensiHarian.tanggal', $tgl)->where('status', 'alfa')->count();
-            }
+            $chartHadir   = [$allPresensi->where('status', 'Hadir')->count()];
+            $chartSakit   = [$allPresensi->where('status', 'Sakit')->count()];
+            $chartIzin    = [$allPresensi->where('status', 'Izin')->count()];
+            $chartAlfa    = [$allPresensi->where('status', 'Alpha')->count()];
         }
 
 
@@ -118,34 +111,62 @@ class SiswaMenuController extends Controller
 
         // Ambil tahun semester aktif
         $tahunAktif = TahunSemester::where('is_active', 1)->first();
-        $daftarTahunSemester = TahunSemester::with('tahunAjaran')->get();
+        // Ambil tahun ajaran di mana siswa terdaftar di kelas siswa
+        $tahunAjaranIds = $siswa->kelasSiswa()->pluck('tahun_ajaran_id')->unique();
+        // Ambil semua tahun semester yang tahun_ajaran_id-nya ada di kelas_siswa siswa
+        $daftarTahunSemester = TahunSemester::with('tahunAjaran')
+            ->whereIn('tahun_ajaran_id', $tahunAjaranIds)
+            ->get();
         $tahunSemesterId = $request->input('tahun_semester_id', $tahunAktif?->id);
 
         // Ambil semua nilai mapel untuk semester terpilih
+        $perPage = $request->input('per_page', 10);
         $nilaiMapelRows = \App\Models\NilaiMapel::with('mapel')
             ->where('kelas_siswa_id', $siswa->kelasSiswaAktif()?->id)
             ->where('tahun_semester_id', $tahunSemesterId)
+            ->orderBy('mapel_id')
+            ->orderByRaw("FIELD(periode, 'tengah', 'akhir')")
             ->get();
 
         // Group by mapel, ambil nilai UTS dan UAS per mapel
-        $nilaiMapel = [];
+        $grouped = [];
         foreach ($nilaiMapelRows as $row) {
             $mapelId = $row->mapel_id;
             $mapelNama = $row->mapel->nama ?? '-';
-            if (!isset($nilaiMapel[$mapelId])) {
-                $nilaiMapel[$mapelId] = [
+            if (!isset($grouped[$mapelId])) {
+                $grouped[$mapelId] = [
+                    'id' => $mapelId,
                     'nama' => $mapelNama,
                     'uts' => '-',
                     'uas' => '-',
                 ];
             }
             if ($row->periode == 'tengah') {
-                $nilaiMapel[$mapelId]['uts'] = $row->nilai_akhir ?? '-';
+                $grouped[$mapelId]['uts'] = $row->nilai_akhir ?? '-';
             }
             if ($row->periode == 'akhir') {
-                $nilaiMapel[$mapelId]['uas'] = $row->nilai_akhir ?? '-';
+                $grouped[$mapelId]['uas'] = $row->nilai_akhir ?? '-';
             }
         }
+
+        // Konversi ke Collection dan paginasi manual
+        $dataCollection = collect(array_values($grouped));
+        $currentPage = $request->input('page', 1);
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $dataCollection->forPage($currentPage, $perPage),
+            $dataCollection->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+        $data = $paginator->through(function ($item) {
+            return [
+                'id' => $item['id'],
+                'nama' => $item['nama'],
+                'uts' => $item['uts'],
+                'uas' => $item['uas'],
+            ];
+        });
 
         $breadcrumbs = [
             ['label' => 'Nilai Mata Pelajaran', 'url' => route('nilai-mapel-siswa')],
@@ -154,7 +175,8 @@ class SiswaMenuController extends Controller
 
         return view('menu-siswa.nilai-mapel', compact(
             'siswa',
-            'nilaiMapel',
+            'data',
+            'paginator',
             'breadcrumbs',
             'title',
             'daftarTahunSemester',
@@ -244,8 +266,12 @@ class SiswaMenuController extends Controller
             'tahun_semester' => 'tahun_ajaran.tahun',
         ];
 
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+        $tahunSemesterId = $request->input('tahun_semester_id', $tahunAktif?->id);
+
         $query = NilaiP5::query()
-            ->where('kelas_siswa_id', $siswa->kelasSiswaAktif()?->id)
+            ->where('nilai_p5.kelas_siswa_id', $siswa->kelasSiswaAktif()?->id)
+            ->where('nilai_p5.tahun_semester_id', $tahunSemesterId)
             ->leftJoin('p5_proyek', 'p5_proyek.id', '=', 'nilai_p5.p5_proyek_id')
             ->leftJoin('kelas_siswa', 'kelas_siswa.id', '=', 'nilai_p5.kelas_siswa_id')
             ->leftJoin('tahun_semester', 'tahun_semester.id', '=', 'nilai_p5.tahun_semester_id')
@@ -255,7 +281,7 @@ class SiswaMenuController extends Controller
             ->select(
                 'nilai_p5.*',
                 'p5_proyek.nama_proyek as proyek_nama',
-                'p5_sub_elemen.nama_sub_elemen as sub_elemen_nama', // ✅ pakai nama_sub_elemen
+                'p5_sub_elemen.nama_sub_elemen as sub_elemen_nama',
                 'nilai_p5_detail.predikat',
                 'nilai_p5_detail.deskripsi',
                 'tahun_ajaran.tahun as tahun',
@@ -283,6 +309,15 @@ class SiswaMenuController extends Controller
             ];
         });
 
+        // Ambil tahun semester aktif
+        $tahunAktif = TahunSemester::where('is_active', 1)->first();
+        // Ambil tahun ajaran di mana siswa terdaftar di kelas siswa
+        $tahunAjaranIds = $siswa->kelasSiswa()->pluck('tahun_ajaran_id')->unique();
+        // Ambil semua tahun semester yang tahun_ajaran_id-nya ada di kelas_siswa siswa
+        $daftarTahunSemester = TahunSemester::with('tahunAjaran')
+            ->whereIn('tahun_ajaran_id', $tahunAjaranIds)
+            ->get();
+
         $breadcrumbs = [
             ['label' => 'Nilai P5', 'url' => route('nilai-p5-siswa')],
         ];
@@ -293,7 +328,9 @@ class SiswaMenuController extends Controller
             'data',
             'paginator',
             'breadcrumbs',
-            'title'
+            'title',
+            'daftarTahunSemester',
+            'tahunAktif'
         ));
     }
 

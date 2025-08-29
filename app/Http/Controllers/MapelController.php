@@ -22,6 +22,20 @@ class MapelController extends Controller
     {
         $perPage = $request->input('per_page', 10);
 
+        // Redirect ke tab yang sesuai jika search dilakukan
+        if ($request->has('search_lingkup_materi') && $request->input('tab') !== 'lingkup-materi') {
+    return redirect()->to(role_route('mapel.index', [
+        'tab' => 'lingkup-materi',
+        'search_lingkup_materi' => $request->input('search_lingkup_materi')
+    ]));
+}
+if ($request->has('search_tujuan_pembelajaran') && $request->input('tab') !== 'tujuan-pembelajaran') {
+    return redirect()->to(role_route('mapel.index', [
+        'tab' => 'tujuan-pembelajaran',
+        'search_tujuan_pembelajaran' => $request->input('search_tujuan_pembelajaran')
+    ]));
+}
+
         $mapel = $this->getMapelData($request, $perPage);
         $bab = $this->getBabData($request, $perPage);
         $lingkupMateri = $this->getLingkupMateriData($request, $perPage);
@@ -101,8 +115,20 @@ class MapelController extends Controller
 
         $query = LingkupMateri::query();
         if ($search = $request->input('search_lingkup_materi')) {
-            $query->where('nama', 'like', "%$search%")
-                ->orWhere('kode_lingkup_materi', 'like', "%$search%");
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%$search%")
+                  ->orWhere('periode', 'like', "%$search%")
+                  ->orWhere('semester', 'like', "%$search%")
+                  ->orWhereHas('kelas', function($kq) use ($search) {
+                      $kq->where('nama', 'like', "%$search%");
+                  })
+                  ->orWhereHas('mapel', function($mq) use ($search) {
+                      $mq->where('nama', 'like', "%$search%");
+                  })
+                  ->orWhereHas('bab', function($bq) use ($search) {
+                      $bq->where('nama', 'like', "%$search%");
+                  });
+            });
         }
 
         $paginator = $query->paginate($perPage)->withQueryString();
@@ -144,8 +170,22 @@ class MapelController extends Controller
         // $query = TujuanPembelajaran::with('lingkupMateri.guruKelas.kelas', 'lingkupMateri.guruKelas.mapel', 'lingkupMateri.bab');
         $query = TujuanPembelajaran::with('lingkupMateri.mapel', 'lingkupMateri.kelas', 'lingkupMateri.bab');
         if ($search = $request->input('search_tujuan_pembelajaran')) {
-            $query->where('nama', 'like', "%$search%")
-                ->orWhere('kode_tujuan_pembelajaran', 'like', "%$search%");
+            $query->where(function($q) use ($search) {
+                $q->where('tujuan', 'like', "%$search%")
+                  ->orWhere('subbab', 'like', "%$search%")
+                  ->orWhereHas('lingkupMateri', function($lq) use ($search) {
+                      $lq->where('nama', 'like', "%$search%")
+                        ->orWhereHas('kelas', function($kq) use ($search) {
+                            $kq->where('nama', 'like', "%$search%");
+                        })
+                        ->orWhereHas('mapel', function($mq) use ($search) {
+                            $mq->where('nama', 'like', "%$search%");
+                        })
+                        ->orWhereHas('bab', function($bq) use ($search) {
+                            $bq->where('nama', 'like', "%$search%");
+                        });
+                  });
+            });
         }
 
         $paginator = $query->paginate($perPage)->withQueryString();

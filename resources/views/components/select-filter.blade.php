@@ -38,11 +38,11 @@
         <select name="{{ $name }}" id="{{ $name }}" onchange="this.form.submit()"
             class="h-9 w-full sm:w-auto rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
             <option value="">{{ '-- ' . $label . ' --' }}</option>
-                        @foreach ($options->take($maxOptions) as $option)
-                <option value="{{ $option[$valueKey] }}" {{ request($name) == $option[$valueKey] ? 'selected' : '' }}>
-                    {{ $option[$labelKey] }}
-                </option>
-            @endforeach
+                        @foreach ($options as $option)
+                            <option value="{{ is_array($option) ? $option[$valueKey] : $option->{$valueKey} }}" {{ request($name) == (is_array($option) ? $option[$valueKey] : $option->{$valueKey}) ? 'selected' : '' }}>
+                                {{ is_array($option) ? $option[$labelKey] : $option->{$labelKey} }}
+                            </option>
+                        @endforeach
         </select>
     </form>
 @endif

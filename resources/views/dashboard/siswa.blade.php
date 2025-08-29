@@ -51,24 +51,33 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             const labels = {!! json_encode($chartLabels ?? []) !!};
-            const dataNilai = {!! json_encode($chartData ?? []) !!};
+            const dataUts = {!! json_encode($chartUts ?? []) !!};
+            const dataUas = {!! json_encode($chartUas ?? []) !!};
             const ctx = document.getElementById('chartNilai').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Nilai',
-                        data: dataNilai,
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                        borderRadius: 8,
-                    }]
+                    datasets: [
+                        {
+                            label: 'UTS',
+                            data: dataUts,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderRadius: 8,
+                        },
+                        {
+                            label: 'UAS',
+                            data: dataUas,
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderRadius: 8,
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     plugins: {
                         legend: {
-                            display: false
+                            display: true
                         }
                     },
                     scales: {

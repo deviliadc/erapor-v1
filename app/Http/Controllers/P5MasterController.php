@@ -247,9 +247,16 @@ class P5MasterController extends Controller
     private function getProyekData(Request $request, $perPage)
     {
         $searchProyek = $request->input('search_proyek');
-        $proyekQuery = P5Proyek::with(['tahunSemester']);
+        $proyekQuery = P5Proyek::with(['tahunSemester.tahunAjaran']);
         if ($searchProyek) {
-            $proyekQuery->where('nama_proyek', 'like', "%$searchProyek%");
+            $proyekQuery->where('nama_proyek', 'like', "%$searchProyek%")
+                ->orWhere('deskripsi', 'like', "%$searchProyek%")
+                ->orWhereHas('tahunSemester', function($q) use ($searchProyek) {
+                    $q->where('semester', 'like', "%$searchProyek%")
+                      ->orWhereHas('tahunAjaran', function($qa) use ($searchProyek) {
+                          $qa->where('tahun', 'like', "%$searchProyek%");
+                      });
+                });
         }
         $prefix = 'proyek';
         $sortBy = $request->input("sortBy_{$prefix}", 'id');

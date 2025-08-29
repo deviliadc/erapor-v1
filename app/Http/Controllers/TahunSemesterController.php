@@ -16,16 +16,32 @@ class TahunSemesterController extends Controller
      */
     public function index(Request $request)
     {
-        // $perPage = $request->input('per_page', 10);
-        // $query = TahunSemester::query();
-        // $totalCount = $query->count();
-        // $paginator = $query->paginate($perPage)->withQueryString();
-        // $tahun_semester = $paginator->through(function ($item) {
-        //     $siswa_count = KelasSiswa::where('tahun_ajaran_id', $item->tahun_ajaran_id)->count();
-        //     return [
-        //         'id' => $item->id,
-        //         // 'tahun' => $item->tahun_ajaran_id,
-        //         'tahun' => $item->tahunAjaran->tahun,
+        $perPage = $request->input('per_page', 10);
+
+        // Redirect ke tab yang sesuai jika search dilakukan
+        if ($request->has('search_tahun_ajaran') && $request->input('tab') !== 'tahun-ajaran') {
+            return redirect()->to(role_route('tahun-semester.index', [
+                'tab' => 'tahun-ajaran',
+                'search_tahun_ajaran' => $request->input('search_tahun_ajaran')
+            ]));
+        }
+        if ($request->has('search_tahun_semester') && $request->input('tab') !== 'semester') {
+            return redirect()->to(role_route('tahun-semester.index', [
+                'tab' => 'semester',
+                'search_tahun_semester' => $request->input('search_tahun_semester')
+            ]));
+        }
+
+        $tahunAjaran = $this->getTahunAjaranData($request, $perPage);
+        $tahunSemester = $this->getTahunSemesterData($request, $perPage);
+        $breadcrumbs = [['label' => 'Data Tahun Semester']];
+        $title = 'Data Tahun Semester';
+
+        return view('tahun-semester.index', array_merge(
+            compact('title', 'breadcrumbs'),
+            $tahunAjaran,
+            $tahunSemester
+        ));
         //         'semester' => $item->semester,
         //         'status' => $item->is_active,
         //         'siswa_count' => $siswa_count,
@@ -53,7 +69,13 @@ class TahunSemesterController extends Controller
 
     private function getTahunAjaranData(Request $request, $perPage)
     {
-        $query = TahunAjaran::orderByDesc('tahun'); // urut dari tahun terbaru
+        $query = TahunAjaran::orderByDesc('tahun');
+        if ($search = $request->input('search_tahun_ajaran')) {
+            $query->where(function($q) use ($search) {
+                $q->where('tahun', 'like', "%$search%")
+                  ->orWhere('is_active', $search == 'aktif' ? 1 : ($search == 'nonaktif' ? 0 : -1));
+            });
+        }
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
         $tahunAjaran = $paginator->through(function ($item) {
@@ -61,8 +83,6 @@ class TahunSemesterController extends Controller
             return [
                 'id' => $item->id,
                 'tahun' => $item->tahun,
-                // 'tahun_mulai' => $item->mulai,
-                // 'tahun_selesai' => $item->selesai,
                 'tahun_status' => $item->is_active,
                 'siswa_count' => $siswa_count,
             ];
@@ -77,18 +97,22 @@ class TahunSemesterController extends Controller
     private function getTahunSemesterData(Request $request, $perPage)
     {
         $query = TahunSemester::with('tahunAjaran')
-            ->select('tahun_semester.*') // ambil hanya kolom dari tahun_semester
+            ->select('tahun_semester.*')
             ->join('tahun_ajaran', 'tahun_semester.tahun_ajaran_id', '=', 'tahun_ajaran.id')
             ->orderByDesc('tahun_ajaran.tahun')
             ->orderBy('semester');
-
+        if ($search = $request->input('search_tahun_semester')) {
+            $query->where(function($q) use ($search) {
+                $q->where('tahun_ajaran.tahun', 'like', "%$search%")
+                  ->orWhere('semester', 'like', "%$search%")
+                  ->orWhere('tahun_semester.is_active', $search == 'aktif' ? 1 : ($search == 'nonaktif' ? 0 : -1));
+            });
+        }
         $totalCount = $query->count();
         $paginator = $query->paginate($perPage)->withQueryString();
 
         $tahunSemester = $paginator->through(function ($item) {
-            // pastikan ambil dari tabel tahun_semester
             $isActive = $item->getAttribute('is_active') ? true : false;
-
             return [
                 'id' => $item->id,
                 'tahun_ajaran_id' => $item->tahun_ajaran_id,
@@ -336,9 +360,17 @@ class TahunSemesterController extends Controller
 
         $item = TahunSemester::findOrFail($id);
 
-        // Cek duplikat (hanya kalau ganti tahun_ajaran_id / semester)
         $tahunAjaranBerubah = $item->tahun_ajaran_id != $validated['tahun_ajaran_id'];
         $semesterBerubah    = $item->semester != $validated['semester'];
+        // $isActive           = $request->has('is_active');
+$isActive = $request->input('is_active', '0') == '1';
+        // Jika tidak ada perubahan dan tidak dicentang aktif, kembalikan tanpa update
+        if (!$tahunAjaranBerubah && !$semesterBerubah && !$isActive) {
+            return redirect()->to(role_route('tahun-semester.index', ['tab' => $request->tab ?? 'semester']))
+                ->with('success', 'Tidak ada perubahan data.');
+        }
+
+        // Validasi duplikat jika ganti tahun_ajaran_id / semester
         if ($tahunAjaranBerubah || $semesterBerubah) {
             $duplikat = TahunSemester::where('tahun_ajaran_id', $validated['tahun_ajaran_id'])
                 ->where('semester', $validated['semester'])
@@ -351,24 +383,16 @@ class TahunSemesterController extends Controller
             }
         }
 
-        $isActive = $request->has('is_active');
-
+        // Hanya jika dicentang aktif, update status aktif semester dan tahun ajaran
         if ($isActive) {
-            // Nonaktifkan semua TahunSemester lain
-            TahunSemester::where('id', '!=', $id)->update(['is_active' => false]);
-
-            // Nonaktifkan semua TahunAjaran lain
-            TahunAjaran::where('id', '!=', $validated['tahun_ajaran_id'])->update(['is_active' => false]);
-
-            // Aktifkan TahunAjaran terkait
+            TahunSemester::where('is_active', true)->where('id', '!=', $id)->update(['is_active' => false]);
+            TahunAjaran::where('is_active', true)->update(['is_active' => false]);
             TahunAjaran::where('id', $validated['tahun_ajaran_id'])->update(['is_active' => true]);
         }
 
         $item->update([
             'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
             'semester'        => $validated['semester'],
-            // 'mulai'           => $validated['mulai'],
-            // 'selesai'         => $validated['selesai'],
             'is_active'       => $isActive,
         ]);
 

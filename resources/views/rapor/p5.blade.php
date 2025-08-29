@@ -138,43 +138,29 @@
         <div class="subheader" style="margin-top:18px;">
             PROYEK : {{ $p5['proyek']->nama_proyek ?? '-' }}
         </div>
-        <div style="font-size:13px; border:1px solid #333; padding:8px; background:#f9f9f9;">
+        <div style="margin-bottom:12px;">
             {{ $p5['proyek']->deskripsi ?? '-' }}
         </div>
-        <table class="main-table" width="100%" style="margin-bottom:8px;">
+
+        <table class="main-table" width="100%">
             <tr>
-                <th style="width:50%; text-align:left;">{{ $p5['proyek']->nama_proyek ?? '-' }}</th>
-                <th style="width:12%">BB</th>
-                <th style="width:12%">MB</th>
-                <th style="width:12%">BSH</th>
-                <th style="width:12%">SB</th>
+                <th style="width:40%">Dimensi</th>
+                <th style="width:10%">BB</th>
+                <th style="width:10%">MB</th>
+                <th style="width:10%">BSH</th>
+                <th style="width:10%">SB</th>
             </tr>
-            @php
-                $dimensiList = isset($p5['dimensi']) && is_array($p5['dimensi']) ? $p5['dimensi'] : [];
-            @endphp
-            @foreach ($dimensiList as $dimensi)
-                @php
-                    $subelemenList = isset($dimensi['subelemen']) && is_array($dimensi['subelemen']) ? $dimensi['subelemen'] : [];
-                @endphp
-                @if(count($subelemenList) > 0)
-                    <tr>
-                        <td colspan="5" class="dimensi" style="font-weight:bold; background:#f9f9f9;">{{ $dimensi['nama'] }}</td>
-                    </tr>
-                    @foreach ($subelemenList as $sub)
-                        <tr>
-                            <td style="text-align:left; vertical-align:top;">{{ $sub['capaian'] ?? '-' }}</td>
-                            <td style="text-align:center;">@if($sub['predikat'] === 'Belum Berkembang')&#10003;@endif</td>
-                            <td style="text-align:center;">@if($sub['predikat'] === 'Mulai Berkembang')&#10003;@endif</td>
-                            <td style="text-align:center;">@if($sub['predikat'] === 'Berkembang Sesuai Harapan' || $sub['predikat'] === 'Berkembang sesuai harapan')&#10003;@endif</td>
-                            <td style="text-align:center;">@if($sub['predikat'] === 'Sangat Berkembang')&#10003;@endif</td>
-                        </tr>
-                    @endforeach
-                @else
-                    <tr>
-                        <td style="color:#888;">Tidak ada capaian</td>
-                        <td colspan="4" style="text-align:center; color:#888;">-</td>
-                    </tr>
-                @endif
+            @foreach ($p5['capaian'] as $c)
+                <tr>
+                    <td>
+                        <strong>{{ $c['dimensi'] }}</strong><br>
+                        {{ $c['deskripsi_dimensi'] ?? $c['deskripsi'] }}
+                    </td>
+                    <td style="text-align:center;">@if($c['predikat'] === 'Belum Berkembang')&#10003;@endif</td>
+                    <td style="text-align:center;">@if($c['predikat'] === 'Mulai Berkembang')&#10003;@endif</td>
+                    <td style="text-align:center;">@if($c['predikat'] === 'Berkembang sesuai harapan')&#10003;@endif</td>
+                    <td style="text-align:center;">@if($c['predikat'] === 'Sangat Berkembang')&#10003;@endif</td>
+                </tr>
             @endforeach
         </table>
 
