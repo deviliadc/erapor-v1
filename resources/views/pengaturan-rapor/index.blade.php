@@ -40,7 +40,7 @@
                 required
             />
 
-            <x-form.date-picker
+            {{-- <x-form.date-picker
                 label="Tanggal Cetak"
                 name="tanggal_cetak"
                 type="date"
@@ -48,6 +48,22 @@
                     ? \Carbon\Carbon::parse($data->tanggal_cetak)->format('Y-m-d')
                     : \Carbon\Carbon::now()->format('Y-m-d')
                 ))"
+                required
+            /> --}}
+            
+            <x-form.date-picker
+                label="Tanggal Cetak UTS"
+                name="tanggal_cetak_uts"
+                type="date"
+                :value="old('tanggal_cetak_uts', ($data?->tanggal_cetak_uts ? \Carbon\Carbon::parse($data->tanggal_cetak_uts)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d')))"
+                required
+            />
+
+            <x-form.date-picker
+                label="Tanggal Cetak UAS"
+                name="tanggal_cetak_uas"
+                type="date"
+                :value="old('tanggal_cetak_uas', ($data?->tanggal_cetak_uas ? \Carbon\Carbon::parse($data->tanggal_cetak_uas)->format('Y-m-d') : \Carbon\Carbon::now()->format('Y-m-d')))"
                 required
             />
 
@@ -75,10 +91,10 @@
             </div> -->
 
             <div class="flex justify-end">
-                    <button type="submit"
-                        class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
-                        Simpan Pengaturan
-                    </button>
+                <button type="submit"
+                    class="inline-flex items-center gap-2 rounded-lg bg-brand-500 w-36 justify-center px-4 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600">
+                    Simpan Pengaturan
+                </button>
             </div>
         </form>
     </div>

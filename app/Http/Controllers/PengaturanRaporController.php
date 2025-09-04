@@ -47,14 +47,22 @@ class PengaturanRaporController extends Controller
             'nama_kepala_sekolah' => 'required|string|max:255',
             'nip_kepala_sekolah' => 'nullable|string|max:50',
             'tempat' => 'required|string|max:100',
-            'tanggal_cetak' => 'nullable|date',
+            'tanggal_cetak_uts' => 'nullable|date',
+            'tanggal_cetak_uas' => 'nullable|date',
         ]);
 
         $tahunAktif = TahunSemester::where('is_active', true)->first();
 
         $data = PengaturanRapor::firstOrNew(['tahun_semester_id' => $tahunAktif?->id]);
 
-        $data->fill($request->except('ttd'));
+        // $data->fill($request->except('ttd'));
+        $data->fill($request->only([
+            'nama_kepala_sekolah',
+            'nip_kepala_sekolah',
+            'tempat',
+            'tanggal_cetak_uts',
+            'tanggal_cetak_uas',
+        ]));
         $data->tahun_semester_id = $tahunAktif?->id;
         $data->save();
 
@@ -75,7 +83,7 @@ class PengaturanRaporController extends Controller
         Storage::disk('public')->delete($data->ttd);
 
         // Kosongkan kolom di database
-        $data->ttd = null;
+        // $data->ttd = null;
         $data->save();
 
         return back()->with('success', 'Tanda tangan berhasil dihapus.');

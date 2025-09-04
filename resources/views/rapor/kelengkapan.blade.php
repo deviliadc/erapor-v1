@@ -256,7 +256,7 @@
             <!-- TTD Kepala Sekolah di tengah -->
             <div style="flex: 2; text-align: center;">
                 {{ $pengaturan->tempat ?? ($sekolah->kabupaten ?? '-') }},
-                {{ \Carbon\Carbon::parse($pengaturan->tanggal_cetak ?? now())->translatedFormat('d F Y') }}<br>
+                {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}<br>
                 Kepala Sekolah,<br><br><br><br><br>
                 <b>{{ $pengaturan->nama_kepala_sekolah ?? '-' }}</b><br>
                 NIP: {{ $pengaturan->nip_kepala_sekolah ?? '-' }}

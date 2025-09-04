@@ -202,7 +202,7 @@
             </td>
             <td width="50%" style="text-align:center;">
                 {{ $pengaturan->tempat ?? ($sekolah->kabupaten ?? '-') }},
-                {{ \Carbon\Carbon::parse($pengaturan->tanggal_cetak ?? now())->translatedFormat('d F Y') }}<br>
+                {{ \Carbon\Carbon::parse($pengaturan->tanggal_cetak_uas ?? now())->translatedFormat('d F Y') }}<br>
                 Wali Kelas<br><br><br><br>
                 <span class="nama">{{ $waliKelas->nama ?? '-' }}</span><br>
                 NIP: {{ $waliKelas->nip ?? '-' }}

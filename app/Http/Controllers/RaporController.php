@@ -49,31 +49,31 @@ class RaporController extends Controller
     }
 
     private function authorizeRaporAccess($tahunSemesterId)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    // Admin boleh selalu
-    if ($user->hasRole('admin')) {
-        return true;
-    }
-
-    // Cek kalau guru wali kelas
-    if ($user->hasRole('guru')) {
-        $guruId = $user->guru?->id;
-        $tahunAjaranId = TahunSemester::where('id', $tahunSemesterId)->value('tahun_ajaran_id');
-
-        $isWali = \App\Models\GuruKelas::where('guru_id', $guruId)
-            ->where('tahun_ajaran_id', $tahunAjaranId)
-            ->where('peran', 'wali')
-            ->exists();
-
-        if ($isWali) {
+        // Admin boleh selalu
+        if ($user->hasRole('admin')) {
             return true;
         }
-    }
 
-    return false;
-}
+        // Cek kalau guru wali kelas
+        if ($user->hasRole('guru')) {
+            $guruId = $user->guru?->id;
+            $tahunAjaranId = TahunSemester::where('id', $tahunSemesterId)->value('tahun_ajaran_id');
+
+            $isWali = \App\Models\GuruKelas::where('guru_id', $guruId)
+                ->where('tahun_ajaran_id', $tahunAjaranId)
+                ->where('peran', 'wali')
+                ->exists();
+
+            if ($isWali) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 
     public function index(Request $request)
@@ -91,10 +91,9 @@ class RaporController extends Controller
         } else {
             $kelasList = \App\Models\Kelas::orderBy('nama')->get();
         }
-    
+
         $breadcrumbs = [['label' => 'Rapor']];
         $title = 'Rapor';
-        $user = Auth::user();
         $guru = $user->guru ?? null;
         // Ambil daftar Tahun Semester
         $daftarTahunSemester = TahunSemester::with('tahunAjaran')
@@ -114,16 +113,33 @@ class RaporController extends Controller
             $kelasIds = $user->guru?->kelasDiampuIds() ?? [];
             $kelasList = $kelasList->whereIn('id', $kelasIds);
         }
-        $kelas_id = $request->input('kelas_id');
-        $kelasDipilih = $kelas_id ? Kelas::find($kelas_id) : null;
-        // Query siswa sesuai Tahun Ajaran dan Kelas
-        $siswaList = Siswa::with(['kelasSiswa.kelas'])
-            ->whereHas('kelasSiswa', function ($q) use ($tahunAjaranId, $kelas_id) {
-                if ($tahunAjaranId) $q->where('tahun_ajaran_id', $tahunAjaranId);
-                if ($kelas_id) $q->where('kelas_id', $kelas_id);
-            })
-            ->get()
-            ->sortBy('nama');
+        // Ambil kelas_id dari request, default ke kelas pertama di $kelasList jika ada
+$kelas_id = $request->input('kelas_id');
+// Jika belum ada kelas yang dipilih dan user guru, ambil semua kelas yang jadi wali pada tahun ajaran aktif
+if (!$kelas_id && $user->hasRole('guru')) {
+    $kelasIds = $kelasList->pluck('id')->toArray();
+} else {
+    $kelasIds = $kelas_id ? [$kelas_id] : [];
+}
+
+// Query siswa sesuai Tahun Ajaran dan Kelas (bisa banyak kelas jika guru wali dan belum pilih kelas)
+// $siswaList = Siswa::with(['kelasSiswa.kelas'])
+//     ->whereHas('kelasSiswa', function ($q) use ($tahunAjaranId, $kelasIds) {
+//         if ($tahunAjaranId) $q->where('tahun_ajaran_id', $tahunAjaranId);
+//         if ($kelasIds) $q->whereIn('kelas_id', $kelasIds);
+//     })
+//     ->get()
+//     ->sortBy('nama');
+$siswaQuery = Siswa::with(['kelasSiswa.kelas'])
+        ->whereHas('kelasSiswa', function ($q) use ($tahunAjaranId, $kelasIds) {
+            if ($tahunAjaranId) $q->where('tahun_ajaran_id', $tahunAjaranId);
+            if ($kelasIds) $q->whereIn('kelas_id', $kelasIds);
+        })
+        ->orderBy('nama');
+
+    $perPage = $request->input('per_page', 20);
+    $siswaList = $siswaQuery->paginate($perPage)->withQueryString();
+
         $isValidUAS = ValidasiSemester::where('tahun_semester_id', $tahunSemesterId)
             ->whereIn('tipe', ['UAS', 'Ekstra', 'Presensi'])
             ->where('is_validated', true)
@@ -159,9 +175,9 @@ class RaporController extends Controller
     {
         $tahunSemesterId = $request->input('tahun_semester_id');
         // 🔒 Batasi akses
-    if (!$this->authorizeRaporAccess($tahunSemesterId)) {
-        return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
-    }
+        if (!$this->authorizeRaporAccess($tahunSemesterId)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
+        }
 
         $pengaturan = $this->getPengaturanRapor($tahunSemesterId);
 
@@ -193,9 +209,9 @@ class RaporController extends Controller
     {
         $tahunSemesterId = $request->input('tahun_semester_id');
         // 🔒 Batasi akses
-    if (!$this->authorizeRaporAccess($tahunSemesterId)) {
-        return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
-    }
+        if (!$this->authorizeRaporAccess($tahunSemesterId)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
+        }
 
         $pengaturan = $this->getPengaturanRapor($tahunSemesterId);
 
@@ -251,9 +267,9 @@ class RaporController extends Controller
     {
         $tahunSemesterId = $request->input('tahun_semester_id');
         // 🔒 Batasi akses
-    if (!$this->authorizeRaporAccess($tahunSemesterId)) {
-        return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
-    }
+        if (!$this->authorizeRaporAccess($tahunSemesterId)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
+        }
 
         $pengaturan = $this->getPengaturanRapor($tahunSemesterId);
 
@@ -323,7 +339,7 @@ class RaporController extends Controller
             } else {
                 $rekap = \App\Models\RekapAbsensi::where('kelas_siswa_id', $kelasSiswaAktif->id)
                     ->where('tahun_semester_id', $tahunSemesterId)
-                    ->where('periode', 'akhir') 
+                    ->where('periode', 'akhir')
                     ->first();
 
                 $absensi = [
@@ -357,9 +373,9 @@ class RaporController extends Controller
     {
         $tahunSemesterId = $request->input('tahun_semester_id');
         // 🔒 Batasi akses
-    if (!$this->authorizeRaporAccess($tahunSemesterId)) {
-        return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
-    }
+        if (!$this->authorizeRaporAccess($tahunSemesterId)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki hak untuk mencetak rapor.');
+        }
 
         $pengaturan = $this->getPengaturanRapor($tahunSemesterId);
 

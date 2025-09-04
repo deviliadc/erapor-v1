@@ -154,7 +154,7 @@
                     ? \Carbon\Carbon::parse($pengaturan->tanggal_cetak)->translatedFormat('d F Y')
                     : now()->translatedFormat('d F Y') }}<br> --}}
                 {{ $pengaturan->tempat ?? ($sekolah->kabupaten ?? '-') }},
-                {{ \Carbon\Carbon::parse($pengaturan->tanggal_cetak ?? now())->translatedFormat('d F Y') }}
+                {{ \Carbon\Carbon::parse($pengaturan->tanggal_cetak_uts ?? now())->translatedFormat('d F Y') }}
                 <br>
                 Wali Kelas<br><br><br><br>
                 <span class="nama">{{ $waliKelas->nama ?? '-' }}</span><br>

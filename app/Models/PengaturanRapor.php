@@ -14,7 +14,8 @@ class PengaturanRapor extends Model
         // 'jabatan',
         'ttd',
         'tempat',
-        'tanggal_cetak',
+        'tanggal_cetak_uts',
+        'tanggal_cetak_uas',
     ];
 
     public function tahunSemester()
@@ -22,10 +23,10 @@ class PengaturanRapor extends Model
         return $this->belongsTo(TahunSemester::class);
     }
 
-    public function getTtdUrlAttribute()
-    {
-        return $this->ttd ? asset('storage/' . $this->ttd) : null;
-    }
+    // public function getTtdUrlAttribute()
+    // {
+    //     return $this->ttd ? asset('storage/' . $this->ttd) : null;
+    // }
 
     // public function getTanggalCetakFormattedAttribute()
     // {

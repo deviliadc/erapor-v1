@@ -74,40 +74,41 @@
 
                             {{-- Rapor Tengah Semester (UTS) --}}
                             <a @if ($isValidUTS) href="{{ role_route('rapor.cetakTengah', ['siswa' => $siswa->id, 'tahun_semester_id' => $tahunSemesterId]) }}"
-        target="_blank" @endif
+                                target="_blank" @endif
                                 class="rounded-lg px-4 py-3 text-sm font-medium shadow-theme-xs
-        {{ $isValidUTS ? 'bg-blue-light-500 text-white hover:bg-blue-light-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}"
+                                {{ $isValidUTS ? 'bg-blue-light-500 text-white hover:bg-blue-light-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}"
                                 {{ $isValidUTS ? '' : 'tabindex="0"' }}>
                                 Cetak Rapor UTS
                             </a>
 
                             {{-- Rapor Akhir Semester (UAS) --}}
                             <a @if ($isValidUAS) href="{{ role_route('rapor.cetakAkhir', ['siswa' => $siswa->id, 'tahun_semester_id' => $tahunSemesterId]) }}"
-        target="_blank" @endif
+                                target="_blank" @endif
                                 class="rounded-lg px-4 py-3 text-sm font-medium shadow-theme-xs
-        {{ $isValidUAS ? 'bg-brand-500 text-white hover:bg-brand-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}"
+                                {{ $isValidUAS ? 'bg-brand-500 text-white hover:bg-brand-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}"
                                 {{ $isValidUAS ? '' : 'tabindex="0"' }}>
                                 Cetak Rapor UAS
                             </a>
 
                             {{-- Rapor P5 --}}
                             <a @if ($isValidP5) href="{{ role_route('rapor.cetakP5', ['siswa' => $siswa->id, 'tahun_semester_id' => $tahunSemesterId]) }}"
-        target="_blank" @endif
+                                target="_blank" @endif
                                 class="rounded-lg px-4 py-3 text-sm font-medium shadow-theme-xs
-        {{ $isValidP5 ? 'bg-success-500 text-white hover:bg-success-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}"
+                                {{ $isValidP5 ? 'bg-success-500 text-white hover:bg-success-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}"
                                 {{ $isValidP5 ? '' : 'tabindex="0"' }}>
                                 Rapor P5
                             </a>
                         </td>
-
-
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="py-4 text-gray-500">Tidak ada data siswa.</td>
+                        <td colspan="7" class="py-4 text-gray-500">Tidak ada data siswa.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+    <div class="mt-4">
+    {{ $siswaList->links() }}
+</div>
 </x-app-layout>

@@ -19,8 +19,10 @@ return new class extends Migration
             // $table->string('jabatan')->default('Kepala Sekolah');
             $table->string('ttd')->nullable();
             $table->string('tempat'); // misal: Bojonegoro
-            $table->date('tanggal_cetak')->nullable();
-            $table->string('periode')->nullable();
+            // $table->date('tanggal_cetak')->nullable();
+            // $table->string('periode')->nullable();
+            $table->date('tanggal_cetak_uts')->nullable();
+            $table->date('tanggal_cetak_uas')->nullable();
             $table->timestamps();
         });
     }

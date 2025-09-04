@@ -3,10 +3,27 @@
     <div class="container mx-auto py-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow p-6">
+                <h2 class="text-lg font-semibold mb-4 text-brand-500">Status Siswa</h2>
+                <div class="space-y-2">
+                    <div>
+                        <span class="font-medium">Tahun Ajaran:</span>
+                        {{ $siswa->kelasSiswaAktif()?->tahunAjaran?->tahun ?? '-' }}
+                    </div>
+                    <div>
+                        <span class="font-medium">Status:</span>
+                        {{ $siswa->kelasSiswaAktif()?->status ?? '-' }}
+                    </div>
+                    <div>
+                        <span class="font-medium">Kelas:</span>
+                        {{ $siswa->kelasSiswaAktif()?->kelas?->nama ?? '-' }}
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6">
                 <h2 class="text-lg font-semibold mb-4 text-brand-500">Data Diri Siswa</h2>
                 <div class="space-y-2">
                     <div><span class="font-medium">Nama:</span> {{ $siswa->nama }}</div>
-                    <div><span class="font-medium">NIS:</span> {{ $siswa->nis }}</div>
+                    <div><span class="font-medium">NIPD:</span> {{ $siswa->nipd }}</div>
                     <div><span class="font-medium">NISN:</span> {{ $siswa->nisn }}</div>
                     <div><span class="font-medium">Jenis Kelamin:</span> {{ $siswa->jenis_kelamin }}</div>
                     <div><span class="font-medium">Tempat, Tanggal Lahir:</span> {{ $siswa->tempat_lahir }},

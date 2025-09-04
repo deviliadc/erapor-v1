@@ -17,19 +17,26 @@ class SiswaMenuController extends Controller
     {
         $user = Auth::user();
         $siswa = $user->siswa;
-        // $daftarTahunSemester = TahunSemester::orderByDesc('tahun')->orderByDesc('semester')->get();
+        // Ambil tahun ajaran di mana siswa terdaftar di kelas siswa
+        $tahunAjaranIds = $siswa->kelasSiswa()->pluck('tahun_ajaran_id')->unique();
+
+        // Ambil semua tahun semester yang tahun_ajaran_id-nya ada di kelas_siswa siswa
+        // $daftarTahunSemester = TahunSemester::with('tahunAjaran')
+        //     ->whereIn('tahun_ajaran_id', $tahunAjaranIds)
+        //     ->get()
+        //     ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
+        //     ->sortByDesc('semester')
+        //     ->values();
         $daftarTahunSemester = TahunSemester::with('tahunAjaran')
-            ->get()
-            ->sortByDesc(fn($ts) => $ts->tahunAjaran->tahun)
-            ->sortByDesc('semester')
-            ->values();
+            ->whereIn('tahun_ajaran_id', $tahunAjaranIds)
+            ->get();
 
         $tahunAktif = TahunSemester::where('is_active', 1)->first();
         $tahunSemesterId = $request->input('tahun_semester_id', $tahunAktif->id);
+        $tahunAjaranId = TahunSemester::find($tahunSemesterId)?->tahun_ajaran_id;
 
-        // $kelasSiswaAktif = $siswa->kelasSiswa()->where('tahun_semester_id', $tahunSemesterId)->first();
         $kelasSiswaAktif = $siswa->kelasSiswa()
-            ->where('tahun_ajaran_id', $tahunAktif->tahun_ajaran_id)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
             ->first();
 
         // Rekap absensi untuk tahun semester yang dipilih
@@ -43,8 +50,10 @@ class SiswaMenuController extends Controller
         $perPage = $request->input('per_page', 10);
         $presensiQuery = PresensiDetail::with(['presensiHarian.kelas.tahunSemester'])
             ->where('kelas_siswa_id', $kelasSiswaAktif?->id)
+            ->whereHas('presensiHarian', function ($q) use ($tahunSemesterId) {
+                $q->where('tahun_semester_id', $tahunSemesterId);
+            })
             ->orderBy('presensi_harian_id');
-
         $paginator = $presensiQuery->paginate($perPage)->withQueryString();
 
         // Mapping data untuk x-table.table
@@ -61,7 +70,7 @@ class SiswaMenuController extends Controller
         // Untuk chart: hanya presensi detail sesuai tahun semester yang dipilih
         $allPresensi = PresensiDetail::with(['presensiHarian'])
             ->where('kelas_siswa_id', $kelasSiswaAktif?->id)
-            ->whereHas('presensiHarian', function($q) use ($tahunSemesterId) {
+            ->whereHas('presensiHarian', function ($q) use ($tahunSemesterId) {
                 $q->where('tahun_semester_id', $tahunSemesterId);
             })
             ->get();

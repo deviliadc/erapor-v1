@@ -17,16 +17,9 @@
         </form>
 
     {{-- Chart Bar --}}
-    {{-- <div class="flex justify-center mb-8">
-        <div class="w-full max-w-md bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg shadow p-4 flex items-center justify-center">
-            <canvas id="barAbsensi" width="320" height="200" style="max-width:320px;max-height:200px;"></canvas>
-        </div>
-    </div> --}}
-
-    {{-- Pie Chart --}}
-    <div class="flex justify-center mb-8">
+<div class="flex justify-center mb-8">
     <div class="w-full max-w-md bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg shadow p-4 flex items-center justify-center">
-        <canvas id="pieAbsensi" width="320" height="200" style="max-width:320px;max-height:200px;"></canvas>
+        <canvas id="barAbsensi" width="320" height="200" style="max-width:320px;max-height:200px;"></canvas>
     </div>
 </div>
 
@@ -62,10 +55,10 @@
 {{-- Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Pie chart: proporsi status absensi
-    const pieLabels = ['Hadir', 'Sakit', 'Izin', 'Alfa'];
-    const pieData = {
-        labels: pieLabels,
+    // Horizontal bar chart: satu baris per status
+    const labels = ['Hadir', 'Sakit', 'Izin', 'Alfa'];
+    const data = {
+        labels: labels,
         datasets: [{
             label: 'Jumlah',
             data: [
@@ -83,17 +76,27 @@
         }]
     };
 
-    new Chart(document.getElementById('pieAbsensi'), {
-        type: 'pie',
-        data: pieData,
+    new Chart(document.getElementById('barAbsensi'), {
+        type: 'bar',
+        data: data,
         options: {
+            indexAxis: 'y', // horizontal bar
             responsive: true,
             plugins: {
-                legend: { display: true, position: 'bottom', labels: { color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' } },
+                legend: { display: false },
                 title: {
                     display: true,
                     text: 'Rekap Absensi Siswa',
                     color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' }
+                },
+                y: {
+                    ticks: { color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' }
                 }
             }
         }
