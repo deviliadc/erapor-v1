@@ -480,7 +480,7 @@ class NilaiEkstraController extends Controller
             foreach ($siswaKelas as $ks) {
                 $nilaiEkstra = NilaiEkstra::where('ekstra_id', $ekstra->id)
                     ->where('kelas_siswa_id', $ks->id)
-                    ->where('tahun_ajaran_id', $tahunAjaranId)
+                    ->where('tahun_semester_id', $tahunSemesterId)
                     ->where('periode', 'akhir')
                     ->first();
                 if ($nilaiEkstra) {

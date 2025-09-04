@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('ttd')->nullable();
             $table->string('tempat'); // misal: Bojonegoro
             $table->date('tanggal_cetak')->nullable();
+            $table->string('periode')->nullable();
             $table->timestamps();
         });
     }

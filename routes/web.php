@@ -212,11 +212,11 @@ Route::middleware(['auth', 'checkrole:guru'])->prefix('guru')->name('guru.')->gr
     // Route::delete('/pengaturan-rapor/hapus-ttd', [PengaturanRaporController::class, 'hapusTtd'])
     // ->name('pengaturan-rapor.hapus-ttd');
 
-    Route::resource('validasi-semester', ValidasiSemesterController::class);
-    Route::post('validasi-semester/validate/{validasiSemester}', [ValidasiSemesterController::class, 'validateType'])->name('validasi-semester.validate');
-    Route::post('validasi-semester/cancel/{validasiSemester}', [ValidasiSemesterController::class, 'cancelValidation'])->name('validasi-semester.cancel');
-    Route::post('validasi-semester/validate-all', [ValidasiSemesterController::class, 'validateAll'])
-        ->name('validasi_semester.validateAll');
+    // Route::resource('validasi-semester', ValidasiSemesterController::class);
+    // Route::post('validasi-semester/validate/{validasiSemester}', [ValidasiSemesterController::class, 'validateType'])->name('validasi-semester.validate');
+    // Route::post('validasi-semester/cancel/{validasiSemester}', [ValidasiSemesterController::class, 'cancelValidation'])->name('validasi-semester.cancel');
+    // Route::post('validasi-semester/validate-all', [ValidasiSemesterController::class, 'validateAll'])
+    //     ->name('validasi_semester.validateAll');
     Route::get('arsip-siswa', [ArsipController::class, 'siswa'])->name('arsip-siswa.index');
     Route::get('arsip-siswa/export', [ArsipController::class, 'exportSiswa'])->name('arsip-siswa.export');
 });
