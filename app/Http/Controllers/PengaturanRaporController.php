@@ -55,7 +55,6 @@ class PengaturanRaporController extends Controller
 
         $data = PengaturanRapor::firstOrNew(['tahun_semester_id' => $tahunAktif?->id]);
 
-        // $data->fill($request->except('ttd'));
         $data->fill($request->only([
             'nama_kepala_sekolah',
             'nip_kepala_sekolah',
